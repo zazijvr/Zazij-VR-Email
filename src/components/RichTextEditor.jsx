@@ -349,6 +349,8 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
   const [formatState, setFormatState] = useState({});
   const [linkModal, setLinkModal] = useState({ isOpen: false, text: '', url: 'https://', savedRange: null, htmlContent: '', existingAnchor: null });
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null); // { el, rect }
+  const [customWidth, setCustomWidth] = useState('');
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -553,7 +555,42 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     setLinkModal({ isOpen: false, text: '', url: 'https://', savedRange: null, htmlContent: '', existingAnchor: null });
   };
 
-  // Add Native Click Interceptor to bypass WebView link defaults
+  // Image click handler – zobraz toolbar pro resize
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const handleImageClick = (e) => {
+      const img = e.target.closest('img');
+      if (img) {
+        e.preventDefault();
+        setSelectedImage(img);
+        setCustomWidth(img.width ? String(img.width) : '');
+      } else {
+        setSelectedImage(null);
+      }
+    };
+
+    editor.addEventListener('click', handleImageClick);
+    return () => editor.removeEventListener('click', handleImageClick);
+  }, []);
+
+  const resizeImage = (width) => {
+    if (!selectedImage) return;
+    if (width === 'auto') {
+      selectedImage.style.width = '';
+      selectedImage.style.height = '';
+      selectedImage.removeAttribute('width');
+      selectedImage.removeAttribute('height');
+    } else {
+      selectedImage.style.width = `${width}px`;
+      selectedImage.style.height = 'auto';
+      selectedImage.setAttribute('width', width);
+      selectedImage.removeAttribute('height');
+    }
+    if (editorRef.current) onChange(editorRef.current.innerHTML);
+  };
+
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -692,6 +729,56 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
         placeholder={placeholder}
       ></div>
 
+      {/* Image Resize Toolbar */}
+      {selectedImage && (() => {
+        const editorEl = editorRef.current;
+        if (!editorEl) return null;
+        const editorRect = editorEl.getBoundingClientRect();
+        const imgRect = selectedImage.getBoundingClientRect();
+        const topRelative = imgRect.bottom - editorRect.top + editorEl.scrollTop + 6;
+        const leftRelative = Math.max(4, imgRect.left - editorRect.left);
+
+        return (
+          <div
+            style={{ position: 'absolute', top: topRelative, left: leftRelative, zIndex: 200 }}
+            className="flex items-center gap-1.5 bg-black/95 border border-[#00f3ff]/60 rounded-xl px-3 py-2 shadow-[0_0_20px_rgba(0,243,255,0.4)] backdrop-blur-sm"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <span className="text-[9px] text-[#00f3ff] font-bold uppercase tracking-widest mr-1">Velikost</span>
+            {[{label:'S', px:120},{label:'M', px:250},{label:'L', px:450},{label:'XL', px:700}].map(({label, px}) => (
+              <button
+                key={label}
+                onMouseDown={(e) => { e.preventDefault(); resizeImage(px); }}
+                className="px-2 py-1 text-[10px] font-black text-gray-300 hover:text-[#00f3ff] hover:bg-[#00f3ff]/20 rounded border border-white/10 hover:border-[#00f3ff]/50 transition-all"
+              >{label}</button>
+            ))}
+            <div className="w-px h-4 bg-white/20" />
+            <button
+              onMouseDown={(e) => { e.preventDefault(); resizeImage('auto'); }}
+              className="px-2 py-1 text-[10px] font-black text-gray-300 hover:text-white hover:bg-white/10 rounded border border-white/10 transition-all"
+            >Původní</button>
+            <div className="w-px h-4 bg-white/20" />
+            <input
+              type="number"
+              value={customWidth}
+              onChange={e => setCustomWidth(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (customWidth) resizeImage(parseInt(customWidth)); } }}
+              onMouseDown={e => e.stopPropagation()}
+              placeholder="px"
+              className="w-14 bg-black/60 border border-white/20 rounded px-2 py-1 text-[10px] text-white text-center font-mono focus:outline-none focus:border-[#00f3ff]/50"
+            />
+            <button
+              onMouseDown={(e) => { e.preventDefault(); if (customWidth) resizeImage(parseInt(customWidth)); }}
+              className="px-2 py-1 text-[10px] font-black text-[#f800ff] hover:text-white hover:bg-[#f800ff]/20 rounded border border-[#f800ff]/40 transition-all"
+            >OK</button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); setSelectedImage(null); }}
+              className="ml-1 text-gray-500 hover:text-red-400 text-xs transition-colors"
+            >✕</button>
+          </div>
+        );
+      })()}
+
       <style dangerouslySetInnerHTML={{__html: `
         div[data-ctrl="true"] [contenteditable] a {
           cursor: pointer !important;
@@ -716,6 +803,11 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
           margin: 10px 0;
           box-shadow: 0 4px 15px rgba(0,0,0,0.3);
           border: 1px solid rgba(255,255,255,0.1);
+          cursor: pointer;
+        }
+        [contenteditable] img:hover {
+          outline: 2px solid rgba(0,243,255,0.5);
+          outline-offset: 2px;
         }
         [contenteditable] ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
         [contenteditable] ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
