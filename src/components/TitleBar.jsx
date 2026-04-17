@@ -3,47 +3,9 @@ import { getCurrentWindow, PhysicalSize } from '@tauri-apps/api/window';
 import { Minus, Square, X } from 'lucide-react';
 
 export default function TitleBar() {
-  const handleManualCornerResize = (e) => {
+  const handleCornerInteraction = (e) => {
     e.preventDefault();
-    if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId);
-    
-    const startX = e.clientX;
-    const startY = e.clientY;
-    let isResizing = false;
-    let factor = 1;
-    let startPhysicalSize = null;
-
-    const appWindow = getCurrentWindow();
-    
-    // Získání vlastností okna asynchronně bez zablokování zachycení myši
-    Promise.all([appWindow.scaleFactor(), appWindow.innerSize()]).then(([f, size]) => {
-        factor = f;
-        startPhysicalSize = size;
-    });
-
-    const onPointerMove = (moveEvent) => {
-      if (!startPhysicalSize || isResizing) return;
-      isResizing = true;
-      requestAnimationFrame(() => {
-        const deltaX = (moveEvent.clientX - startX) * factor;
-        const deltaY = (moveEvent.clientY - startY) * factor;
-        
-        const newWidth = Math.max(400 * factor, startPhysicalSize.width + deltaX);
-        const newHeight = Math.max(300 * factor, startPhysicalSize.height + deltaY);
-        
-        appWindow.setSize(new PhysicalSize(newWidth, newHeight));
-        isResizing = false;
-      });
-    };
-
-    const onPointerUp = (upEvent) => {
-      if (upEvent.target.releasePointerCapture) upEvent.target.releasePointerCapture(upEvent.pointerId);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-    };
-
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
+    getCurrentWindow().startResizeDragging('SouthEast');
   };
 
   return (
@@ -62,10 +24,10 @@ export default function TitleBar() {
         />
       ))}
 
-      {/* Neviditelný, ale aktivní blok v pravém dolním rohu pro Corner Resize (JS Fallback) */}
+      {/* Nativní tenký rezisze blok pro Corner Resize (sladěný s OS Wayland limity) */}
       <div 
-        className="absolute bottom-0 right-0 w-24 h-24 z-[10000] cursor-se-resize touch-none"
-        onPointerDown={handleManualCornerResize}
+        className="absolute bottom-0 right-0 w-6 h-6 z-[10000] cursor-se-resize touch-none"
+        onPointerDown={handleCornerInteraction}
       />
       
       {/* Vlastní tenký Titlebar (Nativní Rust Tauri handler podpořený backend právy) */}
