@@ -24,8 +24,25 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // Na Linuxu: schovat nativní GTK titlebar přes CSS ale zachovat WM resize hrany.
+            // Výsledek: spolehlivý resize jako každá nativní apka, ale bez viditelného system titlebar.
+            #[cfg(target_os = "linux")]
+            {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    let gtk_window = window.gtk_window()?;
+                    gtk_window.set_decorated(true); // WM hrany zachovány
+                    // Schovat GTK titlebar widget – WM resize hrany zůstanou
+                    if let Some(titlebar) = gtk_window.titlebar() {
+                        titlebar.hide();
+                    }
+                }
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
