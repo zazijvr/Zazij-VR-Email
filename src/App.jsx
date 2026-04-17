@@ -171,6 +171,7 @@ function App() {
       setGoogleToken(accessToken);
     } catch (error) {
       console.error('Kriticky selhalo spojení s backendem:', error);
+      alert('Systémová chyba při startu přihlášení:\n\n' + String(error) + '\n\nZkuste zmáčknout F12 a podívat se do konzole.');
     }
   };
 
