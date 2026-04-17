@@ -1,0 +1,20 @@
+pkgbase = zazijvr-email
+	pkgdesc = Zažij VR - Modern Linux Email & Calendar Client
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://github.com/zazijvr/Zazij-VR-Email
+	arch = x86_64
+	license = custom
+	makedepends = npm
+	makedepends = rust
+	makedepends = cargo
+	makedepends = nodejs
+	depends = webkit2gtk
+	depends = gtk3
+	depends = cairo
+	depends = pango
+	depends = glib2
+	source = git+https://github.com/zazijvr/Zazij-VR-Email.git#branch=main
+	sha256sums = SKIP
+
+pkgname = zazijvr-email
