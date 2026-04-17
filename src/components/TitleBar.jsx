@@ -8,10 +8,10 @@ export default function TitleBar() {
       {/* Neviditelné resize handles – Tauri startResizeDragging */}
       {[
         { dir: 'North',     cls: 'top-0 left-4 right-4 h-[8px] cursor-n-resize' },
-        { dir: 'South',     cls: 'bottom-0 left-4 right-12 h-[8px] cursor-s-resize' },
-        { dir: 'East',      cls: 'right-0 top-4 bottom-12 w-[8px] cursor-e-resize' },
+        { dir: 'South',     cls: 'bottom-0 left-4 right-24 h-[8px] cursor-s-resize' },
+        { dir: 'East',      cls: 'right-0 top-4 bottom-24 w-[8px] cursor-e-resize' },
         { dir: 'West',      cls: 'left-0 top-4 bottom-4 w-[8px] cursor-w-resize' },
-        { dir: 'SouthEast', cls: 'bottom-0 right-0 w-12 h-12 z-[10000] cursor-se-resize' },
+        { dir: 'SouthEast', cls: 'bottom-0 right-0 w-24 h-24 z-[10000] cursor-se-resize' },
       ].map(({ dir, cls }) => (
         <div
           key={dir}
