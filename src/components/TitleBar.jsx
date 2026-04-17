@@ -1,8 +1,37 @@
 import React from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { Minus, Square, X } from 'lucide-react';
 
 export default function TitleBar() {
+  const handleManualCornerResize = async (e) => {
+    e.preventDefault();
+    if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId);
+    
+    const appWindow = getCurrentWindow();
+    const factor = await appWindow.scaleFactor();
+    const startSize = await appWindow.innerSize();
+    
+    const initialWidth = startSize.width / factor;
+    const initialHeight = startSize.height / factor;
+    const startX = e.clientX;
+    const startY = e.clientY;
+
+    const onPointerMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = moveEvent.clientY - startY;
+      appWindow.setSize(new LogicalSize(Math.max(400, initialWidth + deltaX), Math.max(300, initialHeight + deltaY)));
+    };
+
+    const onPointerUp = (upEvent) => {
+      if (upEvent.target.releasePointerCapture) upEvent.target.releasePointerCapture(upEvent.pointerId);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  };
+
   return (
     <>
       {/* Neviditelné resize handles – Tauri startResizeDragging */}
@@ -19,12 +48,12 @@ export default function TitleBar() {
         />
       ))}
 
-      {/* Vizuální a aktivní cyberpunkový "rožek" v pravém dolním rohu pro Corner Resize */}
+      {/* Vizuální a aktivní cyberpunkový "rožek" v pravém dolním rohu pro Corner Resize (JS Fallback) */}
       <div 
-        className="absolute bottom-0 right-0 w-16 h-16 z-[10000] cursor-se-resize flex items-end justify-end group"
-        onMouseDown={() => getCurrentWindow().startResizeDragging('SouthEast')}
+        className="absolute bottom-0 right-0 w-16 h-16 z-[10000] cursor-se-resize flex items-end justify-end group touch-none"
+        onPointerDown={handleManualCornerResize}
       >
-        <div className="w-8 h-8 border-b-[3px] border-r-[3px] border-[#00f3ff]/30 group-hover:border-[#f800ff] group-hover:shadow-[0_0_15px_#f800ff] transition-all duration-300 mr-2 mb-2 rounded-br-md relative">
+        <div className="w-8 h-8 border-b-[3px] border-r-[3px] border-[#00f3ff]/30 group-hover:border-[#f800ff] group-hover:shadow-[0_0_15px_#f800ff] transition-all duration-300 mr-2 mb-2 rounded-br-md relative pointer-events-none">
           <div className="absolute right-2 bottom-5 w-[3px] h-[8px] bg-[#00f3ff]/30 group-hover:bg-[#f800ff]"></div>
           <div className="absolute right-5 bottom-2 w-[8px] h-[3px] bg-[#00f3ff]/30 group-hover:bg-[#f800ff]"></div>
         </div>
