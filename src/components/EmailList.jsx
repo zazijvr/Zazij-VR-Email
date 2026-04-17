@@ -6,8 +6,9 @@ import { getHeader } from '../utils/emailParser';
 import { saveNewContacts } from '../utils/contactManager';
 import { useAlert } from './AlertProvider';
 
-
-
+// Globální set pro sledování všech ID zpráv, které už aplikace někdy viděla v tomto spuštění,
+// abychom absolutně spolehlivě zabránili dvojitým notifikacím (např. při ručním označení "Přečíst")
+const globalNotifiedSet = new Set();
 const hasAttachment = (payload) => {
   if (!payload) return false;
   if (payload.filename && payload.filename.length > 0) return true;
@@ -315,6 +316,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
         const fullMessages = await Promise.all(messagesPromises);
 
         const formattedEmails = fullMessages.map(formatMessage);
+        formattedEmails.forEach(e => globalNotifiedSet.add(e.id));
         setEmails(mergeAndGroupEmails([], formattedEmails));
       } catch (err) {
         console.error("Chyba načítání pošty:", err);
@@ -384,9 +386,9 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
              permissionGranted = permission === 'granted';
           }
           
-          const trulyNewEmails = formattedEmails.filter(newEm => !emailsRef.current.some(oldEm => oldEm.id === newEm.id));
+          const trulyNewEmails = formattedEmails.filter(newEm => !globalNotifiedSet.has(newEm.id));
 
-          if (permissionGranted && trulyNewEmails.length > 0 && emailsRef.current.length > 0) {
+          if (permissionGranted && trulyNewEmails.length > 0) {
              const latest = trulyNewEmails[0];
              sendNotification({ 
                 title: 'ZažijVR E-mail', 
@@ -395,6 +397,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
                 sound: 'message-new-instant'
              });
           }
+          
+          formattedEmails.forEach(e => globalNotifiedSet.add(e.id));
 
           setEmails(prev => mergeAndGroupEmails(prev, formattedEmails, true));
         } catch (err) {
@@ -599,6 +603,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       const fullMessages = await Promise.all(messagesPromises);
 
       const formattedEmails = fullMessages.map(formatMessage);
+      formattedEmails.forEach(e => globalNotifiedSet.add(e.id));
       setEmails(prev => mergeAndGroupEmails(prev, formattedEmails));
     } catch (err) {
       console.error("Chyba načítání starší pošty:", err);
