@@ -11,7 +11,6 @@ export default function TitleBar() {
         { dir: 'South',     cls: 'bottom-0 left-4 right-24 h-[8px] cursor-s-resize' },
         { dir: 'East',      cls: 'right-0 top-4 bottom-24 w-[8px] cursor-e-resize' },
         { dir: 'West',      cls: 'left-0 top-4 bottom-4 w-[8px] cursor-w-resize' },
-        { dir: 'SouthEast', cls: 'bottom-0 right-0 w-24 h-24 z-[10000] cursor-se-resize' },
       ].map(({ dir, cls }) => (
         <div
           key={dir}
@@ -19,6 +18,17 @@ export default function TitleBar() {
           onMouseDown={() => getCurrentWindow().startResizeDragging(dir)}
         />
       ))}
+
+      {/* Vizuální a aktivní cyberpunkový "rožek" v pravém dolním rohu pro Corner Resize */}
+      <div 
+        className="absolute bottom-0 right-0 w-16 h-16 z-[10000] cursor-se-resize flex items-end justify-end group"
+        onMouseDown={() => getCurrentWindow().startResizeDragging('SouthEast')}
+      >
+        <div className="w-8 h-8 border-b-[3px] border-r-[3px] border-[#00f3ff]/30 group-hover:border-[#f800ff] group-hover:shadow-[0_0_15px_#f800ff] transition-all duration-300 mr-2 mb-2 rounded-br-md relative">
+          <div className="absolute right-2 bottom-5 w-[3px] h-[8px] bg-[#00f3ff]/30 group-hover:bg-[#f800ff]"></div>
+          <div className="absolute right-5 bottom-2 w-[8px] h-[3px] bg-[#00f3ff]/30 group-hover:bg-[#f800ff]"></div>
+        </div>
+      </div>
       
       {/* Vlastní tenký Titlebar (Nativní Rust Tauri handler podpořený backend právy) */}
       <div 
