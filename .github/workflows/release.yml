@@ -30,17 +30,14 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Generování Tajného .env souboru
-        working-directory: ./email-client
         run: |
           echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > .env
           echo "VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}" >> .env
 
       - name: Stažení NPM balíčků
-        working-directory: ./email-client
         run: npm install
 
       - name: Sestavení produkční verze uzevřené aplikace
-        working-directory: ./email-client
         run: |
           npx tauri build --bundles deb
           mv src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/deb/zazijvr-email-latest.deb
@@ -52,5 +49,5 @@ jobs:
           tag_name: latest-build
           name: "Poslední sestavení z Cloudu (ZazijVR Email)"
           body: "Tento instalační balíček byl plně automaticky zkompilován robotem. Obsahuje všechna hesla."
-          files: email-client/src-tauri/target/release/bundle/deb/zazijvr-email-latest.deb
+          files: src-tauri/target/release/bundle/deb/zazijvr-email-latest.deb
           prerelease: false
