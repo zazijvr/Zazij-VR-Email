@@ -24,10 +24,10 @@ export default function TitleBar() {
         />
       ))}
 
-      {/* Nativní tenký rezisze blok pro Corner Resize (sladěný s OS Wayland limity) */}
+      {/* Rohový resize blok – vyplňuje přesně díru kde South/East edge divy končí */}
       <div 
-        className="absolute bottom-0 right-0 w-6 h-6 z-[10000] cursor-se-resize touch-none"
-        onPointerDown={handleCornerInteraction}
+        className="absolute bottom-0 right-0 w-24 h-24 z-[10000] cursor-se-resize touch-none"
+        onMouseDown={(e) => { e.preventDefault(); getCurrentWindow().startResizeDragging('SouthEast'); }}
       />
       
       {/* Vlastní tenký Titlebar (Nativní Rust Tauri handler podpořený backend právy) */}
