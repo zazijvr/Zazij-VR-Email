@@ -1,0 +1,18 @@
+[Desktop Entry]
+Categories=Network;Email;Calendar;
+Comment[en_GB]=Neonově laděný e-mailový a kalendářový klient
+Comment=Neonově laděný e-mailový a kalendářový klient
+Exec='/home/sefin/.gemini/antigravity/scratch/Email & Calendar/Zažij VR Email/ZazijVR-Email-v1.0.3-linux_x86_64'
+GenericName[en_GB]=
+GenericName=
+Icon=/home/sefin/.gemini/antigravity/scratch/Email & Calendar/Zažij VR Email/icon.png
+MimeType=
+Name[en_GB]=Zažij VR Email
+Name=Zažij VR Email
+Path=
+StartupNotify=true
+Terminal=false
+TerminalOptions=
+Type=Application
+X-KDE-SubstituteUID=false
+X-KDE-Username=
