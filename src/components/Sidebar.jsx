@@ -164,7 +164,7 @@ export default function Sidebar({
         )}
       </div>
 
-      <nav className="flex-1 px-4 space-y-2">
+      <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-6 pt-2">
         {appMode === 'email' && folders.map((folder, index) => {
           const isActive = activeFolder === folder.label;
           const isDragOver = dragOverIdx === index;
