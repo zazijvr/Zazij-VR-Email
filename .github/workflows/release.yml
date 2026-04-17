@@ -1,0 +1,56 @@
+name: Měsíční kompilace do Cloudu
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repozitáře
+        uses: actions/checkout@v4
+
+      - name: Instalace Node.js (v20)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Příprava Rust Compileru
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Instalace Linuxových knihoven (C/GTK/Webkit)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Generování Tajného .env souboru
+        working-directory: ./email-client
+        run: |
+          echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > .env
+          echo "VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}" >> .env
+
+      - name: Stažení NPM balíčků
+        working-directory: ./email-client
+        run: npm install
+
+      - name: Sestavení produkční verze uzevřené aplikace
+        working-directory: ./email-client
+        run: |
+          npx tauri build --bundles deb
+          mv src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/deb/zazijvr-email-latest.deb
+
+      - name: Publikace zkompilované verze do Release složky
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/')
+        with:
+          tag_name: latest-build
+          name: "Poslední sestavení z Cloudu (ZazijVR Email)"
+          body: "Tento instalační balíček byl plně automaticky zkompilován robotem. Obsahuje všechna hesla."
+          files: email-client/src-tauri/target/release/bundle/deb/zazijvr-email-latest.deb
+          prerelease: false
