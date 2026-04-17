@@ -1,5 +1,5 @@
 import React from 'react';
-import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
+import { getCurrentWindow, PhysicalSize } from '@tauri-apps/api/window';
 import { Minus, Square, X } from 'lucide-react';
 
 export default function TitleBar() {
@@ -10,16 +10,25 @@ export default function TitleBar() {
     const appWindow = getCurrentWindow();
     const factor = await appWindow.scaleFactor();
     const startSize = await appWindow.innerSize();
-    
-    const initialWidth = startSize.width / factor;
-    const initialHeight = startSize.height / factor;
     const startX = e.clientX;
     const startY = e.clientY;
+    
+    let isResizing = false;
 
     const onPointerMove = (moveEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const deltaY = moveEvent.clientY - startY;
-      appWindow.setSize(new LogicalSize(Math.max(400, initialWidth + deltaX), Math.max(300, initialHeight + deltaY)));
+      if (isResizing) return;
+      isResizing = true;
+      requestAnimationFrame(() => {
+        // Tauri u fyzických pixelů násobí logickou CSS pozici měřítkem displeje (scaleFactor)
+        const deltaX = (moveEvent.clientX - startX) * factor;
+        const deltaY = (moveEvent.clientY - startY) * factor;
+        
+        const newWidth = Math.max(400 * factor, startSize.width + deltaX);
+        const newHeight = Math.max(300 * factor, startSize.height + deltaY);
+        
+        appWindow.setSize(new PhysicalSize(newWidth, newHeight));
+        isResizing = false;
+      });
     };
 
     const onPointerUp = (upEvent) => {
