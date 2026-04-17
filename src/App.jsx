@@ -4,7 +4,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onAction, registerActionTypes } from '@tauri-apps/plugin-notification';
 import { message } from '@tauri-apps/plugin-dialog';
 
-import TitleBar from './components/TitleBar';
+
 import Sidebar from './components/Sidebar';
 import SettingsModal from './components/SettingsModal';
 import EmailApp from './modules/Email/EmailApp';
@@ -258,7 +258,7 @@ function App() {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0f172a] relative border border-[#00f3ff]/20 shadow-2xl select-none">
 
-      <TitleBar />
+
       
       <div className="flex flex-1 overflow-hidden relative">
       
