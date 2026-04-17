@@ -3,28 +3,33 @@ import { getCurrentWindow, PhysicalSize } from '@tauri-apps/api/window';
 import { Minus, Square, X } from 'lucide-react';
 
 export default function TitleBar() {
-  const handleManualCornerResize = async (e) => {
+  const handleManualCornerResize = (e) => {
     e.preventDefault();
     if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId);
     
-    const appWindow = getCurrentWindow();
-    const factor = await appWindow.scaleFactor();
-    const startSize = await appWindow.innerSize();
     const startX = e.clientX;
     const startY = e.clientY;
-    
     let isResizing = false;
+    let factor = 1;
+    let startPhysicalSize = null;
+
+    const appWindow = getCurrentWindow();
+    
+    // Získání vlastností okna asynchronně bez zablokování zachycení myši
+    Promise.all([appWindow.scaleFactor(), appWindow.innerSize()]).then(([f, size]) => {
+        factor = f;
+        startPhysicalSize = size;
+    });
 
     const onPointerMove = (moveEvent) => {
-      if (isResizing) return;
+      if (!startPhysicalSize || isResizing) return;
       isResizing = true;
       requestAnimationFrame(() => {
-        // Tauri u fyzických pixelů násobí logickou CSS pozici měřítkem displeje (scaleFactor)
         const deltaX = (moveEvent.clientX - startX) * factor;
         const deltaY = (moveEvent.clientY - startY) * factor;
         
-        const newWidth = Math.max(400 * factor, startSize.width + deltaX);
-        const newHeight = Math.max(300 * factor, startSize.height + deltaY);
+        const newWidth = Math.max(400 * factor, startPhysicalSize.width + deltaX);
+        const newHeight = Math.max(300 * factor, startPhysicalSize.height + deltaY);
         
         appWindow.setSize(new PhysicalSize(newWidth, newHeight));
         isResizing = false;
@@ -59,7 +64,7 @@ export default function TitleBar() {
 
       {/* Vizuální a aktivní cyberpunkový "rožek" v pravém dolním rohu pro Corner Resize (JS Fallback) */}
       <div 
-        className="absolute bottom-0 right-0 w-16 h-16 z-[10000] cursor-se-resize flex items-end justify-end group touch-none"
+        className="absolute bottom-0 right-0 w-24 h-24 z-[10000] cursor-se-resize flex items-end justify-end group touch-none"
         onPointerDown={handleManualCornerResize}
       >
         <div className="w-8 h-8 border-b-[3px] border-r-[3px] border-[#00f3ff]/30 group-hover:border-[#f800ff] group-hover:shadow-[0_0_15px_#f800ff] transition-all duration-300 mr-2 mb-2 rounded-br-md relative pointer-events-none">
