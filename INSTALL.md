@@ -81,3 +81,22 @@ cd ~/vr-email/email-client
 ./install-cachyos.sh
 ```
 Skript už si díky vnitřním mechanismům sám stáhne novinky z cloudu pomocí příkazu `git pull` a zkompiluje a nahradí starou verzi novou. Nikdy tak neklikáte a neřešíte nic navíc!
+
+---
+
+## Záložní metoda: Rychlá "Portable" instalace (bez kompilace)
+Pokud na nějakém počítači nechcete ztrácet čas stahováním kompilátorů, instalací Node.js, Rustu a podobně, můžete využít už dopředu "zkompilovanou" verzi. V Gitu pro tyto účely udržujeme připravenou speciální složku, ve které se nachází rovnou holá aplikace.
+
+**Tento způsob je ideální, pokud si chcete aplikaci jen "zkopírovat a spustit":**
+
+1. Přes terminál si stáhněte projekt do počítače:
+```bash
+cd ~
+git clone https://github.com/zazijvr/Zazij-VR-Email.git vr-email
+```
+
+2. Najděte si novou složku `vr-email` ve vašem prohlížeči souborů a uvnitř najdete podsložku s názvem **`Zažij VR Email`**. Tuto složku s diakritikou už můžete libovolně vzít a překopírovat si ji z repozitáře kamkoliv do počítače natrvalo (klidně přímo do vašeho Domovského adresáře).
+
+3. Uvnitř této složky se chytře nachází tři věci: samotná už zkompilovaná aplikace (`ZazijVR-Email-v...`), ikonka a tzv. `.desktop` soubor pro vytvoření zástupce v menu.
+
+4. Dvakrát klikněte na soubor **`zazijvr-email.desktop`** - to vám aplikaci jednak rovnou spustí a zároveň pro ni ihned pošle zástupce klasicky do vyhledávače aplikací vašeho grafického prostředí. (Popřípadě, pokud by tento trik s dvojklikem nezafungoval, můžete ten malý soubor s koncovkou ".desktop" vzít a manuálně jej přesunout do systémové cesty `~/.local/share/applications/`).
