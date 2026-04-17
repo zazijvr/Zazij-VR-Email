@@ -1,0 +1,86 @@
+<svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="pureBlueGlow" x="-500%" y="-500%" width="1100%" height="1100%">
+        <feGaussianBlur stdDeviation="5" result="blur1" />
+        <feGaussianBlur stdDeviation="12" result="blur2" />
+        <feGaussianBlur stdDeviation="25" result="blur3" />
+        <feMerge>
+            <feMergeNode in="blur3" />
+            <feMergeNode in="blur2" />
+            <feMergeNode in="blur1" />
+            <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    <g transform="translate(200, 0)">
+    <!-- TRACE 1: Masivní levá asymetrická žíla (Hlavní datová cesta) -->
+    <!-- Opraveno: Odstraněna horizontální sběrnice kroutící se za logem v levém panelu -->
+    <path d="M 150 1080 L 400 800 L 400 400 L 450 350 L 450 300" stroke="#00f3ff" stroke-width="6" stroke-opacity="1" filter="url(#pureBlueGlow)" />
+    <path d="M 150 1080 L 400 800 L 400 400 L 450 350 L 450 300" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.9" filter="url(#pureBlueGlow)" />
+    
+    <circle cx="400" cy="800" r="12" fill="#0f172a" stroke="#00f3ff" stroke-width="3" filter="url(#pureBlueGlow)" />
+    <circle cx="450" cy="350" r="7" fill="#00f3ff" filter="url(#pureBlueGlow)" />
+    <circle cx="450" cy="300" r="14" fill="#0f172a" stroke="#00f3ff" stroke-width="4" filter="url(#pureBlueGlow)" />
+    <circle cx="450" cy="300" r="3" fill="#ffffff" />
+
+    <!-- TRACE 2: Zkroucená pravá žíla křižující střed (uříznuta a přesměrována kolmo kvůli preview panelu) -->
+    <path d="M 650 1080 L 520 700 L 520 450 L 600 300" stroke="#00f3ff" stroke-width="5" stroke-opacity="1" filter="url(#pureBlueGlow)" />
+    <path d="M 650 1080 L 520 700 L 520 450 L 600 300" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.9" filter="url(#pureBlueGlow)" />
+    
+    <circle cx="520" cy="700" r="9" fill="#0f172a" stroke="#00f3ff" stroke-width="3" filter="url(#pureBlueGlow)" />
+    <circle cx="520" cy="450" r="6" fill="#00f3ff" filter="url(#pureBlueGlow)" />
+    <circle cx="600" cy="300" r="8" fill="#f800ff" stroke="#00f3ff" stroke-width="2" filter="url(#pureBlueGlow)" />
+
+    <!-- TRACE 3: Extrémně rozevláté rozvětvení doleva -->
+    <path d="M 400 500 L 200 500 L 100 400" stroke="#00f3ff" stroke-width="3" stroke-opacity="0.8" filter="url(#pureBlueGlow)" />
+    <circle cx="400" cy="500" r="5" fill="#f800ff" filter="url(#pureBlueGlow)" />
+    <circle cx="100" cy="400" r="12" fill="#0f172a" stroke="#00f3ff" stroke-width="2" filter="url(#pureBlueGlow)" />
+    <circle cx="100" cy="400" r="3" fill="#00f3ff" />
+
+    <!-- TRACE 4: Široká sekundární sběrnice doprava -->
+    <path d="M 600 300 L 900 300 L 1000 300 L 1400 300" stroke="#00f3ff" stroke-width="4" stroke-opacity="0.75" filter="url(#pureBlueGlow)" />
+    <path d="M 600 300 L 900 300 L 1000 300 L 1400 300" stroke="#ffffff" stroke-width="1" stroke-opacity="0.5" filter="url(#pureBlueGlow)" />
+    
+    <circle cx="900" cy="300" r="4" fill="#00f3ff" filter="url(#pureBlueGlow)" />
+    <circle cx="1000" cy="300" r="7" fill="#0f172a" stroke="#00f3ff" stroke-width="2" filter="url(#pureBlueGlow)" />
+
+    <!-- TRACE 6: Krátký horizontální bypass tvořící síť u základu -->
+    <path d="M 400 650 L 700 650 L 800 550" stroke="#00f3ff" stroke-width="2" stroke-opacity="0.5" filter="url(#pureBlueGlow)" />
+    <circle cx="400" cy="650" r="3" fill="#00f3ff" filter="url(#pureBlueGlow)" />
+    <circle cx="700" cy="650" r="4" fill="#0f172a" stroke="#00f3ff" stroke-width="1" filter="url(#pureBlueGlow)" />
+    <circle cx="800" cy="550" r="5" fill="#f800ff" filter="url(#pureBlueGlow)" />
+
+    <!-- Nové TRACE k zahuštění pozadí -->
+    
+    <!-- TRACE 7: Levá horní síť -->
+    <path d="M 50 100 L 150 200 L 150 400 L 50 500" stroke="#00f3ff" stroke-width="3" stroke-opacity="0.5" filter="url(#pureBlueGlow)" />
+    <circle cx="150" cy="200" r="4" fill="#0f172a" stroke="#00f3ff" stroke-width="1" filter="url(#pureBlueGlow)"/>
+    <circle cx="150" cy="400" r="3" fill="#f800ff" filter="url(#pureBlueGlow)"/>
+    
+    <!-- TRACE 8: Horní sběrnice napříč panelem -->
+    <path d="M 150 200 L 300 200 L 350 150 L 800 150 L 900 250 L 1100 250" stroke="#00f3ff" stroke-width="2.5" stroke-opacity="0.6" filter="url(#pureBlueGlow)" />
+    <circle cx="800" cy="150" r="6" fill="#0f172a" stroke="#00f3ff" stroke-width="2" filter="url(#pureBlueGlow)" />
+    <circle cx="900" cy="250" r="5" fill="#00f3ff" filter="url(#pureBlueGlow)" />
+
+    <!-- TRACE 9: Spodní masivní podpůrná síť -->
+    <path d="M 200 900 L 300 1000 L 600 1000 L 700 900 L 1200 900" stroke="#00f3ff" stroke-width="2" stroke-opacity="0.5" filter="url(#pureBlueGlow)" />
+    <circle cx="300" cy="1000" r="4" fill="#00f3ff" filter="url(#pureBlueGlow)" />
+    <circle cx="600" cy="1000" r="4" fill="#f800ff" filter="url(#pureBlueGlow)" />
+    <circle cx="700" cy="900" r="7" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5" filter="url(#pureBlueGlow)" />
+
+    <!-- TRACE 10: Vertikální rozkročmo -->
+    <path d="M 1100 250 L 1100 500 L 1200 600 L 1200 900" stroke="#00f3ff" stroke-width="2" stroke-opacity="0.7" filter="url(#pureBlueGlow)" />
+    <circle cx="1100" cy="500" r="5" fill="#00f3ff" filter="url(#pureBlueGlow)" />
+    <circle cx="1200" cy="600" r="9" fill="#0f172a" stroke="#f800ff" stroke-width="2" filter="url(#pureBlueGlow)" />
+
+    <!-- TRACE 11: Záměrně tenké ambientní fialové čáry napříč pozadím -->
+    <path d="M 0 600 L 200 800 L 800 800 L 1000 600 L 1500 600" stroke="#f800ff" stroke-width="1.5" stroke-opacity="0.4" filter="url(#pureBlueGlow)" />
+    <circle cx="200" cy="800" r="3" fill="#f800ff" opacity="0.6" filter="url(#pureBlueGlow)" />
+    <circle cx="800" cy="800" r="3" fill="#f800ff" opacity="0.6" filter="url(#pureBlueGlow)" />
+    <circle cx="1000" cy="600" r="2" fill="#f800ff" opacity="0.6" filter="url(#pureBlueGlow)" />
+
+    <!-- TRACE 12: Jemnější dodatečné propletení vlevo u panelu -->
+    <path d="M 50 700 L 150 700 L 200 750" stroke="#00f3ff" stroke-width="2" stroke-opacity="0.6" filter="url(#pureBlueGlow)" />
+    <circle cx="150" cy="700" r="4" fill="#f800ff" filter="url(#pureBlueGlow)" />
+    </g>
+</svg>
