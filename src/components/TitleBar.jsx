@@ -11,10 +11,10 @@ export default function TitleBar() {
         { dir: 'South',     cls: 'bottom-0 left-4 right-4 h-[5px] cursor-s-resize' },
         { dir: 'East',      cls: 'right-0 top-4 bottom-4 w-[5px] cursor-e-resize' },
         { dir: 'West',      cls: 'left-0 top-4 bottom-4 w-[5px] cursor-w-resize' },
-        { dir: 'NorthEast', cls: 'top-0 right-0 w-4 h-4 cursor-ne-resize' },
-        { dir: 'NorthWest', cls: 'top-0 left-0 w-4 h-4 cursor-nw-resize' },
-        { dir: 'SouthEast', cls: 'bottom-0 right-0 w-4 h-4 cursor-se-resize' },
-        { dir: 'SouthWest', cls: 'bottom-0 left-0 w-4 h-4 cursor-sw-resize' },
+        { dir: 'NorthEast', cls: 'top-0 right-0 w-8 h-8 cursor-ne-resize' },
+        { dir: 'NorthWest', cls: 'top-0 left-0 w-8 h-8 cursor-nw-resize' },
+        { dir: 'SouthEast', cls: 'bottom-0 right-0 w-8 h-8 cursor-se-resize' },
+        { dir: 'SouthWest', cls: 'bottom-0 left-0 w-8 h-8 cursor-sw-resize' },
       ].map(({ dir, cls }) => (
         <div
           key={dir}
