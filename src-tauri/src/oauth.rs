@@ -19,7 +19,19 @@ pub async fn start_google_login(
         "https://accounts.google.com/o/oauth2/v2/auth?client_id={}&redirect_uri=http://localhost:3456/callback&response_type=code&scope=https://mail.google.com/%20https://www.googleapis.com/auth/calendar&access_type=offline&prompt=consent",
         client_id
     );
-    app.shell().open(&url, None).map_err(|e| e.to_string())?;
+
+    // Bypassing Tauri shell_plugin on Linux to prevent LD_LIBRARY_PATH pollution crashing the browser
+    #[cfg(target_os = "linux")]
+    {
+        let _ = std::process::Command::new("xdg-open")
+            .env_remove("LD_LIBRARY_PATH")
+            .arg(&url)
+            .spawn();
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = app.shell().open(&url, None);
+    }
 
     // 3. Počkáme až nás Google přesměruje zpět
     let (mut stream, _) = listener.accept().await.map_err(|e| e.to_string())?;
