@@ -62,16 +62,11 @@ export default function TitleBar() {
         />
       ))}
 
-      {/* Vizuální a aktivní cyberpunkový "rožek" v pravém dolním rohu pro Corner Resize (JS Fallback) */}
+      {/* Neviditelný, ale aktivní blok v pravém dolním rohu pro Corner Resize (JS Fallback) */}
       <div 
-        className="absolute bottom-0 right-0 w-24 h-24 z-[10000] cursor-se-resize flex items-end justify-end group touch-none"
+        className="absolute bottom-0 right-0 w-24 h-24 z-[10000] cursor-se-resize touch-none"
         onPointerDown={handleManualCornerResize}
-      >
-        <div className="w-8 h-8 border-b-[3px] border-r-[3px] border-[#00f3ff]/30 group-hover:border-[#f800ff] group-hover:shadow-[0_0_15px_#f800ff] transition-all duration-300 mr-2 mb-2 rounded-br-md relative pointer-events-none">
-          <div className="absolute right-2 bottom-5 w-[3px] h-[8px] bg-[#00f3ff]/30 group-hover:bg-[#f800ff]"></div>
-          <div className="absolute right-5 bottom-2 w-[8px] h-[3px] bg-[#00f3ff]/30 group-hover:bg-[#f800ff]"></div>
-        </div>
-      </div>
+      />
       
       {/* Vlastní tenký Titlebar (Nativní Rust Tauri handler podpořený backend právy) */}
       <div 
