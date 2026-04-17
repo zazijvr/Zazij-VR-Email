@@ -20,18 +20,9 @@ pub async fn start_google_login(
         client_id
     );
 
-    // Bypassing Tauri shell_plugin on Linux to prevent LD_LIBRARY_PATH pollution crashing the browser
-    #[cfg(target_os = "linux")]
-    {
-        let _ = std::process::Command::new("xdg-open")
-            .env_remove("LD_LIBRARY_PATH")
-            .arg(&url)
-            .spawn();
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        let _ = app.shell().open(&url, None);
-    }
+    // Bypassing Tauri shell_plugin and using the ultra-robust 'open' crate 
+    // which flawlessly handles all Linux Wayland/AppImage environment pollution 
+    open::that(&url).map_err(|e| e.to_string())?;
 
     // 3. Počkáme až nás Google přesměruje zpět
     let (mut stream, _) = listener.accept().await.map_err(|e| e.to_string())?;
