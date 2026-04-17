@@ -10,9 +10,26 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   const [to, setTo] = useState(config?.initialTo || '');
   const [cc, setCc] = useState(config?.initialCc || '');
   const [subject, setSubject] = useState(config?.initialSubject || config?.templateData?.subject || '');
-  const [body, setBody] = useState(config?.initialBody || config?.templateData?.body || '');
+  const getInitialBody = () => {
+    let text = config?.initialBody || config?.templateData?.body || '';
+    if (!config?.draftId && (config?.type !== 'reply' && config?.type !== 'replyAll' && config?.type !== 'forward')) {
+        try {
+            const signatures = JSON.parse(localStorage.getItem('zazijvr_signatures')) || [];
+            const defSig = signatures.find(s => s.isDefault);
+            if (defSig && !text.includes(defSig.body)) {
+                text = text + (text ? '<br><br>' : '') + defSig.body;
+            }
+        } catch(e) {}
+    }
+    if (config?.htmlBody && !text.includes('class="gmail_quote"')) {
+        text = text + `<br><br><div class="gmail_quote" dir="auto"><blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">${config.htmlBody}</blockquote></div>`;
+    }
+    return text;
+  };
+
+  const [body, setBody] = useState(getInitialBody);
   // bodyRef drží aktuální HTML obsah bez triggerování re-renderu při psaní
-  const bodyRef = useRef(config?.initialBody || config?.templateData?.body || '');
+  const bodyRef = useRef(getInitialBody());
   const [templateTitle, setTemplateTitle] = useState(config?.templateData?.title || '');
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -37,16 +54,6 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       const signatures = JSON.parse(localStorage.getItem('zazijvr_signatures')) || [];
       setSavedTemplates(templates);
       setSavedSignatures(signatures);
-
-      if (!config?.draftId && (config?.type !== 'reply' && config?.type !== 'replyAll' && config?.type !== 'forward')) {
-         const defSig = signatures.find(s => s.isDefault);
-         if (defSig) {
-            setBody(prev => {
-                if (prev.includes(defSig.body)) return prev;
-                return prev + (prev ? '<br><br>' : '') + defSig.body;
-            });
-         }
-      }
     } catch(e) {}
   }, []);
 
@@ -122,11 +129,8 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     const boundRel = '====related_boundary_rel_789====';
     const boundAlt = '====alt_boundary_abc_456====';
 
-    const quotedBody = config?.htmlBody ? 
-      `<br><br><div class="gmail_quote" dir="auto"><blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">${config.htmlBody}</blockquote></div>` : '';
-      
     // Zpracování Base64 obrázků vložených napřímo do HTML (např. skrze RichTextEditor)
-    let processedHtmlBody = `<div dir="ltr">${bodyRef.current}</div>${quotedBody}`;
+    let processedHtmlBody = `<div dir="ltr">${bodyRef.current}</div>`;
     const inlineImages = [];
     let imgCounter = 0;
 
@@ -339,8 +343,8 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
           </button>
         </div>
 
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden border-b border-[#00f3ff]/10">
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 flex flex-col gap-4 border-r border-[#00f3ff]/10 bg-[#02040a]">
+        <div className="flex-1 flex flex-col overflow-hidden border-b border-[#00f3ff]/10">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 flex flex-col gap-4 bg-[#02040a]">
             {errorMsg && (
               <div className="p-4 bg-[#ef4444]/10 border border-[#ef4444]/40 rounded-xl text-[#ef4444] flex items-center gap-3 font-semibold">
                 <AlertTriangle className="shrink-0" />
@@ -418,47 +422,6 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             )}
             
           </div>
-          
-          {React.useMemo(() => {
-            if (!config?.htmlBody) return null;
-            return (
-               <div className="flex-1 lg:flex-1 flex flex-col bg-[#00f3ff]/[0.02] overflow-hidden relative">
-                 <div className="p-3 border-b border-white/5 bg-black/20 text-[#00f3ff] opacity-60 text-[10px] font-bold uppercase tracking-widest text-center z-10 flex items-center justify-center gap-2">
-                   <span>Původní kontext zprávy</span>
-                 </div>
-                 <div className="flex-1 overflow-hidden p-6 pl-4">
-                   <div className="w-full h-full bg-[#0f172a]/40  rounded-2xl border border-white/10 overflow-hidden ">
-                    <iframe 
-                     title="Previous Email Content"
-                     className="w-full h-full border-none bg-transparent"
-                     sandbox="allow-popups allow-same-origin allow-scripts"
-                     srcDoc={`
-                        <style>
-                          body, html, table, tr, td, div, span, font, center, tbody, thead { 
-                            background-color: transparent !important; 
-                            background: transparent !important;
-                          }
-                          *:not(a):not(a *) { color: #e2e8f0 !important; }
-                          body {
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-                            line-height: 1.6; padding: 1.5rem; margin: 0;
-                          }
-                          a, a * { color: #00f3ff !important; text-decoration: none !important; }
-                          a:hover, a:hover * { text-decoration: underline !important; color: #00f3ff !important; text-shadow: 0 0 10px #00f3ff !important; }
-                          img { max-width: 100%; height: auto; border-radius: 8px; }
-                          ::-webkit-scrollbar { width: 8px; height: 8px; }
-                          ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-                          ::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.2); border-radius: 4px; }
-                          ::-webkit-scrollbar-thumb:hover { background: rgba(0,243,255,0.5); }
-                        </style>
-                        ${config.htmlBody}
-                     `}
-                    />
-                   </div>
-                 </div>
-               </div>
-            );
-          }, [config?.htmlBody])}
         </div>
 
         <div className="p-4 sm:p-6 bg-black/30 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 border-t border-[#00f3ff]/10">
