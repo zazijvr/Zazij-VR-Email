@@ -1,16 +1,31 @@
-# React + Vite
+# ZažijVR - Email & Calendar (Kiosk)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tento repozitář obsahuje zdrojové kódy pro e-mailový a kalendářový klient pro potřeby Zažij VR. Aplikace běží na nativní vrstvě **Tauri (v2)** nad React/Vite frontendem s neonovým cyberpunkovým "Glassmorphism" vizuálem.
 
-Currently, two official plugins are available:
+## Jak instalovat a aktualizovat na CachyOS (Arch Linux)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Všechny kroky jsou plně zautomatizovány ve skriptu. Kdykoliv provedete změny na gitu v produkční `main` větvi, na požadovaném linuxovém stroji stačí udělat toto z terminálu:
 
-## React Compiler
+```bash
+# 1. Přejděte do složky repozitáře (pokud už tam nejste)
+cd ".../Email & Calendar/email-client"
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+# 2. Spusťte instalační skript
+./install-cachyos.sh
+```
 
-## Expanding the ESLint configuration
+**Co skript udělá?**
+1. Automaticky detekuje repozitář a stáhne nejnovější verze pomocí `git pull origin main`.
+2. S aktualizovaným kódem zkompiluje přes Tauri a Node.js čerstvý `.deb` balíček.
+3. Pomocí nástroje `debtap` jej tiše převede do podoby `.pkg.tar.zst`, kterému rozumí správce balíčků Arch Linuxu (`pacman`).
+4. Bez ptaní natvrdo zaktualizuje rovnou vaši starší instalaci novou verzí i v systému s obejitím falešných chyb na závislostech (`sudo pacman -Udd`).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Úpravy a Dev větev
+Pro úpravy a nové integrace (jako Microsoft Outlook / Graph API) se primárně používejte větev `dev`:
+`git checkout dev`
+Před samotnou instalací na "produkční CachyOS stroj" pak stačí do `main` zavolat merge nebo Pull Request z `dev`. 
+
+## Technický stack
+- **Frontend:** React + Vite, Tailwind CSS + Custom CSS mikro animace
+- **Bezpečnost:** DOMPurify pro sanitisaci příchozích HTML cizích těles
+- **Rozhraní:** Nativní Wayland / KWin decorace přes nastavení `decorations: true` v `tauri.conf.json`
