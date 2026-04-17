@@ -3,6 +3,7 @@ import { X, MapPin, Loader2, Bell } from 'lucide-react';
 import DatePicker from '../../../components/DatePicker';
 import TimePicker from '../../../components/TimePicker';
 import RichTextEditor from '../../../components/RichTextEditor';
+import AutofillInput from '../../../components/AutofillInput';
 
 export default function EventModal({
   isCreateModalOpen,
@@ -11,7 +12,8 @@ export default function EventModal({
   newEventForm,
   setNewEventForm,
   handleCreateEvent,
-  isCreatingEvent
+  isCreatingEvent,
+  userEmail
 }) {
   if (!isCreateModalOpen) return null;
   return (
@@ -326,6 +328,17 @@ export default function EventModal({
                       </div>
                     </div>
                  )}
+               </div>
+
+               <div className="flex flex-col relative z-20 mt-2 mb-2">
+                 <AutofillInput 
+                   label="Hosté (e-maily oddělené čárkou)"
+                   value={newEventForm.attendees || ''}
+                   onChange={e => setNewEventForm(prev => ({...prev, attendees: e.target.value}))}
+                   className="w-full bg-black/50 border border-[#00f3ff]/40 rounded-xl px-4 py-2 text-sm text-[#00f3ff] font-mono focus:outline-none focus:border-[#00f3ff] shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)_inset] transition-all" 
+                   placeholder=""
+                   userEmail={userEmail}
+                 />
                </div>
 
                <div className="flex flex-col mt-2 flex-1 min-h-[300px] relative z-10">

@@ -18,6 +18,7 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
   const [downloadingAttachId, setDownloadingAttachId] = useState(null);
   const [previewBlob, setPreviewBlob] = useState(null);
   const [isPreparingForward, setIsPreparingForward] = useState(false);
+  const [icsDetails, setIcsDetails] = useState({});
   const { showAlert } = useAlert();
 
   const [copiedId, setCopiedId] = useState(null);
@@ -64,6 +65,82 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [previewBlob]);
+
+  useEffect(() => {
+    if (!emailData?.attachments || !emailData?.messageId || !googleToken) return;
+
+    const fetchIcsData = async () => {
+      const newDetails = {};
+      
+      for (const att of emailData.attachments) {
+        const mType = att.mimeType?.toLowerCase() || '';
+        const fName = att.filename?.toLowerCase() || '';
+        if (fName.endsWith('.ics') || mType === 'text/calendar') {
+          if (!icsDetails[att.attachmentId]) {
+            try {
+              const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/attachments/${att.attachmentId}`, {
+                headers: { Authorization: `Bearer ${googleToken}` }
+              });
+              const data = await res.json();
+              if (data.data) {
+                const base64 = data.data.replace(/-/g, '+').replace(/_/g, '/');
+                const binaryString = window.atob(base64);
+                let utf8String = binaryString;
+                try { utf8String = decodeURIComponent(escape(binaryString)); } catch(e) { }
+                const jcalData = ICAL.parse(utf8String);
+                const comp = new ICAL.Component(jcalData);
+                const eventComp = comp.getFirstSubcomponent('vevent');
+                if (eventComp) {
+                  const ev = new ICAL.Event(eventComp);
+                  let dateStr = '';
+                  if (ev.startDate) {
+                    const formatTime = (icalTime) => icalTime.toJSDate().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+                    const formatDate = (icalTime) => icalTime.toJSDate().toLocaleDateString('cs-CZ');
+
+                    if (ev.startDate.isDate) {
+                        // Celodenní událost
+                        dateStr = formatDate(ev.startDate);
+                        if (ev.endDate && ev.endDate.isDate) {
+                            const startMs = ev.startDate.toJSDate().getTime();
+                            const endMs = ev.endDate.toJSDate().getTime();
+                            // ICS endDate pro celodenní je často +1 den
+                            if (endMs - startMs > 86400000) {
+                                // Ubereme 1 den z konce pro správné vizuální zobrazení
+                                const realEnd = new Date(endMs - 86400000);
+                                dateStr += ` - ${realEnd.toLocaleDateString('cs-CZ')}`;
+                            }
+                        }
+                    } else {
+                        // Časová událost
+                        dateStr = `${formatDate(ev.startDate)} ${formatTime(ev.startDate)}`;
+                        if (ev.endDate && !ev.endDate.isDate) {
+                            if (formatDate(ev.startDate) === formatDate(ev.endDate)) {
+                                // Stejný den
+                                dateStr += ` - ${formatTime(ev.endDate)}`;
+                            } else {
+                                // Rozdílný den
+                                dateStr += ` - ${formatDate(ev.endDate)} ${formatTime(ev.endDate)}`;
+                            }
+                        }
+                    }
+                  }
+                  newDetails[att.attachmentId] = dateStr || '?';
+                }
+              }
+            } catch (e) {
+               console.error("Auto-fetch ICS failed:", e);
+            }
+          }
+        }
+      }
+      
+      if (Object.keys(newDetails).length > 0) {
+        setIcsDetails(prev => ({...prev, ...newDetails}));
+      }
+    };
+    fetchIcsData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emailData, googleToken]);
 
   const handleActionAttachment = async (attach, action) => {
     if (downloadingAttachId) return;
@@ -660,10 +737,14 @@ ${ccLine}
                       ) : (
                         <Paperclip size={16} className="text-[#00f3ff]" />
                       )}
-                      <span className="truncate max-w-[220px] text-[#00f3ff] text-sm font-semibold tracking-wide drop-shadow-[0_0_5px_rgba(0,243,255,0.1)]">{att.filename}</span>
-                      <span className="text-[11px] text-[#00f3ff]/50 bg-black/30 px-2 py-0.5 rounded-md border border-[#00f3ff]/10 font-bold uppercase">
-                        {Math.round(att.size / 1024)} KB
-                      </span>
+                      <div className="flex flex-col text-left pl-1">
+                        <span className="truncate max-w-[220px] text-[#00f3ff] text-sm font-semibold tracking-wide drop-shadow-[0_0_5px_rgba(0,243,255,0.1)]">{att.filename}</span>
+                        {isIcs && icsDetails[att.attachmentId] && (
+                          <span className="text-[10px] text-[#f800ff] font-bold tracking-[0.15em] uppercase animate-pulse">📅 {icsDetails[att.attachmentId]}</span>
+                        )}
+                        {!isIcs && <span className="text-[10px] text-[#00f3ff]/50 font-bold uppercase tracking-wider">{Math.round(att.size / 1024)} KB</span>}
+                      </div>
+
                     </button>
 
                     <div className="flex items-center px-1 border-l border-[#00f3ff]/20">

@@ -348,6 +348,7 @@ function App() {
              activeCalendarView={activeCalendarView} 
              googleToken={googleToken} 
              triggerCreateEvent={triggerCreateEvent} 
+             userEmail={userInfo?.email}
           />
         )}
       </div>

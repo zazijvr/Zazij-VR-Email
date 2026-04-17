@@ -9,7 +9,8 @@ import TimePicker from '../../components/TimePicker';
 export default function CalendarApp({
   activeCalendarView,
   googleToken,
-  triggerCreateEvent
+  triggerCreateEvent,
+  userEmail
 }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
@@ -47,7 +48,8 @@ export default function CalendarApp({
     recurrenceRule: 'NONE', // NONE, DAILY, WEEKLY, MONTHLY, YEARLY, CUSTOM
     recurrenceInterval: 1,
     customFreq: 'WEEKLY',
-    recurrenceUntil: '' // YYYY-MM-DD
+    recurrenceUntil: '', // YYYY-MM-DD
+    attendees: ''
   });
 
   const monthNames = ["LEDEN", "ÚNOR", "BŘEZEN", "DUBEN", "KVĚTEN", "ČERVEN", "ČERVENEC", "SRPEN", "ZÁŘÍ", "ŘÍJEN", "LISTOPAD", "PROSINEC"];
@@ -77,7 +79,8 @@ export default function CalendarApp({
       recurrenceRule: 'NONE',
       recurrenceInterval: 1,
       customFreq: 'WEEKLY',
-      recurrenceUntil: ''
+      recurrenceUntil: '',
+      attendees: ''
     });
     setSelectedCalDay(null);
     setIsCreateModalOpen(true);
@@ -219,7 +222,8 @@ export default function CalendarApp({
                 colorId: item.colorId,
                 description: item.description || '',
                 isAllDay: isAllDay,
-                alertMinutes: alertMins
+                alertMinutes: alertMins,
+                attendees: item.attendees || []
              };
           });
 
@@ -264,7 +268,8 @@ export default function CalendarApp({
          recurrenceRule: 'NONE',
          recurrenceInterval: 1,
          customFreq: 'WEEKLY',
-         recurrenceUntil: ''
+         recurrenceUntil: '',
+         attendees: ''
       });
       setIsCreateModalOpen(true);
       lastTriggerRef.current = triggerCreateEvent;
@@ -402,6 +407,10 @@ export default function CalendarApp({
        description: newEventForm.description
     };
     
+    if (newEventForm.attendees && newEventForm.attendees.trim() !== '') {
+       eventBody.attendees = newEventForm.attendees.split(',').map(email => ({ email: email.trim() })).filter(obj => obj.email !== '');
+    }
+
     if (newEventForm.alertMinutes === 'default') {
        eventBody.reminders = { useDefault: true };
     } else if (newEventForm.alertMinutes === null) {
@@ -454,8 +463,8 @@ export default function CalendarApp({
 
     try {
       const url = editEventId 
-        ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${editEventId}`
-        : "https://www.googleapis.com/calendar/v3/calendars/primary/events";
+        ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${editEventId}?sendUpdates=all`
+        : "https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all";
       const method = editEventId ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -480,7 +489,8 @@ export default function CalendarApp({
            endTime: '11:00',
            allDay: false,
            description: '',
-           alertMinutes: 'default'
+           alertMinutes: 'default',
+           attendees: ''
         });
       } else {
         setAppError("Něco se pokazilo při komunikaci s Google API.");
@@ -562,7 +572,8 @@ export default function CalendarApp({
         recurrenceRule: rr,
         customFreq: freq,
         recurrenceInterval: inv,
-        recurrenceUntil: untilVal
+        recurrenceUntil: untilVal,
+        attendees: selectedEvent.attendees ? selectedEvent.attendees.map(a => a.email).join(', ') : ''
      });
      
      setSelectedEvent(null);
@@ -1259,6 +1270,7 @@ export default function CalendarApp({
         setNewEventForm={setNewEventForm}
         handleCreateEvent={handleCreateEvent}
         isCreatingEvent={isCreatingEvent}
+        userEmail={userEmail}
       />
 
       {/* Warning Overlay */}
