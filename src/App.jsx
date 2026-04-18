@@ -5,12 +5,14 @@ import { onAction, registerActionTypes } from '@tauri-apps/plugin-notification';
 import { message } from '@tauri-apps/plugin-dialog';
 
 
+import { useAlert } from './components/AlertProvider';
 import Sidebar from './components/Sidebar';
 import SettingsModal from './components/SettingsModal';
 import EmailApp from './modules/Email/EmailApp';
 import CalendarApp from './modules/Calendar/CalendarApp';
 
 function App() {
+  const { showAlert } = useAlert();
   const [activeFolder, setActiveFolder] = useState('Doručené');
   const [activeCalendarView, setActiveCalendarView] = useState('Co mě čeká?');
   const [appMode, setAppMode] = useState('email');
@@ -178,7 +180,7 @@ function App() {
       setGoogleToken(accessToken);
     } catch (error) {
       console.error('Kriticky selhalo spojení s backendem:', error);
-      alert('Systémová chyba při startu přihlášení:\n\n' + String(error) + '\n\nZkuste zmáčknout F12 a podívat se do konzole.');
+      showAlert('Systémová chyba při startu přihlášení:\n\n' + String(error) + '\n\nZkuste zmáčknout F12 a podívat se do konzole.', 'Chyba přihlášení', 'error');
     }
   };
 
@@ -191,7 +193,7 @@ function App() {
     const newName = targetName ? `${targetName}/${basename}` : basename;
     
     if (newName === sourceName) {
-        message("Složka zde již je.\nPořadí složek na jedné úrovni nelze svévolně měnit, Gmail je automaticky řadí abecedně.", { title: 'Přesun neproveden', kind: 'info' });
+        showAlert("Pořadí složek na jedné úrovni nelze svévolně měnit, Gmail je automaticky řadí abecedně.", 'Složka zde již je', 'info');
         return;
     }
 
@@ -245,7 +247,7 @@ function App() {
 
       if (!res.ok) {
         console.error("Chyba při updatu složky:", await res.text());
-        message("Nepodařilo se přesunout složku. Zkontrolujte, že v cíli neexistuje stejnojmenná.", { title: 'Chyba serveru', kind: 'error' });
+        showAlert("Nepodařilo se přesunout složku. Zkontrolujte, že v cíli neexistuje stejnojmenná.", 'Chyba serveru', 'error');
         // Revert pravdou ze serveru
         await refreshLabelsFromServer();
         if (activeFolder === newName) setActiveFolder(sourceName);
