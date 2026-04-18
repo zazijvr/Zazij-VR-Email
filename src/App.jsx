@@ -15,7 +15,14 @@ function App() {
   const [activeCalendarView, setActiveCalendarView] = useState('Co mě čeká?');
   const [appMode, setAppMode] = useState('email');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isVerticalLayout, setIsVerticalLayout] = useState(true);
+  const [isVerticalLayout, setIsVerticalLayout] = useState(() => {
+    const saved = localStorage.getItem('zazijvr_layout_vertical');
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('zazijvr_layout_vertical', JSON.stringify(isVerticalLayout));
+  }, [isVerticalLayout]);
   const [googleToken, setGoogleToken] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [savedAccounts, setSavedAccounts] = useState([]);
@@ -177,6 +184,89 @@ function App() {
 
   const [customLabels, setCustomLabels] = useState([]);
 
+  const handleMoveCustomFolder = async (id, sourceName, targetName) => {
+    if (!googleToken) return;
+    
+    const basename = sourceName.split('/').pop();
+    const newName = targetName ? `${targetName}/${basename}` : basename;
+    
+    if (newName === sourceName) {
+        message("Složka zde již je.\nPořadí složek na jedné úrovni nelze svévolně měnit, Gmail je automaticky řadí abecedně.", { title: 'Přesun neproveden', kind: 'info' });
+        return;
+    }
+
+    // Optimisticky uprav stát pro plynulost UX - rovnou i pro případné podsložky!
+    setCustomLabels(prev => 
+      prev.map(label => {
+        if (label.id === id) return { ...label, name: newName };
+        if (label.name.startsWith(sourceName + '/')) { // Podsložky
+           const suffix = label.name.substring(sourceName.length);
+           return { ...label, name: newName + suffix };
+        }
+        return label;
+      })
+    );
+
+    if (activeFolder === sourceName) {
+      setActiveFolder(newName);
+    }
+
+    // Otevřít složku plynule ihned po vhození, pokud byla sbalená:
+    if (targetName) {
+       window.dispatchEvent(new CustomEvent('zazijvr_expand_folder', { detail: targetName }));
+    }
+
+    try {
+      const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${googleToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: id,
+          name: newName,
+          labelListVisibility: 'labelShow',
+          messageListVisibility: 'show'
+        })
+      });
+
+      const refreshLabelsFromServer = async () => {
+         try {
+            const dataRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
+               headers: { Authorization: `Bearer ${googleToken}` }
+            });
+            if (dataRes.ok) {
+               const data = await dataRes.json();
+               if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
+            }
+         } catch(e) {}
+      };
+
+      if (!res.ok) {
+        console.error("Chyba při updatu složky:", await res.text());
+        message("Nepodařilo se přesunout složku. Zkontrolujte, že v cíli neexistuje stejnojmenná.", { title: 'Chyba serveru', kind: 'error' });
+        // Revert pravdou ze serveru
+        await refreshLabelsFromServer();
+        if (activeFolder === newName) setActiveFolder(sourceName);
+      } else {
+        // Počkáme chvíli a dotáhneme finální server state pro perfektní synchronizaci
+        setTimeout(refreshLabelsFromServer, 500);
+      }
+    } catch (err) {
+      console.error(err);
+      // Revert pravdou ze serveru
+      try {
+         const dataRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', { headers: { Authorization: `Bearer ${googleToken}` } });
+         if (dataRes.ok) {
+            const data = await dataRes.json();
+            if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
+         }
+      } catch(e) {}
+      if (activeFolder === newName) setActiveFolder(sourceName);
+    }
+  };
+
   useEffect(() => {
     if (googleToken) {
       fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
@@ -319,6 +409,7 @@ function App() {
           onComposeNew={() => setTriggerCompose(prev => prev + 1)}
           onCreateNewEvent={() => setTriggerCreateEvent(prev => prev + 1)}
           onMoveEmail={(moves) => setTriggerMove({ moves, ts: Date.now() })}
+          onMoveCustomFolder={handleMoveCustomFolder}
           customLabels={customLabels}
         />
       </div>

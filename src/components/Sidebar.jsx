@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Calendar, Settings } from 'lucide-react';
+import { Mail, Calendar, Settings, ChevronRight, ChevronDown } from 'lucide-react';
 
 export default function Sidebar({
   activeFolder,
@@ -13,6 +13,7 @@ export default function Sidebar({
   onComposeNew,
   onCreateNewEvent,
   onMoveEmail,
+  onMoveCustomFolder,
   customLabels = []
 }) {
   const [folders, setFolders] = useState([
@@ -25,31 +26,54 @@ export default function Sidebar({
   ]);
   const [dragOverIdx, setDragOverIdx] = useState(null);
 
-  const [draggableFolderId, setDraggableFolderId] = useState(null);
-  const dragTimerRef = React.useRef(null);
+  const [collapsedFolders, setCollapsedFolders] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('zazijvr_collapsed_folders') || '[]')); }
+    catch(e) { return new Set(); }
+  });
+
+  const toggleCollapse = (e, folderName) => {
+    e.stopPropagation();
+    setCollapsedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderName)) next.delete(folderName);
+      else next.add(folderName);
+      localStorage.setItem('zazijvr_collapsed_folders', JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const handleAutoExpand = (e) => {
+      const targetPath = e.detail;
+      setCollapsedFolders(prev => {
+        if (!prev.has(targetPath)) return prev;
+        const next = new Set(prev);
+        next.delete(targetPath);
+        localStorage.setItem('zazijvr_collapsed_folders', JSON.stringify([...next]));
+        return next;
+      });
+    };
+    window.addEventListener('zazijvr_expand_folder', handleAutoExpand);
+    return () => window.removeEventListener('zazijvr_expand_folder', handleAutoExpand);
+  }, []);
+
+  const navScrollRef = React.useRef(null);
+  const handleNavDragOver = (e) => {
+    e.preventDefault();
+    if (!navScrollRef.current) return;
+    const { top, bottom } = navScrollRef.current.getBoundingClientRect();
+    const threshold = 60; // posuv pri priblizeni k okraji
+    if (e.clientY - top < threshold) {
+      navScrollRef.current.scrollTop -= 10;
+    } else if (bottom - e.clientY < threshold) {
+      navScrollRef.current.scrollTop += 10;
+    }
+  };
   
   const [specialCals, setSpecialCals] = useState(() => {
     try { return JSON.parse(localStorage.getItem('zazijvr_special_calendars')) || { cz_holidays: false }; }
     catch(e) { return { cz_holidays: false }; }
   });
-
-  const handlePointerDown = (id) => {
-    dragTimerRef.current = setTimeout(() => {
-      setDraggableFolderId(id);
-    }, 500);
-  };
-
-  const clearDragTimer = () => {
-    if (dragTimerRef.current) {
-      clearTimeout(dragTimerRef.current);
-      dragTimerRef.current = null;
-    }
-    setDraggableFolderId(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggableFolderId(null);
-  };
 
   useEffect(() => {
     const saved = localStorage.getItem('zazijvr_folders');
@@ -88,6 +112,10 @@ export default function Sidebar({
         newFolders.splice(dropIndex, 0, removed);
         setFolders(newFolders);
         localStorage.setItem('zazijvr_folders', JSON.stringify(newFolders));
+      } else if (data.type === 'CUSTOM_FOLDER') {
+        if (data.name !== targetLabel && onMoveCustomFolder) {
+           onMoveCustomFolder(data.id, data.name, targetLabel);
+        }
       } else if (data.type === 'EMAIL') {
         if (data.sourceLabel !== targetLabel && onMoveEmail) {
            onMoveEmail([{ id: data.id, sourceLabel: data.sourceLabel, targetLabel, fullObj: data.emailData }]);
@@ -102,7 +130,7 @@ export default function Sidebar({
       }
     } catch(e) {}
   };  return (
-    <div className="w-64 bg-black/40 backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col py-8 z-20 select-none">
+    <div className="min-w-[16rem] w-max max-w-[26rem] bg-black/40 backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col py-8 z-20 select-none shrink-0 transition-all duration-300">
       <div className="flex justify-center w-full px-4 mb-8">
         <img
           src="/cropped-logo-neon-pruhledna-150x50.png"
@@ -112,7 +140,6 @@ export default function Sidebar({
         />
       </div>
 
-      {/* Global App Switcher */}
       <div className="flex justify-center gap-4 mb-10 px-4">
         <div
           onClick={() => setAppMode('email')}
@@ -164,21 +191,15 @@ export default function Sidebar({
         )}
       </div>
 
-      <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-6 pt-2">
+      <nav ref={navScrollRef} onDragOver={handleNavDragOver} className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-6 pt-2">
         {appMode === 'email' && folders.map((folder, index) => {
           const isActive = activeFolder === folder.label;
           const isDragOver = dragOverIdx === index;
           return (
             <div
               key={folder.id}
-              draggable={draggableFolderId === folder.id}
-              onPointerDown={() => handlePointerDown(folder.id)}
-              onPointerUp={clearDragTimer}
-              onPointerLeave={clearDragTimer}
-              onPointerCancel={clearDragTimer}
-              onDragEnd={handleDragEnd}
+              draggable={true}
               onDragStart={(e) => {
-                 clearDragTimer();
                  handleDragStartFolder(e, index);
               }}
               onDragOver={(e) => handleDragOver(e, index)}
@@ -213,43 +234,114 @@ export default function Sidebar({
           );
         })}
 
-        {appMode === 'email' && customLabels && customLabels.length > 0 && (
+         {appMode === 'email' && customLabels && customLabels.length > 0 && (
            <>
-              <div className="h-px bg-[#00f3ff]/20 mx-4 !mt-7 !mb-7 relative shrink-0">
+              <div 
+                className={`h-px bg-[#00f3ff]/20 mx-4 !mt-7 !mb-7 relative shrink-0 transition-all ${dragOverIdx === 'root_custom' ? 'shadow-[0_0_15px_#00f3ff] scale-105' : ''}`}
+                onDragOver={(e) => {
+                   e.preventDefault();
+                   e.dataTransfer.dropEffect = 'move';
+                   setDragOverIdx('root_custom');
+                }}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, -1, null)}
+              >
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0f172a] px-2 text-[10px] text-[#00f3ff]/50 font-bold tracking-widest uppercase whitespace-nowrap">
                   Vlastní složky
                 </div>
               </div>
-              {customLabels.map((folder, index) => {
-                const isActive = activeFolder === folder.name;
-                const isDragOver = dragOverIdx === `custom_${folder.id}`;
-                return (
-                  <div
-                    key={folder.id}
+              {(() => {
+                const sortedCustomLabels = [...customLabels].sort((a, b) => a.name.localeCompare(b.name));
+                return sortedCustomLabels.map((folder, index) => {
+                  const isActive = activeFolder === folder.name;
+                  const isDragOverInto = dragOverIdx === `custom_into_${folder.id}`;
+                  const isDragOverBefore = dragOverIdx === `custom_before_${folder.id}`;
+                  const parts = folder.name.split('/');
+                  const depth = parts.length - 1;
+                  const rawName = parts[parts.length - 1];
+                  const displayName = rawName.length > 25 ? rawName.substring(0, 25) + '…' : rawName;
+                  
+                  let isHidden = false;
+                  for (let i = 1; i <= depth; i++) {
+                     const ancestorPath = parts.slice(0, i).join('/');
+                     if (collapsedFolders.has(ancestorPath)) {
+                        isHidden = true;
+                        break;
+                     }
+                  }
+                  if (isHidden) return null;
+
+                  const hasChildren = index + 1 < sortedCustomLabels.length && sortedCustomLabels[index + 1].name.startsWith(folder.name + '/');
+                  const isCollapsed = collapsedFolders.has(folder.name);
+                  
+                  return (
+                    <React.Fragment key={folder.id}>
+                      {isDragOverBefore && (
+                        <div 
+                           className="h-1 bg-[#0f172a] border border-[#00f3ff] rounded-full my-1 z-30 transition-all relative overflow-hidden"
+                           style={{ marginLeft: `${1 + (depth > 0 ? depth - 1 : 0) * 1.2}rem`, marginRight: '1rem' }}
+                        >
+                           <div className="absolute inset-0 w-full h-full bg-[#00f3ff] shadow-[0_0_15px_#00f3ff] animate-pulse opacity-70" />
+                        </div>
+                      )}
+                      <div
+                      key={`item_${folder.id}`}
+                    draggable={true}
+                    onDragStart={(e) => {
+                       e.dataTransfer.setData('application/json', JSON.stringify({ type: 'CUSTOM_FOLDER', id: folder.id, name: folder.name }));
+                    }}
                     onDragOver={(e) => {
                        e.preventDefault();
                        e.dataTransfer.dropEffect = 'move';
-                       setDragOverIdx(`custom_${folder.id}`);
+                       const rect = e.currentTarget.getBoundingClientRect();
+                       const isTopEdge = (e.clientY - rect.top) < 16;
+                       if (isTopEdge) {
+                           setDragOverIdx(`custom_before_${folder.id}`);
+                       } else {
+                           setDragOverIdx(`custom_into_${folder.id}`);
+                       }
                     }}
                     onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, -1, folder.name)}
+                    onDrop={(e) => {
+                       const rect = e.currentTarget.getBoundingClientRect();
+                       const isTopEdge = (e.clientY - rect.top) < 16;
+                       const targetPath = isTopEdge ? 
+                          (folder.name.includes('/') ? folder.name.substring(0, folder.name.lastIndexOf('/')) : null) 
+                          : folder.name;
+                       handleDrop(e, -1, targetPath);
+                    }}
                     onClick={() => setActiveFolder(folder.name)}
-                    className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
-                      isDragOver ? 'bg-[#00f3ff]/30 border border-[#00f3ff] scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20' :
+                    className={`relative flex items-center justify-between py-3 cursor-pointer transition-all duration-300 overflow-hidden ${
+                      isDragOverInto ? 'bg-[#00f3ff]/30 border border-[#00f3ff] scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20 rounded-xl' :
                       isActive
-                        ? 'bg-gradient-to-r from-[#00f3ff]/20 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
-                        : 'hover:bg-[#00f3ff]/5 border border-[#00f3ff]/10 text-[#00f3ff]/60 hover:text-[#00f3ff]'
+                        ? 'bg-gradient-to-r from-[#00f3ff]/20 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02] rounded-xl'
+                        : 'hover:bg-[#00f3ff]/5 border border-transparent hover:border-[#00f3ff]/10 text-[#00f3ff]/60 hover:text-[#00f3ff] rounded-xl'
                       } group`}
+                    style={{ paddingLeft: `${1 + depth * 1.2}rem`, paddingRight: '1rem' }}
                   >
-                    {isActive && !isDragOver && (
+                    {isActive && (!isDragOverInto && !isDragOverBefore) && (
                       <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-[#00f3ff]/10 to-transparent pointer-events-none" />
                     )}
-                    <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden pr-2">
-                      {isActive && (
-                         <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff] animate-pulse shrink-0" />
+                    <div className="flex items-center gap-2 relative z-10 w-full overflow-hidden">
+                      {hasChildren ? (
+                         <div 
+                           onClick={(e) => toggleCollapse(e, folder.name)}
+                           className="p-1 -ml-1 rounded-md hover:bg-white/10 shrink-0 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-colors"
+                         >
+                            {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                         </div>
+                      ) : (
+                         <div className="w-[22px] shrink-0 flex justify-center items-center">
+                            {isActive ? (
+                               <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff] animate-pulse shrink-0" />
+                            ) : depth > 0 ? (
+                               <div className="w-1 h-1 rounded-full bg-[#00f3ff]/30 shrink-0" />
+                            ) : null}
+                         </div>
                       )}
-                      <span className={`font-semibold tracking-wide truncate ${isActive ? 'text-[#00f3ff] font-bold' : 'text-[#00f3ff]/60'}`}>
-                        {folder.name}
+                      
+                      <span className={`font-semibold tracking-wide whitespace-nowrap ${isActive ? 'text-[#00f3ff] font-bold' : 'text-[#00f3ff]/60'}`}>
+                        {displayName}
                       </span>
                     </div>
                     {unreadCounts[folder.name] > 0 && (
@@ -258,8 +350,10 @@ export default function Sidebar({
                       </span>
                     )}
                   </div>
+                  </React.Fragment>
                 );
-              })}
+              });
+            })()}
            </>
         )}
 
