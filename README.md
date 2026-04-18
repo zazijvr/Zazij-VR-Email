@@ -29,3 +29,6 @@ Před samotnou instalací na "produkční CachyOS stroj" pak stačí do `main` z
 - **Frontend:** React + Vite, Tailwind CSS + Custom CSS mikro animace
 - **Bezpečnost:** DOMPurify pro sanitisaci příchozích HTML cizích těles
 - **Rozhraní:** Nativní Wayland / KWin decorace přes nastavení `decorations: true` v `tauri.conf.json`
+
+pro Update:
+./update-zazijvr_email.sh
