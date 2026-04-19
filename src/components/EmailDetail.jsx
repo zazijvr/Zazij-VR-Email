@@ -4,7 +4,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { open } from '@tauri-apps/plugin-shell';
 import { downloadDir, join } from '@tauri-apps/api/path';
-import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, Star, CalendarPlus, Copy, Check, MoreVertical } from 'lucide-react';
+import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, Star, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen } from 'lucide-react';
 import ICAL from 'ical.js';
 import DOMPurify from 'dompurify';
 
@@ -12,7 +12,7 @@ import { getHeader, getMessageBody, decodeMojibake, extractAttachments, extractI
 
 import { useAlert } from './AlertProvider';
 
-export default function EmailDetail({ googleToken, isVerticalLayout, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, autoResumeDraftId, onDraftResumed }) {
+export default function EmailDetail({ googleToken, isVerticalLayout, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed }) {
   const [emailData, setEmailData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [downloadingAttachId, setDownloadingAttachId] = useState(null);
