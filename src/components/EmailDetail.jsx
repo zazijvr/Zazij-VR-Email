@@ -57,16 +57,7 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
     };
   }, []);
 
-  // Umožnit pinch-zoom v celé aplikaci, když je otevřený tento detail na mobilu
-  useEffect(() => {
-    const metaViewport = document.querySelector('meta[name="viewport"]');
-    if (metaViewport) {
-      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover');
-      return () => {
-        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-      };
-    }
-  }, []);
+  // Odstraněn globální viewport toggle (nesmí se tak ovlivnit UI)
 
   useEffect(() => {
     const handleMessage = async (e) => {
@@ -986,19 +977,58 @@ ${ccLine}
                   });
 
                   // Automatické zmenšení obřích tabulek tak, aby se na mobilu vešly na šířku
+                  let stalyZoom = 1.0;
                   function fitToWidth() {
                     const docWidth = document.documentElement.scrollWidth || document.body.scrollWidth;
                     const winWidth = window.innerWidth;
                     if (docWidth > winWidth && winWidth > 0 && docWidth > 0) {
                        const ratio = winWidth / docWidth;
-                       document.body.style.zoom = ratio;
+                       stalyZoom = ratio;
+                       document.body.style.zoom = stalyZoom;
                     }
                   }
                   window.addEventListener('load', fitToWidth);
-                  // Vyvolat poctivě i preventivně, protože dom může být ready před load
                   setTimeout(fitToWidth, 100);
-                  setTimeout(fitToWidth, 300);
-                  setTimeout(fitToWidth, 1000);
+                  setTimeout(fitToWidth, 500);
+
+                  // Izolovaný Pinch-To-Zoom pouze a jen pro tento obsah emailu!
+                  let vzdalenostInit = 0;
+                  let zoomInit = 1.0;
+
+                  document.addEventListener('touchstart', function(e) {
+                    if (e.touches.length === 2) {
+                      vzdalenostInit = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                      );
+                      zoomInit = parseFloat(document.body.style.zoom) || 1.0;
+                    }
+                  });
+
+                  document.addEventListener('touchmove', function(e) {
+                    if (e.touches.length === 2 && vzdalenostInit > 0) {
+                      // Blokování scrolování ven při zoomování
+                      if (e.cancelable) e.preventDefault();
+                      
+                      const vzdalenostAktual = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                      );
+                      
+                      const pomer = vzdalenostAktual / vzdalenostInit;
+                      let novyZoom = zoomInit * pomer;
+                      
+                      // Zamezit přílišnému zmenšení/zvětšení
+                      if (novyZoom < 0.3) novyZoom = 0.3;
+                      if (novyZoom > 5.0) novyZoom = 5.0;
+                      
+                      document.body.style.zoom = novyZoom;
+                    }
+                  }, { passive: false });
+
+                  document.addEventListener('touchend', function(e) {
+                    if (e.touches.length < 2) vzdalenostInit = 0;
+                  });
                 </script>
              `}
             />
