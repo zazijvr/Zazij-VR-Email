@@ -53,14 +53,14 @@ export default function TemplateSettings({ googleToken }) {
   return (
     <div className="flex flex-col gap-6 w-full h-[50dvh] min-h-[400px]">
 
-          <div className="flex justify-between items-center bg-black/20 p-4 rounded-xl border border-white/5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
             <div>
-              <h3 className="text-xl font-bold text-gray-200">Moje e-mailové šablony</h3>
-              <p className="text-sm text-gray-500">Tyto šablony se při zvolení aplikují natvrdo do otevřeného okna a změní jeho obsah i předmět.</p>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-200">Moje e-mailové šablony</h3>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">Tyto šablony se při zvolení aplikují natvrdo do otevřeného okna a změní jeho obsah i předmět.</p>
             </div>
             <button 
               onClick={createNewTemplate}
-              className="flex items-center gap-2 bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff]/40 px-4 py-2 rounded-lg font-bold transition-all shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:shadow-[0_0_20px_rgba(0,243,255,0.3)]"
+              className="flex w-full sm:w-auto justify-center items-center gap-2 bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff]/40 px-4 py-2.5 sm:py-2 rounded-lg font-bold transition-all shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:shadow-[0_0_20px_rgba(0,243,255,0.3)] shrink-0"
             >
               <Plus size={18} />
               NOVÁ ŠABLONA
