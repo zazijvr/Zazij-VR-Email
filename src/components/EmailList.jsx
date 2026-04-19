@@ -792,11 +792,24 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     <div className="flex-1 relative bg-[#0f172a]/80 backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
 
       {/* Mobilní Nadpis Složky */}
-      <div className="md:hidden px-6 pt-5 pb-3 border-b border-[#00f3ff]/20 bg-gradient-to-b from-black/60 to-transparent shrink-0">
-        <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
-           {activeFolder}
-        </h1>
-        <div className="text-[10px] uppercase tracking-widest text-[#00f3ff]/60 mt-1">Systém // Výpis {visibleEmails.length} konverzací</div>
+      <div className="md:hidden px-6 pt-5 pb-3 border-b border-[#00f3ff]/20 bg-gradient-to-b from-black/60 to-transparent shrink-0 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
+             {activeFolder}
+          </h1>
+          <div className="text-[10px] uppercase tracking-widest text-[#00f3ff]/60 mt-1">Systém // Výpis {visibleEmails.length} konverzací</div>
+        </div>
+        {(() => {
+           const iconMap = {
+             'Doručené': '/vr_inbox_trans.png',
+             'Důležité': '/vr_important_trans.png',
+             'Odeslané': '/vr_sent_trans.png',
+             'Rozepsané': '/vr_drafts_trans.png',
+             'Spam': '/vr_spam_trans.png',
+             'Koš': '/vr_trash_trans.png'
+           };
+           return iconMap[activeFolder] ? <img src={iconMap[activeFolder]} alt="Mascot" className="h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] animate-pulse-slow ml-4" /> : null;
+        })()}
       </div>
 
       {/* Sub-toolbar */}

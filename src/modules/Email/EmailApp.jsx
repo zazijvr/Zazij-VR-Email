@@ -295,8 +295,19 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               </div>
               <div className="flex flex-row items-baseline">
                 <span className="text-[#00f3ff] text-4xl md:text-5xl font-light mr-4 opacity-70">[</span>
-                <h1 className="text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal">
+                <h1 className="text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal flex items-center gap-4">
                   {activeFolder}
+                  {(() => {
+                    const iconMap = {
+                      'Doručené': '/vr_inbox_trans.png',
+                      'Důležité': '/vr_important_trans.png',
+                      'Odeslané': '/vr_sent_trans.png',
+                      'Rozepsané': '/vr_drafts_trans.png',
+                      'Spam': '/vr_spam_trans.png',
+                      'Koš': '/vr_trash_trans.png'
+                    };
+                    return iconMap[activeFolder] ? <img src={iconMap[activeFolder]} alt="Mascot" className="h-[50px] w-auto object-contain drop-shadow-[0_0_15px_rgba(0,243,255,0.5)] animate-pulse-slow ml-2" /> : null;
+                  })()}
                 </h1>
                 <span className="text-[#00f3ff] text-4xl md:text-5xl font-light ml-4 opacity-70">]</span>
               </div>

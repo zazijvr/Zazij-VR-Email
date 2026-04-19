@@ -205,17 +205,6 @@ export default function Sidebar({
         {appMode === 'email' && folders.map((folder, index) => {
           const isActive = activeFolder === folder.label;
           const isDragOver = dragOverIdx === index;
-          
-          const iconMap = {
-            'inbox': '/vr_inbox_trans.png',
-            'important': '/vr_important_trans.png',
-            'sent': '/vr_sent_trans.png',
-            'drafts': '/vr_drafts_trans.png',
-            'spam': '/vr_spam_trans.png',
-            'trash': '/vr_trash_trans.png',
-          };
-          const vrIcon = iconMap[folder.id];
-
           return (
             <div
               key={folder.id}
@@ -242,10 +231,7 @@ export default function Sidebar({
               )}
               <div className="flex items-center gap-3 relative z-10">
                 {isActive && (
-                   <div className="absolute -left-2 w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff] animate-pulse" />
-                )}
-                {vrIcon && (
-                   <img src={vrIcon} alt={folder.label} className="w-8 h-8 object-contain drop-shadow-[0_0_5px_rgba(0,243,255,0.4)] opacity-80 group-hover:opacity-100 transition-opacity" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff] animate-pulse" />
                 )}
                 <span className={`font-semibold tracking-wide ${isActive ? 'text-[#00f3ff] font-bold' : 'text-[#00f3ff]/60'}`}>
                   {folder.label}
