@@ -31,13 +31,14 @@ export default function MobileHeader({
   return (
     <div className="md:hidden flex items-center justify-between px-4 h-16 bg-black/60 backdrop-blur-md border-b border-[#00f3ff]/20 z-40 relative">
       <button 
+        id="mobile-hamburger"
         onClick={toggleSidebar}
         className={`p-2 -ml-2 text-[#00f3ff] rounded-xl transition-all ${userEmail ? 'hover:bg-[#00f3ff]/10 active:scale-95' : 'blur-[3px] opacity-30 pointer-events-none'}`}
       >
         <Menu size={26} strokeWidth={2.5} />
       </button>
 
-      <div className="flex-1 flex justify-center pointer-events-none">
+      <div id="mobile-logo" className="flex-1 flex justify-center pointer-events-none transition-all duration-500">
         <img
           src="/cropped-logo-neon-pruhledna-150x50.png"
           alt="ZažijVR"
@@ -45,7 +46,7 @@ export default function MobileHeader({
         />
       </div>
 
-      <div ref={dropdownRef} className={`relative z-50 transition-all ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
+      <div id="mobile-user" ref={dropdownRef} className={`relative z-50 transition-all duration-500 ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
         <button 
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="w-10 h-10 rounded-full bg-[#00f3ff]/10 border border-[#00f3ff]/40 flex items-center justify-center font-bold text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.6)] shadow-[inset_0_0_10px_rgba(248,0,255,0.1)] transition-transform active:scale-95 hover:border-[#00f3ff]"

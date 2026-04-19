@@ -432,6 +432,11 @@ ${ccLine}
   };
 
   useEffect(() => {
+    document.body.classList.add('email-detail-active');
+    return () => document.body.classList.remove('email-detail-active');
+  }, []);
+
+  useEffect(() => {
     if (!selectedEmailId || !googleToken) {
       setEmailData(null);
       return;
@@ -587,9 +592,9 @@ ${ccLine}
 
   // Samotný E-mail čtecí panel
   return (
-    <div className="flex-1 flex flex-col bg-[#0f172a] overflow-hidden fixed inset-0 z-[60] md:relative md:inset-auto md:z-auto animate-in fade-in duration-300">
+    <div className="flex-1 flex flex-col bg-transparent overflow-hidden fixed inset-0 z-[60] pointer-events-none md:bg-[#0f172a] md:relative md:inset-auto md:z-auto md:pointer-events-auto">
       {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER --- */}
-      <div className="md:hidden flex items-center justify-between px-4 h-16 bg-[#0f172a] border-b border-[#00f3ff]/20 z-20 shadow-[0_5px_15px_rgba(0,0,0,0.5)] w-full shrink-0">
+      <div className="md:hidden flex items-center justify-between px-4 h-16 bg-transparent border-b border-[#00f3ff]/20 z-20 w-full shrink-0 pointer-events-auto">
         {onMobileBack && (
           <button 
             onClick={onMobileBack} 
@@ -618,7 +623,7 @@ ${ccLine}
 
       <div 
         key={emailData?.messageId || "loading"} 
-        className={`flex-1 flex flex-col h-full overflow-hidden ${slideAnimationClass}`}
+        className={`flex-1 flex flex-col h-full bg-[#0f172a] overflow-hidden shadow-[0_-5px_20px_rgba(0,0,0,0.5)] pointer-events-auto md:shadow-none ${slideAnimationClass}`}
         onDoubleClick={() => {
            if (emailData?.isDraft) handleResumeDraft(emailData);
         }}

@@ -93,3 +93,14 @@
   text-shadow: 0 0 5px #00f3ff;
 }
 
+body.email-detail-active #mobile-hamburger {
+  transform: rotate(-180deg) scale(0.5);
+  opacity: 0;
+}
+body.email-detail-active #mobile-logo,
+body.email-detail-active #mobile-user {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+
