@@ -734,17 +734,14 @@ ${ccLine}
                   </div>
                 )}
                 
-                {/* Priority status */}
-                {emailData?.isStarred && (
-                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-yellow-400/10 border border-yellow-400/30 shadow-[0_0_10px_rgba(250,204,21,0.2)]">
-                    <Star size={12} fill="currentColor" strokeWidth={1} className="text-yellow-400" />
-                    <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-yellow-500">High_Priority</span>
-                  </div>
-                )}
+
 
               </div>
 
               <div className="flex items-center gap-3 group w-full">
+                {emailData?.isStarred && (
+                  <div className="shrink-0 w-3 h-3 rounded-full bg-[#f800ff] shadow-[0_0_12px_#f800ff] animate-pulse" title="Důležité (High Priority)"></div>
+                )}
                 <h1 className="text-2xl md:text-3xl font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-tight break-words">
                   {emailData?.subject}
                 </h1>
@@ -968,8 +965,8 @@ ${ccLine}
                                  body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
                                });
                              } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
-                          }} className={`flex items-center gap-4 p-4 rounded-2xl transition-all w-full text-left font-bold tracking-wide active:scale-[0.98] ${emailData.isStarred ? 'hover:bg-[#f800ff]/10 text-[#f800ff]/90 active:bg-[#f800ff]/20' : 'hover:bg-yellow-400/10 text-yellow-400/80 active:bg-yellow-400/20'}`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-[#f800ff]/10' : 'bg-yellow-400/10'}`}><Star size={20} fill={emailData.isStarred ? "currentColor" : "none"} /></div> {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
+                          }} className={`flex items-center gap-4 p-4 rounded-2xl transition-all w-full text-left font-bold tracking-wide active:scale-[0.98] ${emailData.isStarred ? 'hover:bg-[#f800ff]/10 text-[#f800ff]/90 active:bg-[#f800ff]/20' : 'hover:bg-[#f800ff]/10 text-[#f800ff]/50 active:bg-[#f800ff]/20'}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-[#f800ff]/10' : 'bg-[#f800ff]/5'}`}><Star size={20} fill={emailData.isStarred ? "currentColor" : "none"} /></div> {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                           </button>
                           
                           <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); toggleReadStatus(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/10 text-white/80 hover:text-white transition-all w-full text-left font-bold tracking-wide active:bg-white/20">
