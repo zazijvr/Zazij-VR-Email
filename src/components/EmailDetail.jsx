@@ -878,27 +878,47 @@ ${ccLine}
                     <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className={`p-2 rounded-xl transition-all ${isMoreMenuOpen ? 'text-[#00f3ff] bg-[#00f3ff]/20 shadow-[0_0_15px_rgba(0,243,255,0.3)]' : 'text-[#00f3ff]/70 hover:bg-[#00f3ff]/10 hover:shadow-[0_0_10px_rgba(0,243,255,0.2)]'}`}>
                       <MoreVertical size={22} />
                     </button>
-                    {isMoreMenuOpen && (
-                      <>
-                        {/* Celostránkový neviditelný štít pro odchytnutí kliku mimo (zabrání kliku na linky a ghost clicks) */}
+                    {isMoreMenuOpen && createPortal(
+                      <div className="fixed inset-0 z-[999999] flex justify-center items-end" style={{ isolation: 'isolate' }}>
+                        <style>{`
+                          @keyframes mobileSheetSlideUp {
+                            from { transform: translateY(100%); opacity: 0; }
+                            to { transform: translateY(0); opacity: 1; }
+                          }
+                          @keyframes mobileSheetFadeIn {
+                            from { opacity: 0; backdrop-filter: blur(0px); }
+                            to { opacity: 1; backdrop-filter: blur(8px); }
+                          }
+                        `}</style>
+
+                        {/* Celostránkový neviditelný štít pro odchytnutí kliku (blokuje naprosto VŠECHNO pod sebou) */}
                         <div 
-                          className="fixed inset-0 z-[400] bg-transparent touch-none"
-                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsMoreMenuOpen(false); }}
-                          onTouchStart={(e) => { e.stopPropagation(); e.preventDefault(); setIsMoreMenuOpen(false); }}
+                          className="absolute inset-0 bg-black/40 touch-none"
+                          style={{ animation: 'mobileSheetFadeIn 0.3s ease-out forwards' }}
+                          onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); setIsMoreMenuOpen(false); }}
                         ></div>
                         
-                        <div className="absolute top-14 right-[-10px] w-64 bg-black/95 backdrop-blur-2xl border border-[#00f3ff]/30 rounded-2xl shadow-[0_10px_50px_rgba(0,0,0,0.9),0_0_20px_rgba(0,243,255,0.2)] z-[410] flex flex-col p-2 gap-1 anim-ui-fade-in origin-top-right">
+                        {/* Moderní Mobile Bottom Sheet místo plovoucího okna */}
+                        <div 
+                          className="relative w-full max-w-lg bg-[#050810] border-t border-[#00f3ff]/40 rounded-t-[30px] shadow-[0_-15px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,243,255,0.15)] flex flex-col p-6 pb-12 gap-1 z-10"
+                          style={{ animation: 'mobileSheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+                        >
+                          {/* Designové držátko/čárka typická pro Bottom sheets */}
+                          <div className="w-12 h-1.5 bg-[#00f3ff]/30 rounded-full mx-auto mb-6 shrink-0"></div>
+
                           {onActionReply && !emailData?.isDraft && (
-                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] hover:shadow-[inset_3px_0_0_#00f3ff] transition-all w-full text-left font-medium tracking-wide">
-                              <ReplyAll size={18} /> <span className="pt-0.5">Odpovědět všem</span>
+                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
+                              <div className="w-10 h-10 rounded-full bg-[#00f3ff]/10 flex items-center justify-center shrink-0"><ReplyAll size={20} /></div> Odpovědět všem
                             </button>
                           )}
                           {onActionReply && !emailData?.isDraft && (
-                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] hover:shadow-[inset_3px_0_0_#00f3ff] transition-all w-full text-left font-medium tracking-wide">
-                              <Forward size={18} /> <span className="pt-0.5">Přeposlat</span>
+                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
+                              <div className="w-10 h-10 rounded-full bg-[#00f3ff]/10 flex items-center justify-center shrink-0"><Forward size={20} /></div> Přeposlat
                             </button>
                           )}
-                          <div className="w-full h-px bg-gradient-to-r from-transparent via-[#00f3ff]/30 to-transparent my-1.5 opacity-50"></div>
+                          
+                          <div className="w-full h-px bg-gradient-to-r from-transparent via-[#00f3ff]/20 to-transparent my-2 opacity-50 shrink-0"></div>
+                          
                           <button onClick={async (e) => {
                              e.stopPropagation();
                              setIsMoreMenuOpen(false);
@@ -911,14 +931,16 @@ ${ccLine}
                                  body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
                                });
                              } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
-                          }} className={`flex items-center gap-3 p-3.5 rounded-xl transition-all w-full text-left font-medium tracking-wide ${emailData.isStarred ? 'hover:bg-[#f800ff]/10 text-[#f800ff]/90 hover:text-[#f800ff] hover:shadow-[inset_3px_0_0_#f800ff]' : 'hover:bg-yellow-400/10 text-yellow-400/80 hover:text-yellow-400 hover:shadow-[inset_3px_0_0_#facc15]'}`}>
-                            <Star size={18} fill={emailData.isStarred ? "currentColor" : "none"} /> <span className="pt-0.5">{emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}</span>
+                          }} className={`flex items-center gap-4 p-4 rounded-2xl transition-all w-full text-left font-bold tracking-wide active:scale-[0.98] ${emailData.isStarred ? 'hover:bg-[#f800ff]/10 text-[#f800ff]/90 active:bg-[#f800ff]/20' : 'hover:bg-yellow-400/10 text-yellow-400/80 active:bg-yellow-400/20'}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-[#f800ff]/10' : 'bg-yellow-400/10'}`}><Star size={20} fill={emailData.isStarred ? "currentColor" : "none"} /></div> {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); toggleReadStatus(); setIsMoreMenuOpen(false); }} className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-all w-full text-left font-medium tracking-wide">
-                            {emailData.isUnread ? <Mail size={18} /> : <MailOpen size={18} />} <span className="pt-0.5">{emailData.isUnread ? "Značit jako přečtené" : "Značit jako nepřečtené"}</span>
+                          
+                          <button onClick={(e) => { e.stopPropagation(); toggleReadStatus(); setIsMoreMenuOpen(false); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/10 text-white/80 hover:text-white transition-all w-full text-left font-bold tracking-wide active:bg-white/20">
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0">{emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}</div> {emailData.isUnread ? "Značit jako přečtené" : "Značit jako nepřečtené"}
                           </button>
                         </div>
-                      </>
+                      </div>,
+                      document.body
                     )}
                  </div>
               </div>
