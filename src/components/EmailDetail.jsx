@@ -71,16 +71,13 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
     };
 
     if (isMoreMenuOpen) {
-      // Use capture phase to brutally intercept the click/touch before it reaches other elements
+      // Pouze 'click', jinak touchstart zabije DOM node a odstraní tento listener PŘEDTÍM,
+      // než prohlížeč vygeneruje finální click, což pak vede přesně ke ghost clickům na popelnici
       document.addEventListener('click', handleClickOutside, true);
-      document.addEventListener('touchstart', handleClickOutside, true);
-      document.addEventListener('mousedown', handleClickOutside, true);
     }
     
     return () => {
       document.removeEventListener('click', handleClickOutside, true);
-      document.removeEventListener('touchstart', handleClickOutside, true);
-      document.removeEventListener('mousedown', handleClickOutside, true);
     };
   }, [isMoreMenuOpen]);
 
