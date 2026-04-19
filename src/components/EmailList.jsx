@@ -1016,24 +1016,27 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
            </div>
            
            <div className="flex items-center justify-between px-2">
-             <button onClick={handleBulkTrash} className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-[#ef4444] transition-colors">
-               <div className="p-3 rounded-xl bg-white/5"><Trash2 size={20} /></div>
-               <span className="text-[10px] font-bold uppercase tracking-wider">Smazat</span>
-             </button>
-             <button onClick={handleBulkToggleRead} className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-white transition-colors">
-               <div className="p-3 rounded-xl bg-white/5">{isFirstUnread ? <MailOpen size={20} /> : <Mail size={20} />}</div>
+             <button onClick={handleBulkToggleRead} className="flex flex-col items-center gap-1.5 text-[#00f3ff] hover:text-white transition-colors">
+               <div className="p-3 rounded-xl bg-[#00f3ff]/10 shadow-[inset_0_0_10px_rgba(0,243,255,0.2)]">{isFirstUnread ? <MailOpen size={20} /> : <Mail size={20} />}</div>
                <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstUnread ? 'Přečtené' : 'Nepřeč.'}</span>
              </button>
-             <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-[#f800ff] transition-colors">
-               <div className="p-3 rounded-xl bg-white/5"><Star size={20} className={isFirstStarred ? "" : "fill-current text-[#f800ff] drop-shadow-[0_0_5px_rgba(248,0,255,0.8)]"} /></div>
+             
+             <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-[#f800ff] hover:text-white transition-colors">
+               <div className="p-3 rounded-xl bg-[#f800ff]/10 shadow-[inset_0_0_10px_rgba(248,0,255,0.2)]"><Star size={20} className={isFirstStarred ? "" : "fill-current"} /></div>
                <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstStarred ? 'Odebrat' : 'Důležité'}</span>
              </button>
+
              {activeFolder === 'Koš' && (
-               <button onClick={handleBulkRestore} className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-green-400 transition-colors">
-                 <div className="p-3 rounded-xl bg-white/5"><RotateCcw size={20} /></div>
+               <button onClick={handleBulkRestore} className="flex flex-col items-center gap-1.5 text-green-400 hover:text-white transition-colors">
+                 <div className="p-3 rounded-xl bg-green-500/10 shadow-[inset_0_0_10px_rgba(74,222,128,0.2)]"><RotateCcw size={20} /></div>
                  <span className="text-[10px] font-bold uppercase tracking-wider">Obnovit</span>
                </button>
              )}
+
+             <button onClick={handleBulkTrash} className="flex flex-col items-center gap-1.5 text-[#ef4444] hover:text-white transition-colors">
+               <div className="p-3 rounded-xl bg-[#ef4444]/10 shadow-[inset_0_0_10px_rgba(239,68,68,0.2)]"><Trash2 size={20} /></div>
+               <span className="text-[10px] font-bold uppercase tracking-wider">Smazat</span>
+             </button>
            </div>
         </div>
       )}
