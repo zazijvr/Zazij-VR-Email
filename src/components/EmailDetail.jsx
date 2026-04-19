@@ -544,9 +544,9 @@ ${ccLine}
       >
 
         {/* Detail Hlaviček */}
-        <div className="shrink-0 p-8 border-b border-[#00f3ff]/10 bg-black/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-10 flex flex-col gap-4 relative">
-          <div className="flex justify-between items-start gap-6 relative z-10">
-            <div className="flex-1 min-w-0">
+        <div className="shrink-0 px-4 py-5 md:p-8 border-b border-[#00f3ff]/10 bg-black/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-10 flex flex-col gap-4 relative w-full overflow-hidden">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full">
+            <div className="flex-1 min-w-0 w-full">
               {emailData?.isDraft && (
                 <div className="mb-4">
                   <button
@@ -560,8 +560,8 @@ ${ccLine}
                   </button>
                 </div>
               )}
-              <div className="flex items-center gap-3 group">
-                <h1 className="text-3xl font-black text-white drop-shadow-md tracking-wide leading-tight break-words">
+              <div className="flex items-center gap-3 group w-full">
+                <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-md tracking-wide leading-tight break-words">
                   {emailData?.subject}
                 </h1>
                 {emailData?.subject && (
@@ -576,7 +576,7 @@ ${ccLine}
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center flex-wrap gap-2 shrink-0 w-full md:w-auto mt-2 md:mt-0">
               {emailData && (
                 <>
                   <button
@@ -675,8 +675,8 @@ ${ccLine}
             </div>
           </div>
 
-          <div className="flex items-start justify-between text-sm">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row items-start justify-between text-sm gap-3 w-full">
+            <div className="flex items-start gap-3 w-full md:w-auto min-w-0">
               <div className="shrink-0 w-10 h-10 rounded-full bg-[#00f3ff]/20 text-[#00f3ff] font-bold text-lg flex items-center justify-center border border-[#00f3ff]/50 shadow-[0_0_10px_rgba(0,243,255,0.2)]">
                 {emailData?.from?.match(/[\p{L}\p{N}]/u)?.[0]?.toUpperCase() || emailData?.from?.charAt(0)?.toUpperCase()}
               </div>
@@ -709,7 +709,7 @@ ${ccLine}
                 </div>
               </div>
             </div>
-            <span className="shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10">{emailData?.date}</span>
+            <span className="shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10 md:self-auto">{emailData?.date}</span>
           </div>
 
           {/* Přílohy */}
@@ -776,7 +776,7 @@ ${ccLine}
         </div>
 
         {/* Samotné Iframe Tělo zprávy (Aggressive Dark Mode na Námořnické modré) */}
-        <div className="flex-1 p-0 m-6 mb-8 rounded-2xl border border-white/10 shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] overflow-hidden bg-[#0f172a]/40 backdrop-blur-md">
+        <div className="flex-1 p-0 m-0 mt-2 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-0 md:border border-white/10 shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] overflow-hidden bg-[#0f172a]/40 backdrop-blur-md">
           {emailData?.htmlBody ? (
             <iframe
               title="Email Content"
