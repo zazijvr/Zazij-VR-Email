@@ -992,6 +992,7 @@ ${ccLine}
               scrolling="no"
               sandbox="allow-popups allow-same-origin allow-scripts"
               srcDoc={`
+                <base target="_blank">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
                 <style>
                   /* Umožníme pinch-zoom a zajistíme touch gesta skrz Iframe */
