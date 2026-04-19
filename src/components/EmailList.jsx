@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import EmailListItem from './EmailListItem';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
-import { Paperclip, ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, Flag, Star, CheckSquare, Square, RotateCcw, FileEdit } from 'lucide-react';
+import { Paperclip, ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, Flag, Star, CheckSquare, Square, RotateCcw, FileEdit, X } from 'lucide-react';
 import { getHeader } from '../utils/emailParser';
 import { saveNewContacts } from '../utils/contactManager';
 import { useAlert } from './AlertProvider';
@@ -996,6 +996,47 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           </div>
         )}
       </div>
+
+      {/* Mobile Multiselect Floating Bar */}
+      {selectedMailIds.size > 0 && (
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-[90] bg-[#050810]/95 backdrop-blur-xl border border-[#00f3ff]/40 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,243,255,0.2)] animate-in slide-in-from-bottom-5 duration-300">
+           <div className="flex items-center justify-between mb-4 border-b border-[#00f3ff]/20 pb-3">
+             <div className="flex items-center gap-3">
+               <button onClick={() => setSelectedMailIds(new Set())} className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 transition-colors">
+                 <X size={20} />
+               </button>
+               <span className="font-bold text-[#00f3ff] text-sm tracking-widest">{selectedMailIds.size} Vybráno</span>
+             </div>
+             <button 
+               onClick={toggleSelectAll}
+               className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
+             >
+               {selectedMailIds.size === visibleEmails.length ? 'Odznačit vše' : 'Vybrat vše'}
+             </button>
+           </div>
+           
+           <div className="flex items-center justify-between px-2">
+             <button onClick={handleBulkTrash} className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-[#ef4444] transition-colors">
+               <div className="p-3 rounded-xl bg-white/5"><Trash2 size={20} /></div>
+               <span className="text-[10px] font-bold uppercase tracking-wider">Smazat</span>
+             </button>
+             <button onClick={handleBulkToggleRead} className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-white transition-colors">
+               <div className="p-3 rounded-xl bg-white/5">{isFirstUnread ? <MailOpen size={20} /> : <Mail size={20} />}</div>
+               <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstUnread ? 'Přečtené' : 'Nepřeč.'}</span>
+             </button>
+             <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-[#f800ff] transition-colors">
+               <div className="p-3 rounded-xl bg-white/5"><Star size={20} className={isFirstStarred ? "" : "fill-current text-[#f800ff] drop-shadow-[0_0_5px_rgba(248,0,255,0.8)]"} /></div>
+               <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstStarred ? 'Odebrat' : 'Důležité'}</span>
+             </button>
+             {activeFolder === 'Koš' && (
+               <button onClick={handleBulkRestore} className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-green-400 transition-colors">
+                 <div className="p-3 rounded-xl bg-white/5"><RotateCcw size={20} /></div>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">Obnovit</span>
+               </button>
+             )}
+           </div>
+        </div>
+      )}
 
       {/* Mobile Delete Confirmation Modal */}
       {mobileDeletePending && (

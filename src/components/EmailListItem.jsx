@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { CheckSquare, Square, Mail, MailOpen, FileEdit, Star, Trash2, Paperclip } from 'lucide-react';
+import { CheckSquare, Square, Mail, MailOpen, FileEdit, Star, Trash2, Paperclip, Check } from 'lucide-react';
 import { getAvatarInitial } from '../utils/emailParser';
 
 export default function EmailListItem({
@@ -31,12 +31,24 @@ export default function EmailListItem({
 
   const [swipeOffset, setSwipeOffset] = useState(0);
   const swipeStartRef = useRef(null);
+  const longPressTimerRef = useRef(null);
 
   const SWIPE_THRESHOLD = 80;
+
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) {
+       clearTimeout(longPressTimerRef.current);
+       longPressTimerRef.current = null;
+    }
+  };
 
   const onTouchStart = (e) => {
     if (e.touches.length > 1) return;
     swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    longPressTimerRef.current = setTimeout(() => {
+       if (window.navigator.vibrate) window.navigator.vibrate(50);
+       toggleSelectEmail(email.id, { stopPropagation: () => {} });
+    }, 500);
   };
 
   const onTouchMove = (e) => {
@@ -44,10 +56,16 @@ export default function EmailListItem({
     if (e.touches.length > 1) {
       swipeStartRef.current = null;
       setSwipeOffset(0);
+      clearLongPress();
       return;
     }
     const dx = e.touches[0].clientX - swipeStartRef.current.x;
     const dy = e.touches[0].clientY - swipeStartRef.current.y;
+    
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+      clearLongPress();
+    }
+
     // Povolit scrollování (y) versus swipe (x)
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
       if(e.cancelable) e.preventDefault();
@@ -56,6 +74,7 @@ export default function EmailListItem({
   };
 
   const onTouchEnd = () => {
+    clearLongPress();
     if (swipeStartRef.current) {
       if (swipeOffset > SWIPE_THRESHOLD) {
         // Swipe vpravo -> Read / Unread
@@ -100,9 +119,18 @@ export default function EmailListItem({
               setKeyboardIndex(index); 
            } 
         }}
-        onPointerUp={clearDragTimer}
-        onPointerLeave={clearDragTimer}
-        onPointerCancel={clearDragTimer}
+        onPointerUp={(e) => {
+           if (e.pointerType === 'mouse') clearDragTimer();
+           clearLongPress();
+        }}
+        onPointerLeave={(e) => {
+           if (e.pointerType === 'mouse') clearDragTimer();
+           clearLongPress();
+        }}
+        onPointerCancel={(e) => {
+           if (e.pointerType === 'mouse') clearDragTimer();
+           clearLongPress();
+        }}
         onDragEnd={(e) => {
           handleDragEnd();
           if (e.dataTransfer.dropEffect !== 'none') {
@@ -121,7 +149,16 @@ export default function EmailListItem({
             e.dataTransfer.setData('application/json', JSON.stringify({ type: 'EMAIL', id: email.id, sourceLabel: activeFolder, emailData: email }));
           }
         }}
-        onClick={() => { if (Math.abs(swipeOffset) < 10) { handleEmailClick(email); setKeyboardIndex(index); } }}
+        onClick={(e) => { 
+          if (Math.abs(swipeOffset) < 10) { 
+            if (selectedMailIds.size > 0) {
+              toggleSelectEmail(email.id, { stopPropagation: () => {} });
+            } else {
+              handleEmailClick(email); 
+              setKeyboardIndex(index); 
+            }
+          } 
+        }}
         className={`relative flex flex-col md:flex-row md:items-center px-4 py-4 md:py-3 rounded-xl cursor-pointer select-none border overflow-hidden ${email._newArrival ? 'animate-new-email ' : ''}${isKeyboardFocus && !isActiveRow ? 'md:bg-white/[0.08] md:border-white/20 md:shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10 ' : ''}${isActiveRow
             ? 'bg-gradient-to-r from-[#00f3ff]/20 to-[#00f3ff]/5 border-[#00f3ff] md:shadow-[0_0_20px_rgba(0,243,255,0.2)]'
             : email.isUnread
@@ -139,8 +176,18 @@ export default function EmailListItem({
 
         {/* Sender / Initial */}
         <div className="flex w-full md:w-[20%] items-center mb-1 md:mb-0 shrink-0">
-          <div className="md:hidden flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[#00f3ff]/20 to-[#f800ff]/20 border border-[#00f3ff]/40 flex items-center justify-center font-black text-lg text-[#00f3ff] mr-3 shadow-[0_0_10px_rgba(0,243,255,0.2)]">
-            {getAvatarInitial(activeFolder === 'Odeslané' ? email.to : email.from)}
+          <div 
+            onClick={(e) => { e.stopPropagation(); toggleSelectEmail(email.id, e); }}
+            className={`md:hidden relative flex-shrink-0 w-10 h-10 mr-3 transition-transform duration-500 [transform-style:preserve-3d] ${isMultiSelected ? '[transform:rotateY(180deg)]' : ''}`}
+          >
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-gradient-to-br from-[#00f3ff]/20 to-[#f800ff]/20 border border-[#00f3ff]/40 shadow-[0_0_10px_rgba(0,243,255,0.2)] [backface-visibility:hidden]">
+              <span className="font-black text-lg text-[#00f3ff]">
+                 {getAvatarInitial(activeFolder === 'Odeslané' ? email.to : email.from)}
+              </span>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[#00f3ff] shadow-[0_0_15px_rgba(0,243,255,0.6)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+              <Check className="text-black" size={20} strokeWidth={4} />
+            </div>
           </div>
           <div className={`font-bold truncate w-full md:pr-4 ${email.isUnread || isActiveRow ? 'text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-gray-200'}`}>
             {activeFolder === 'Odeslané' ? email.to : email.from}
