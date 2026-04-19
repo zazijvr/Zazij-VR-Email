@@ -721,9 +721,9 @@ ${ccLine}
               <div className="md:hidden flex flex-wrap items-center gap-2 mb-3">
                 
                 {/* Odesilatel status */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#00f3ff]/10 border border-[#00f3ff]/30">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse shadow-[0_0_5px_#00f3ff]"></div>
-                  <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-[#00f3ff]">Link_Active</span>
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm border ${emailData?.isStarred ? 'bg-[#f800ff]/10 border-[#f800ff]/30 text-[#f800ff]' : 'bg-[#00f3ff]/10 border-[#00f3ff]/30 text-[#00f3ff]'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${emailData?.isStarred ? 'bg-[#f800ff] shadow-[0_0_5px_#f800ff]' : 'bg-[#00f3ff] shadow-[0_0_5px_#00f3ff]'}`}></div>
+                  <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-current">Link_Active</span>
                 </div>
 
                 {/* Attachments status */}
@@ -739,9 +739,6 @@ ${ccLine}
               </div>
 
               <div className="flex items-center gap-3 group w-full">
-                {emailData?.isStarred && (
-                  <div className="shrink-0 w-3 h-3 rounded-full bg-[#f800ff] shadow-[0_0_12px_#f800ff] animate-pulse" title="Důležité (High Priority)"></div>
-                )}
                 <h1 className="text-2xl md:text-3xl font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-tight break-words">
                   {emailData?.subject}
                 </h1>
