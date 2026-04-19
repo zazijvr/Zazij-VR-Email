@@ -734,7 +734,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       visibleEmails.length > 0
     ) {
       lastAutoSelectedFolderRef.current = activeFolder;
-      if (setSelectedEmailId) {
+      const isMobile = window.innerWidth < 768; // Zrušíme autovýběr na telefonech
+      if (setSelectedEmailId && !isMobile) {
         setSelectedEmailId(visibleEmails[0].id);
       }
     }
