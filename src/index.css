@@ -108,4 +108,33 @@ body.email-detail-active #mobile-user {
   transition: all 0.4s ease-out !important;
 }
 
+/* Custom UI Transitions Backup */
+@keyframes emailSlideDown {
+  from { opacity: 0; transform: translateY(-50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes emailSlideRight {
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes uiFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes spinInArrow {
+  from { opacity: 0; transform: rotate(-180deg) scale(0.5); }
+  to { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+@keyframes slideInFromRightOverlay {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.anim-email-slide-down { animation: emailSlideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.anim-email-slide-right { animation: emailSlideRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.anim-ui-fade-in { animation: uiFadeIn 0.3s ease-out forwards; }
+.anim-spin-in-arrow { animation: spinInArrow 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.anim-slide-in-right-overlay { animation: slideInFromRightOverlay 0.5s var(--delay, 0ms) cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+
+
 

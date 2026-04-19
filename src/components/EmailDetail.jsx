@@ -591,8 +591,8 @@ ${ccLine}
   }
 
   const slideAnimationClass = isVerticalLayout
-    ? 'animate-in slide-in-from-top-32 fade-in duration-1000 ease-out fill-mode-both'
-    : 'animate-in slide-in-from-right-32 fade-in duration-1000 ease-out fill-mode-both';
+    ? 'anim-email-slide-down'
+    : 'anim-email-slide-right';
 
   // Samotný E-mail čtecí panel
   return (
@@ -602,12 +602,12 @@ ${ccLine}
         {onMobileBack && (
           <button 
             onClick={onMobileBack} 
-            className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all animate-in spin-in-180 fade-in duration-500 fill-mode-both"
+            className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all anim-spin-in-arrow"
           >
             <ArrowLeft size={26} strokeWidth={2.5} />
           </button>
         )}
-        <div className="flex items-center gap-2 pr-0 animate-in slide-in-from-right-8 fade-in duration-500 delay-150 fill-mode-both">
+        <div className="flex items-center gap-2 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' }}>
           {emailData && (
             <button 
               onClick={toggleReadStatus} 
@@ -816,7 +816,7 @@ ${ccLine}
                       <MoreVertical size={22} />
                     </button>
                     {isMoreMenuOpen && (
-                      <div className="absolute top-10 right-0 w-56 bg-black/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 flex flex-col p-2 gap-1 animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-10 right-0 w-56 bg-black/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 flex flex-col p-2 gap-1 anim-ui-fade-in">
                         {onActionReply && !emailData?.isDraft && (
                           <button onClick={() => { setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
                             <ReplyAll size={18} /> Odpovědět všem
