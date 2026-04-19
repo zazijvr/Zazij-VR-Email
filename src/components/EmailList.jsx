@@ -452,6 +452,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     setEmails(prev => prev.map(email =>
       email.id === emailId ? { ...email, isUnread: isNowUnread } : email
     ));
+    window.dispatchEvent(new CustomEvent('vr-email-read-toggle', { detail: { id: emailId, isUnread: isNowUnread } }));
     if (setUnreadCounts) {
       setUnreadCounts(prev => ({
         ...prev,
@@ -499,6 +500,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     setEmails(prev => prev.map(email =>
       email.id === emailId ? { ...email, isStarred: isNowStarred } : email
     ));
+    window.dispatchEvent(new CustomEvent('vr-email-star-toggle', { detail: { id: emailId, isStarred: isNowStarred } }));
 
     try {
       const endpoint = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/modify`;

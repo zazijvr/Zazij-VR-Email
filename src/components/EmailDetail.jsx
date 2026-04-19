@@ -467,6 +467,7 @@ ${ccLine}
     if (!emailData) return;
     const isUnread = emailData.isUnread;
     setEmailData(prev => ({ ...prev, isUnread: !isUnread }));
+    window.dispatchEvent(new CustomEvent('vr-email-read-toggle', { detail: { id: emailData?.id || selectedEmailId, isUnread: !isUnread } }));
     try {
       await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
         method: 'POST',
@@ -479,6 +480,25 @@ ${ccLine}
       setEmailData(prev => ({ ...prev, isUnread: isUnread }));
     }
   };
+
+  useEffect(() => {
+    const handleStarToggle = (e) => {
+      if (emailData && (emailData.id === e.detail.id || selectedEmailId === e.detail.id)) {
+        setEmailData(prev => prev ? { ...prev, isStarred: e.detail.isStarred } : prev);
+      }
+    };
+    const handleReadToggle = (e) => {
+      if (emailData && (emailData.id === e.detail.id || selectedEmailId === e.detail.id)) {
+        setEmailData(prev => prev ? { ...prev, isUnread: e.detail.isUnread } : prev);
+      }
+    };
+    window.addEventListener('vr-email-star-toggle', handleStarToggle);
+    window.addEventListener('vr-email-read-toggle', handleReadToggle);
+    return () => {
+      window.removeEventListener('vr-email-star-toggle', handleStarToggle);
+      window.removeEventListener('vr-email-read-toggle', handleReadToggle);
+    };
+  }, [emailData, selectedEmailId]);
 
   useEffect(() => {
     if (selectedEmailId) {
@@ -726,6 +746,7 @@ ${ccLine}
                      e.stopPropagation();
                      const currentIsStarred = emailData.isStarred;
                      setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
+                     window.dispatchEvent(new CustomEvent('vr-email-star-toggle', { detail: { id: emailData?.id || selectedEmailId, isStarred: !currentIsStarred } }));
                      try {
                        await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
                          method: 'POST',
@@ -948,6 +969,7 @@ ${ccLine}
                              setIsMoreMenuOpen(false);
                              const currentIsStarred = emailData.isStarred;
                              setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
+                             window.dispatchEvent(new CustomEvent('vr-email-star-toggle', { detail: { id: emailData?.id || selectedEmailId, isStarred: !currentIsStarred } }));
                              try {
                                await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
                                  method: 'POST',
