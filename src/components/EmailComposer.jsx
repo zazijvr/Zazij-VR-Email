@@ -42,6 +42,9 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
   
+  const templateMenuRef = useRef(null);
+  const signatureMenuRef = useRef(null);
+  
   useFocusTrap(modalRef, true);
 
   const [savedTemplates, setSavedTemplates] = useState([]);
@@ -154,6 +157,33 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [to, cc, subject, body, attachments, showCloseWarning, config, isSending, isSaving, templateTitle]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // Capture fází odchycený klik mimo otevřené menu. 
+      // Zastaví propagaci a nevznikne žádný následný ghost click.
+      let didClose = false;
+      if (showTemplateMenu && templateMenuRef.current && !templateMenuRef.current.contains(e.target)) {
+        e.stopPropagation();
+        e.preventDefault();
+        setShowTemplateMenu(false);
+        didClose = true;
+      }
+      if (showSignatureMenu && signatureMenuRef.current && !signatureMenuRef.current.contains(e.target)) {
+        e.stopPropagation();
+        e.preventDefault();
+        setShowSignatureMenu(false);
+        didClose = true;
+      }
+    };
+
+    if (showTemplateMenu || showSignatureMenu) {
+      document.addEventListener('click', handleClickOutside, true);
+    }
+    return () => {
+      document.removeEventListener('click', handleClickOutside, true);
+    };
+  }, [showTemplateMenu, showSignatureMenu]);
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -531,7 +561,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
               onChange={handleFileChange} 
             />
 
-            <div className="relative">
+            <div className="relative" ref={templateMenuRef}>
               <button
                  onClick={() => {setShowTemplateMenu(!showTemplateMenu); setShowSignatureMenu(false);}}
                  className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-gray-600 hover:border-[#00f3ff]/80 rounded-xl text-gray-400 hover:text-[#00f3ff] transition-all"
@@ -540,12 +570,6 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                  <FileText size={18} className="group-hover:scale-110 transition-transform" />
               </button>
               {showTemplateMenu && (
-                <>
-                 <div 
-                   className="fixed inset-0 z-[90]" 
-                   onClick={(e) => { e.stopPropagation(); setShowTemplateMenu(false); }}
-                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowTemplateMenu(false); }}
-                 />
                  <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-black/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
                    <div className="p-2 border-b border-white/10 text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vybrat Šablonu</div>
                    <button 
@@ -575,11 +599,10 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                      </div>
                    )}
                  </div>
-                </>
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative" ref={signatureMenuRef}>
               <button
                  onClick={() => {setShowSignatureMenu(!showSignatureMenu); setShowTemplateMenu(false);}}
                  className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-gray-600 hover:border-[#00f3ff]/80 rounded-xl text-gray-400 hover:text-[#00f3ff] transition-all"
@@ -588,12 +611,6 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                  <PenTool size={18} className="group-hover:scale-110 transition-transform" />
               </button>
               {showSignatureMenu && (
-                <>
-                 <div 
-                   className="fixed inset-0 z-[90]" 
-                   onClick={(e) => { e.stopPropagation(); setShowSignatureMenu(false); }}
-                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowSignatureMenu(false); }}
-                 />
                  <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-black/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
                    <div className="p-2 border-b border-white/10 text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vložit Podpis</div>
                    {savedSignatures.length === 0 ? (
@@ -620,7 +637,6 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                      </div>
                    )}
                  </div>
-                </>
               )}
             </div>
           </div>
