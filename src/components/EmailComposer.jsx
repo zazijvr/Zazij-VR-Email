@@ -519,6 +519,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                            onClick={() => {
                              if (t.subject) setSubject(t.subject);
                              setBody(t.body);
+                             bodyRef.current = t.body;
                              setShowTemplateMenu(false);
                            }}
                            className="p-3 hover:bg-[#00f3ff]/20 text-gray-300 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 truncate text-sm"
@@ -551,7 +552,11 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                          <div 
                            key={s.id} 
                            onClick={() => {
-                             setBody(prev => prev + (prev ? '<br><br>' : '') + s.body);
+                             setBody(prev => {
+                                const newBody = prev + (prev ? '<br><br>' : '') + s.body;
+                                bodyRef.current = newBody;
+                                return newBody;
+                             });
                              setShowSignatureMenu(false);
                            }}
                            className="p-3 hover:bg-[#00f3ff]/20 text-gray-300 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 text-sm"
