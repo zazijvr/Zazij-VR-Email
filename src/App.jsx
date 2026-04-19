@@ -55,33 +55,33 @@ function App() {
         }]);
 
         unlistenAction = await onAction(async (notification) => {
-           console.log("Kliknuto na notifikaci:", notification);
-           
-           try {
-             const win = getCurrentWindow();
-             await win.unminimize();
-             await win.show();
-             
-             // Agresivní hack na prokopnutí Linux (Wayland/Gnome) Focus zdi
-             await win.setAlwaysOnTop(true);
-             await win.setFocus();
-             setTimeout(() => {
-                win.setAlwaysOnTop(false);
-             }, 500);
-             
-             // Fallback if focus doesn't work
-             if (win.requestUserAttention) {
-                await win.requestUserAttention(1); // 1 = Critical
-             }
-           } catch(e) {
-             console.error(e);
-           }
+          console.log("Kliknuto na notifikaci:", notification);
+
+          try {
+            const win = getCurrentWindow();
+            await win.unminimize();
+            await win.show();
+
+            // Agresivní hack na prokopnutí Linux (Wayland/Gnome) Focus zdi
+            await win.setAlwaysOnTop(true);
+            await win.setFocus();
+            setTimeout(() => {
+              win.setAlwaysOnTop(false);
+            }, 500);
+
+            // Fallback if focus doesn't work
+            if (win.requestUserAttention) {
+              await win.requestUserAttention(1); // 1 = Critical
+            }
+          } catch (e) {
+            console.error(e);
+          }
         });
       } catch (err) {
         console.error("Nelze nastavit listener pro notifikace:", err);
       }
     };
-    
+
     setupNotificationListener();
 
     return () => {
@@ -167,68 +167,68 @@ function App() {
     // DEV MODE: Obejít Tauri a načíst token z GET URL (nebo z lokální paměti po F5)
     const params = new URLSearchParams(window.location.search);
     let devToken = params.get('devToken');
-    
+
     // Zkusit vytáhnout z paměti pro případ refreshnutí (F5) na webu
     if (!devToken && !window.__TAURI_INTERNALS__) {
-       devToken = sessionStorage.getItem('zazij_dev_token');
+      devToken = sessionStorage.getItem('zazij_dev_token');
     }
 
     if (devToken && !window.__TAURI_INTERNALS__) {
-       console.log("DEV MODE OVERRIDE: Nalezen devToken! Spouštím aplikaci v testovacím režimu bez napojení na Tauri backend.");
-       setGoogleToken(devToken);
-       sessionStorage.setItem('zazij_dev_token', devToken);
-       
-       // Smažeme devToken z URL lišty, aby se to uživateli pořád nepletlo do odkazů
-       if (params.get('devToken')) {
-          window.history.replaceState({}, document.title, "/");
-       }
-       
-       // Načteme skutečná data z Google, testér chce vidět svou vlastní mailovou schránku a obličej
-       fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-          headers: { Authorization: `Bearer ${devToken}` }
-       })
-       .then(res => res.json())
-       .then(data => {
+      console.log("DEV MODE OVERRIDE: Nalezen devToken! Spouštím aplikaci v testovacím režimu bez napojení na Tauri backend.");
+      setGoogleToken(devToken);
+      sessionStorage.setItem('zazij_dev_token', devToken);
+
+      // Smažeme devToken z URL lišty, aby se to uživateli pořád nepletlo do odkazů
+      if (params.get('devToken')) {
+        window.history.replaceState({}, document.title, "/");
+      }
+
+      // Načteme skutečná data z Google, testér chce vidět svou vlastní mailovou schránku a obličej
+      fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${devToken}` }
+      })
+        .then(res => res.json())
+        .then(data => {
           if (data.email) {
-             setUserInfo({ email: data.email, name: data.name, picture: data.picture });
+            setUserInfo({ email: data.email, name: data.name, picture: data.picture });
           } else {
-             // Token propadl nebo nemáme scopes
-             sessionStorage.removeItem('zazij_dev_token');
-             console.error("Profil nevrátil email, token je zřejmě mrtvý");
+            // Token propadl nebo nemáme scopes
+            sessionStorage.removeItem('zazij_dev_token');
+            console.error("Profil nevrátil email, token je zřejmě mrtvý");
           }
-       })
-       .catch(err => {
+        })
+        .catch(err => {
           console.error("Chyba načítání profilu z devTokenu:", err);
-       });
-       
-       return;
+        });
+
+      return;
     }
 
     // WEB OAUTH FALLBACK (Implicit Grant Flow)
     if (!window.__TAURI_INTERNALS__ && window.location.hash.includes('access_token')) {
-       // Google OAuth přesměroval zpět s #access_token=... v URL
-       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-       const accessToken = hashParams.get('access_token');
-       
-       if (accessToken) {
-          console.log("Úspěšný login webového prohlížeče! Detekován token v URL.");
-          // Smažeme Hash z adresní lišty aby URL nevypadalo ošklivě a nezůstal tam token
-          window.location.hash = ''; 
-          
-          setGoogleToken(accessToken);
-          
-          // U webového přihlášení musíme ručně načíst osobní info přes Google Profile API, protože Rust backend to teď neudělá.
-          fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-             headers: { Authorization: `Bearer ${accessToken}` }
-          })
+      // Google OAuth přesměroval zpět s #access_token=... v URL
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+
+      if (accessToken) {
+        console.log("Úspěšný login webového prohlížeče! Detekován token v URL.");
+        // Smažeme Hash z adresní lišty aby URL nevypadalo ošklivě a nezůstal tam token
+        window.location.hash = '';
+
+        setGoogleToken(accessToken);
+
+        // U webového přihlášení musíme ručně načíst osobní info přes Google Profile API, protože Rust backend to teď neudělá.
+        fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
           .then(res => res.json())
           .then(data => {
-             setUserInfo({ email: data.email, name: data.name, picture: data.picture });
+            setUserInfo({ email: data.email, name: data.name, picture: data.picture });
           })
           .catch(err => console.error("Chyba při načítání profilu u webového přihlášení:", err));
-          
-          return;
-       }
+
+        return;
+      }
     }
 
     checkSilentLogin();
@@ -238,7 +238,7 @@ function App() {
   // Takže každých 45 minut o něj nenápadně střelíme znova na backend server, aby neusnul e-mail panel.
   useEffect(() => {
     if (!googleToken) return;
-    
+
     // 45 minut = 45 * 60 * 1000 ms
     const intervalId = setInterval(() => {
       console.log("Preventivní záchrana tokenu: Google token vyprší za 15 minut, probíhá auto-refresh...");
@@ -272,22 +272,22 @@ function App() {
 
   const handleMoveCustomFolder = async (id, sourceName, targetName) => {
     if (!googleToken) return;
-    
+
     const basename = sourceName.split('/').pop();
     const newName = targetName ? `${targetName}/${basename}` : basename;
-    
+
     if (newName === sourceName) {
-        showAlert("Pořadí složek na jedné úrovni nelze svévolně měnit, Gmail je automaticky řadí abecedně.", 'Složka zde již je', 'info');
-        return;
+      showAlert("Pořadí složek na jedné úrovni nelze svévolně měnit, Gmail je automaticky řadí abecedně.", 'Složka zde již je', 'info');
+      return;
     }
 
     // Optimisticky uprav stát pro plynulost UX - rovnou i pro případné podsložky!
-    setCustomLabels(prev => 
+    setCustomLabels(prev =>
       prev.map(label => {
         if (label.id === id) return { ...label, name: newName };
         if (label.name.startsWith(sourceName + '/')) { // Podsložky
-           const suffix = label.name.substring(sourceName.length);
-           return { ...label, name: newName + suffix };
+          const suffix = label.name.substring(sourceName.length);
+          return { ...label, name: newName + suffix };
         }
         return label;
       })
@@ -299,7 +299,7 @@ function App() {
 
     // Otevřít složku plynule ihned po vhození, pokud byla sbalená:
     if (targetName) {
-       window.dispatchEvent(new CustomEvent('zazijvr_expand_folder', { detail: targetName }));
+      window.dispatchEvent(new CustomEvent('zazijvr_expand_folder', { detail: targetName }));
     }
 
     try {
@@ -318,15 +318,15 @@ function App() {
       });
 
       const refreshLabelsFromServer = async () => {
-         try {
-            const dataRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
-               headers: { Authorization: `Bearer ${googleToken}` }
-            });
-            if (dataRes.ok) {
-               const data = await dataRes.json();
-               if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
-            }
-         } catch(e) {}
+        try {
+          const dataRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
+            headers: { Authorization: `Bearer ${googleToken}` }
+          });
+          if (dataRes.ok) {
+            const data = await dataRes.json();
+            if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
+          }
+        } catch (e) { }
       };
 
       if (!res.ok) {
@@ -343,12 +343,12 @@ function App() {
       console.error(err);
       // Revert pravdou ze serveru
       try {
-         const dataRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', { headers: { Authorization: `Bearer ${googleToken}` } });
-         if (dataRes.ok) {
-            const data = await dataRes.json();
-            if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
-         }
-      } catch(e) {}
+        const dataRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', { headers: { Authorization: `Bearer ${googleToken}` } });
+        if (dataRes.ok) {
+          const data = await dataRes.json();
+          if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
+        }
+      } catch (e) { }
       if (activeFolder === newName) setActiveFolder(sourceName);
     }
   };
@@ -393,12 +393,12 @@ function App() {
         };
         try {
           const counts = {};
-          
+
           // Combine system and custom labels for counting
           const targets = Object.entries(folderMapping).map(([name, id]) => ({ name, id }));
           loadedUserLabels.forEach(l => targets.push({ name: l.name, id: l.id }));
 
-          for (const {name, id} of targets) {
+          for (const { name, id } of targets) {
             const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
               headers: { Authorization: `Bearer ${googleToken}` }
             });
@@ -436,131 +436,131 @@ function App() {
     <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-[#0f172a] relative md:border border-[#00f3ff]/20 shadow-2xl select-none">
 
 
-      <MobileHeader 
-         toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-         userEmail={userInfo?.email || (googleToken ? 'test@zazijvr.cz' : undefined)} 
-         logoutGoogleAccount={logoutGoogleAccount}
+      <MobileHeader
+        toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        userEmail={userInfo?.email || (googleToken ? 'test@zazijvr.cz' : undefined)}
+        logoutGoogleAccount={logoutGoogleAccount}
       />
 
-      
+
       <div className="flex flex-1 overflow-hidden relative">
-      
 
-      {/* Vizuální scelení celé aplikace shora - kyberpunkový top okraj rozhraní */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] z-30 md:z-[100] pointer-events-none"></div>
 
-      {/* Variace 1: Čistě CSS vykreslované obrazové pozadí pro dokonalý výkon */}
-      <div 
-        className="fixed top-0 left-0 w-full pointer-events-none opacity-[0.45] z-0" 
-        style={{ 
-          height: bgHeight,
-          backgroundImage: "url('/bg_trace.svg?v=3')", 
-          backgroundSize: 'cover', 
-          backgroundPosition: 'center' 
-        }} 
-      />
+        {/* Vizuální scelení celé aplikace shora - kyberpunkový top okraj rozhraní */}
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] z-30 md:z-[100] pointer-events-none"></div>
 
-      {/* Overlay pro mobilní menu */}
-      {isMobileMenuOpen && googleToken && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" 
-          onClick={() => setIsMobileMenuOpen(false)} 
+        {/* Variace 1: Čistě CSS vykreslované obrazové pozadí pro dokonalý výkon */}
+        <div
+          className="fixed top-0 left-0 w-full pointer-events-none opacity-[0.45] z-0"
+          style={{
+            height: bgHeight,
+            backgroundImage: "url('/bg_trace.svg?v=3')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'top center'
+          }}
         />
-      )}
 
-      {/* Levá navigace */}
-      <div className={`fixed inset-y-0 left-0 z-50 md:relative md:z-10 h-full shrink-0 overflow-visible transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${googleToken ? 'flex' : 'hidden'}`}>
-        {/* Levé spodní zrcadlové rozhraní sběrnice (Crisp část v Sidebar) */}
-        <div className="absolute left-0 bottom-0 h-[73px] md:h-[114px] w-[256px] overflow-hidden z-[30] pointer-events-none">
-           <div className="absolute left-0 bottom-0 w-full md:w-[400px] h-full md:h-[114px] opacity-40 rotate-180">
-             <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <defs>
-                 <filter id="bottomLeftMiniGlow" x="-20%" y="-20%" width="140%" height="140%">
-                   <feGaussianBlur stdDeviation="3" result="blur1" />
-                   <feGaussianBlur stdDeviation="8" result="blur2" />
-                   <feMerge>
-                       <feMergeNode in="blur2" />
-                       <feMergeNode in="blur1" />
-                       <feMergeNode in="SourceGraphic" />
-                   </feMerge>
-                 </filter>
-               </defs>
-               <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#bottomLeftMiniGlow)" />
-               <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlow)" />
-               <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#bottomLeftMiniGlow)" />
-               <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlow)" />
-               <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlow)" />
-               <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#bottomLeftMiniGlow)" />
-               <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#bottomLeftMiniGlow)" />
-               <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlow)" />
-               <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#bottomLeftMiniGlow)" />
-             </svg>
-           </div>
-        </div>
-
-        <Sidebar 
-          activeFolder={activeFolder} 
-          setActiveFolder={setActiveFolder} 
-          activeCalendarView={activeCalendarView}
-          setActiveCalendarView={setActiveCalendarView}
-          appMode={appMode}
-          setAppMode={setAppMode}
-          setIsSettingsOpen={setIsSettingsOpen}
-          unreadCounts={unreadCounts}
-          onComposeNew={() => setTriggerCompose(prev => prev + 1)}
-          onCreateNewEvent={() => setTriggerCreateEvent(prev => prev + 1)}
-          onMoveEmail={(moves) => setTriggerMove({ moves, ts: Date.now() })}
-          onMoveCustomFolder={handleMoveCustomFolder}
-          customLabels={customLabels}
-          onMobileClose={() => setIsMobileMenuOpen(false)}
-        />
-      </div>
-
-      {/* Hlavní obsahová oblast s plynulým maskováním na okrajích (pouze na desktopu, aby mobilní view šlo ostře ke kraji displeje) */}
-      <div 
-         className="flex-1 h-full z-10 relative overflow-hidden md:[mask-image:linear-gradient(to_right,transparent,black_15px,black_calc(100%-15px),transparent)]"
-      >
-        {/* Dekorativní hexagon maska napravo */}
-        <div className="absolute right-[-100px] top-[10%] w-[400px] h-[800px] bg-[#f800ff] opacity-5 mix-blend-screen blur-[100px] pointer-events-none rounded-[100%] z-0"></div>
-
-        {appMode === 'email' ? (
-           <EmailApp 
-             googleToken={googleToken} 
-             activeFolder={activeFolder} 
-             unreadCounts={unreadCounts} 
-             setUnreadCounts={setUnreadCounts}
-             triggerCompose={triggerCompose}
-             triggerMove={triggerMove}
-             loginWithGoogle={loginWithGoogle}
-             isVerticalLayout={isVerticalLayout}
-             customLabels={customLabels}
-             userEmail={userInfo?.email}
-           />
-        ) : (
-          <CalendarApp 
-             activeCalendarView={activeCalendarView} 
-             googleToken={googleToken} 
-             triggerCreateEvent={triggerCreateEvent} 
-             userEmail={userInfo?.email}
+        {/* Overlay pro mobilní menu */}
+        {isMobileMenuOpen && googleToken && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
-      </div>
 
-      {/* Skryté modální okno pro nastavení */}
-      <SettingsModal
-        isSettingsOpen={isSettingsOpen}
-        setIsSettingsOpen={setIsSettingsOpen}
-        googleToken={googleToken}
-        userInfo={userInfo}
-        loginWithGoogle={loginWithGoogle}
-        isVerticalLayout={isVerticalLayout}
-        setIsVerticalLayout={setIsVerticalLayout}
-        savedAccounts={savedAccounts}
-        switchGoogleAccount={switchGoogleAccount}
-        logoutGoogleAccount={logoutGoogleAccount}
-        customLabels={customLabels}
-        setCustomLabels={setCustomLabels}
-      />
+        {/* Levá navigace */}
+        <div className={`fixed inset-y-0 left-0 z-50 md:relative md:z-10 h-full shrink-0 overflow-visible transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${googleToken ? 'flex' : 'hidden'}`}>
+          {/* Levé spodní zrcadlové rozhraní sběrnice (Crisp část v Sidebar) */}
+          <div className="absolute left-0 bottom-0 h-[73px] md:h-[114px] w-[256px] overflow-hidden z-[30] pointer-events-none">
+            <div className="absolute left-0 bottom-0 w-full md:w-[400px] h-full md:h-[114px] opacity-40 rotate-180">
+              <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <filter id="bottomLeftMiniGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur1" />
+                    <feGaussianBlur stdDeviation="8" result="blur2" />
+                    <feMerge>
+                      <feMergeNode in="blur2" />
+                      <feMergeNode in="blur1" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#bottomLeftMiniGlow)" />
+                <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlow)" />
+                <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#bottomLeftMiniGlow)" />
+                <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlow)" />
+                <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlow)" />
+                <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#bottomLeftMiniGlow)" />
+                <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#bottomLeftMiniGlow)" />
+                <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlow)" />
+                <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#bottomLeftMiniGlow)" />
+              </svg>
+            </div>
+          </div>
+
+          <Sidebar
+            activeFolder={activeFolder}
+            setActiveFolder={setActiveFolder}
+            activeCalendarView={activeCalendarView}
+            setActiveCalendarView={setActiveCalendarView}
+            appMode={appMode}
+            setAppMode={setAppMode}
+            setIsSettingsOpen={setIsSettingsOpen}
+            unreadCounts={unreadCounts}
+            onComposeNew={() => setTriggerCompose(prev => prev + 1)}
+            onCreateNewEvent={() => setTriggerCreateEvent(prev => prev + 1)}
+            onMoveEmail={(moves) => setTriggerMove({ moves, ts: Date.now() })}
+            onMoveCustomFolder={handleMoveCustomFolder}
+            customLabels={customLabels}
+            onMobileClose={() => setIsMobileMenuOpen(false)}
+          />
+        </div>
+
+        {/* Hlavní obsahová oblast s plynulým maskováním na okrajích (pouze na desktopu, aby mobilní view šlo ostře ke kraji displeje) */}
+        <div
+          className="flex-1 h-full z-10 relative overflow-hidden md:[mask-image:linear-gradient(to_right,transparent,black_15px,black_calc(100%-15px),transparent)]"
+        >
+          {/* Dekorativní hexagon maska napravo */}
+          <div className="absolute right-[-100px] top-[10%] w-[400px] h-[800px] bg-[#f800ff] opacity-5 mix-blend-screen blur-[100px] pointer-events-none rounded-[100%] z-0"></div>
+
+          {appMode === 'email' ? (
+            <EmailApp
+              googleToken={googleToken}
+              activeFolder={activeFolder}
+              unreadCounts={unreadCounts}
+              setUnreadCounts={setUnreadCounts}
+              triggerCompose={triggerCompose}
+              triggerMove={triggerMove}
+              loginWithGoogle={loginWithGoogle}
+              isVerticalLayout={isVerticalLayout}
+              customLabels={customLabels}
+              userEmail={userInfo?.email}
+            />
+          ) : (
+            <CalendarApp
+              activeCalendarView={activeCalendarView}
+              googleToken={googleToken}
+              triggerCreateEvent={triggerCreateEvent}
+              userEmail={userInfo?.email}
+            />
+          )}
+        </div>
+
+        {/* Skryté modální okno pro nastavení */}
+        <SettingsModal
+          isSettingsOpen={isSettingsOpen}
+          setIsSettingsOpen={setIsSettingsOpen}
+          googleToken={googleToken}
+          userInfo={userInfo}
+          loginWithGoogle={loginWithGoogle}
+          isVerticalLayout={isVerticalLayout}
+          setIsVerticalLayout={setIsVerticalLayout}
+          savedAccounts={savedAccounts}
+          switchGoogleAccount={switchGoogleAccount}
+          logoutGoogleAccount={logoutGoogleAccount}
+          customLabels={customLabels}
+          setCustomLabels={setCustomLabels}
+        />
       </div>
     </div>
   );
