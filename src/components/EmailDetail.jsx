@@ -20,6 +20,7 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
   const [isPreparingForward, setIsPreparingForward] = useState(false);
   const [icsDetails, setIcsDetails] = useState({});
   const { showAlert } = useAlert();
+  const [iframeHeight, setIframeHeight] = useState('100%');
 
   const [copiedId, setCopiedId] = useState(null);
 
@@ -67,6 +68,10 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
         } catch (err) {
           console.error("Failed to open link via Tauri shell:", err);
         }
+      }
+      if (e.data && e.data.type === 'content-height') {
+        const height = Math.max(100, e.data.height);
+        setIframeHeight(`${height}px`);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -928,13 +933,16 @@ ${ccLine}
           )}
           </div>
           
-          <div className="flex-1 relative w-full h-full min-h-0 bg-transparent flex flex-col">
+          <div className="flex-1 relative w-full min-h-0 bg-transparent flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar">
             {/* Vizuální buffer (jemný stín) pod hlavičkou pro hladší mizející text při rolování mailu nahoru */}
             <div className="absolute top-0 left-0 w-full h-[24px] bg-gradient-to-b from-[#0a0f1d] to-transparent pointer-events-none z-[100] border-t border-black/20"></div>
-          {emailData?.htmlBody ? (
-            <iframe
+          
+            {emailData?.htmlBody ? (
+              <iframe
               title="Email Content"
-              className="w-full h-full border-none rounded-none md:rounded-2xl bg-transparent"
+              className="w-full shrink-0 border-none rounded-none md:rounded-2xl bg-transparent"
+              style={{ height: iframeHeight }}
+              scrolling="no"
               sandbox="allow-popups allow-same-origin allow-scripts"
               srcDoc={`
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
@@ -1041,6 +1049,10 @@ ${ccLine}
                     // 4. Aplikovat transform a znovu uzamknout scrollování s pojištěním, že neosekáváme vnitřek
                     applyTransform();
                     document.documentElement.style.overflowX = 'hidden';
+                    
+                    // 5. Odeslat novou výšku rodiči, aby nás správně roztáhl
+                    const fullScrollHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight);
+                    window.parent.postMessage({ type: 'content-height', height: (fullScrollHeight * stalyScale) + 50 }, '*');
                   }
 
                   // Okamžitá spoušť po nalití docu
