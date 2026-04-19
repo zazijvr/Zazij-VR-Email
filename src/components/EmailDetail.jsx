@@ -939,15 +939,10 @@ ${ccLine}
                     overflow-x: auto;
                   }
                   
-                  /* Naprosté zprůhlednění všech pozadí, ať sklem prosvítá ZažijVR modř */
-                  body, html, table, tr, td, div, span, font, center, tbody, thead { 
-                    background-color: transparent !important; 
-                    background: transparent !important;
-                  }
-                  
-                  /* Přebijeme generátory faktur: všechno co není aktivní odkaz obarvíme na bílo! */
-                  *:not(a):not(a *) {
-                    color: #e2e8f0 !important;
+                  /* Výchozí neutrální podklad pro čisté e-maily beze stylů. Plně nastylované faktury nebo Google karty si vykreslí své nativní neprůhledné pozadí! */
+                  body, html {
+                    background-color: #0a0f1d;
+                    color: #e2e8f0;
                   }
                   
                   /* Odstřelovač neviditelných prvků co rozbíjí layout (Sledovací pixely, dlouhé URL) */
