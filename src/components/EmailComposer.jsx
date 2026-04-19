@@ -59,6 +59,29 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     } catch(e) {}
   }, []);
 
+  const handleSaveCurrentAsTemplate = () => {
+    const title = window.prompt("Zadejte název, pod kterým se má tento e-mail uložit jako šablona:");
+    if (!title || !title.trim()) return;
+
+    try {
+      const templates = JSON.parse(localStorage.getItem('zazijvr_templates')) || [];
+      const newTemplate = {
+        id: Date.now().toString(),
+        title: title.trim(),
+        subject: subject,
+        body: bodyRef.current
+      };
+      
+      const newTemplates = [...templates, newTemplate];
+      localStorage.setItem('zazijvr_templates', JSON.stringify(newTemplates));
+      
+      setSavedTemplates(newTemplates);
+      setShowTemplateMenu(false);
+    } catch (err) {
+      console.error("Nepodařilo se uložit šablonu:", err);
+    }
+  };
+
   const handleUpgradeToReplyAll = () => {
      let allTo = [config?.originalFrom, config?.originalTo].filter(Boolean).join(', ');
      let allCc = config?.originalCc || '';
@@ -509,6 +532,12 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
               {showTemplateMenu && (
                  <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-black/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
                    <div className="p-2 border-b border-white/10 text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vybrat Šablonu</div>
+                   <button 
+                     onClick={(e) => { e.preventDefault(); handleSaveCurrentAsTemplate(); }}
+                     className="w-full px-3 py-2.5 bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 text-[#00f3ff] font-bold text-xs flex items-center justify-center gap-2 border-b border-[#00f3ff]/20 transition-colors"
+                   >
+                     <Save size={14} /> ULOŽIT JAKO ŠABLONU
+                   </button>
                    {savedTemplates.length === 0 ? (
                      <div className="p-4 text-xs text-gray-500 text-center font-semibold">Zatím nemáte žádné šablony.</div>
                    ) : (
