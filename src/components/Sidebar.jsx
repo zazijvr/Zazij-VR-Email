@@ -214,7 +214,10 @@ export default function Sidebar({
               onDragOver={(e) => handleDragOver(e, index)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index, folder.label)}
-              onClick={() => setActiveFolder(folder.label)}
+              onClick={() => {
+                 setActiveFolder(folder.label);
+                 if (onMobileClose) onMobileClose();
+              }}
               className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
                 isDragOver ? 'bg-[#00f3ff]/30 border border-[#00f3ff] scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20' :
                 isActive
@@ -319,7 +322,10 @@ export default function Sidebar({
                           : folder.name;
                        handleDrop(e, -1, targetPath);
                     }}
-                    onClick={() => setActiveFolder(folder.name)}
+                    onClick={() => {
+                       setActiveFolder(folder.name);
+                       if (onMobileClose) onMobileClose();
+                    }}
                     className={`relative flex items-center justify-between py-3 cursor-pointer transition-all duration-300 overflow-hidden ${
                       isDragOverInto ? 'bg-[#00f3ff]/30 border border-[#00f3ff] scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20 rounded-xl' :
                       isActive

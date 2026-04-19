@@ -473,6 +473,7 @@ function App() {
           onMoveEmail={(moves) => setTriggerMove({ moves, ts: Date.now() })}
           onMoveCustomFolder={handleMoveCustomFolder}
           customLabels={customLabels}
+          onMobileClose={() => setIsMobileMenuOpen(false)}
         />
       </div>
 
