@@ -12,15 +12,19 @@ export default function MobileHeader({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Check if the click was outside the dropdown container
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        event.stopPropagation();
+        event.preventDefault();
         setIsDropdownOpen(false);
       }
     };
     if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      // Use capture phase to intercept the click before it reaches other elements
+      document.addEventListener('click', handleClickOutside, true);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside, true);
     };
   }, [isDropdownOpen]);
 
