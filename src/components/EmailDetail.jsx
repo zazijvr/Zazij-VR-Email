@@ -432,9 +432,13 @@ ${ccLine}
   };
 
   useEffect(() => {
-    document.body.classList.add('email-detail-active');
+    if (selectedEmailId) {
+      document.body.classList.add('email-detail-active');
+    } else {
+      document.body.classList.remove('email-detail-active');
+    }
     return () => document.body.classList.remove('email-detail-active');
-  }, []);
+  }, [selectedEmailId]);
 
   useEffect(() => {
     if (!selectedEmailId || !googleToken) {
