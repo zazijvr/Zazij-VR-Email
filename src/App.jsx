@@ -162,7 +162,22 @@ function App() {
     if (devToken && !window.__TAURI_INTERNALS__) {
        console.log("DEV MODE OVERRIDE: Nalezen devToken v URL! Spouštím aplikaci v testovacím režimu bez napojení na Tauri backend.");
        setGoogleToken(devToken);
-       setUserInfo({ email: 'dev.tester@zazijvr.cz', name: 'ZVR Tester' }); // Mock
+       
+       // Smažeme devToken z URL lišty, aby se to uživateli pořád nepletlo do odkazů
+       window.history.replaceState({}, document.title, "/");
+       
+       // Načteme skutečná data z Google, testér chce vidět svou vlastní mailovou schránku a obličej
+       fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${devToken}` }
+       })
+       .then(res => res.json())
+       .then(data => {
+          setUserInfo({ email: data.email, name: data.name, picture: data.picture });
+       })
+       .catch(err => {
+          console.error("Chyba načítání profilu z devTokenu:", err);
+       });
+       
        return;
     }
 
