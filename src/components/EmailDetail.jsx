@@ -880,10 +880,11 @@ ${ccLine}
                     </button>
                     {isMoreMenuOpen && (
                       <>
-                        {/* Celostránkový neviditelný štít pro odchytnutí kliku mimo (zabrání kliku na linky) */}
+                        {/* Celostránkový neviditelný štít pro odchytnutí kliku mimo (zabrání kliku na linky a ghost clicks) */}
                         <div 
-                          className="fixed inset-0 z-[400] bg-transparent"
-                          onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); }}
+                          className="fixed inset-0 z-[400] bg-transparent touch-none"
+                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsMoreMenuOpen(false); }}
+                          onTouchStart={(e) => { e.stopPropagation(); e.preventDefault(); setIsMoreMenuOpen(false); }}
                         ></div>
                         
                         <div className="absolute top-14 right-[-10px] w-64 bg-black/95 backdrop-blur-2xl border border-[#00f3ff]/30 rounded-2xl shadow-[0_10px_50px_rgba(0,0,0,0.9),0_0_20px_rgba(0,243,255,0.2)] z-[410] flex flex-col p-2 gap-1 anim-ui-fade-in origin-top-right">
