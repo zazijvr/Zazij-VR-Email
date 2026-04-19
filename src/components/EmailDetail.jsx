@@ -598,7 +598,7 @@ ${ccLine}
             <ArrowLeft size={26} strokeWidth={2.5} />
           </button>
         )}
-        <div className="flex items-center gap-2 pr-0 animate-in slide-in-from-right fade-in duration-500 delay-150 fill-mode-both">
+        <div className="flex items-center gap-2 pr-0 animate-in slide-in-from-right-8 fade-in duration-500 delay-150 fill-mode-both">
           {emailData && (
             <button 
               onClick={toggleReadStatus} 
