@@ -602,7 +602,7 @@ ${ccLine}
         {onMobileBack && (
           <button 
             onClick={onMobileBack} 
-            className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all animate-in spin-in-[180deg] fade-in duration-500 fill-mode-both"
+            className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all animate-in spin-in-180 fade-in duration-500 fill-mode-both"
           >
             <ArrowLeft size={26} strokeWidth={2.5} />
           </button>
