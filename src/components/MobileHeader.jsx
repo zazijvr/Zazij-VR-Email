@@ -73,7 +73,7 @@ export default function MobileHeader({
       <div id="mobile-user" ref={dropdownRef} className={`relative z-50 transition-all duration-500 ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
         <button 
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-10 h-10 rounded-full bg-[#00f3ff]/10 border border-[#00f3ff]/40 flex items-center justify-center font-bold text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.6)] shadow-[inset_0_0_10px_rgba(248,0,255,0.1)] transition-transform active:scale-95 hover:border-[#00f3ff]"
+          className="w-10 h-10 rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 flex items-center justify-center font-extrabold text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-transform active:scale-95 hover:border-[#00f3ff]"
         >
           {getAvatarInitial(userEmail)}
         </button>
