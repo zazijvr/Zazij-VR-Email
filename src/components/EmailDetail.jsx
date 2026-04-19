@@ -413,6 +413,24 @@ ${ccLine}
     });
   };
 
+  const toggleReadStatus = async () => {
+    setIsMoreMenuOpen(false);
+    if (!emailData) return;
+    const isUnread = emailData.isUnread;
+    setEmailData(prev => ({ ...prev, isUnread: !isUnread }));
+    try {
+      await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(isUnread ? { removeLabelIds: ['UNREAD'] } : { addLabelIds: ['UNREAD'] })
+      });
+      if (onMobileBack && isUnread) setTimeout(onMobileBack, 150);
+    } catch (err) {
+      console.error(err);
+      setEmailData(prev => ({ ...prev, isUnread: isUnread }));
+    }
+  };
+
   useEffect(() => {
     if (!selectedEmailId || !googleToken) {
       setEmailData(null);
