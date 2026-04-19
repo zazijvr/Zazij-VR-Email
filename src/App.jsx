@@ -354,13 +354,11 @@ function App() {
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0f172a] relative border border-[#00f3ff]/20 shadow-2xl select-none">
 
 
-      {googleToken && (
-        <MobileHeader 
-           toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-           userEmail={userInfo?.email} 
-           logoutGoogleAccount={logoutGoogleAccount}
-        />
-      )}
+      <MobileHeader 
+         toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+         userEmail={userInfo?.email} 
+         logoutGoogleAccount={logoutGoogleAccount}
+      />
 
       
       <div className="flex flex-1 overflow-hidden relative">

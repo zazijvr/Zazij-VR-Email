@@ -13,7 +13,7 @@ export default function MobileHeader({
     <div className="md:hidden flex items-center justify-between px-4 h-16 bg-black/60 backdrop-blur-md border-b border-[#00f3ff]/20 z-40 relative">
       <button 
         onClick={toggleSidebar}
-        className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-colors active:scale-95"
+        className={`p-2 -ml-2 text-[#00f3ff] rounded-xl transition-all ${userEmail ? 'hover:bg-[#00f3ff]/10 active:scale-95' : 'blur-[3px] opacity-30 pointer-events-none'}`}
       >
         <Menu size={26} strokeWidth={2.5} />
       </button>
@@ -26,7 +26,7 @@ export default function MobileHeader({
         />
       </div>
 
-      <div className="relative z-50">
+      <div className={`relative z-50 transition-all ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
         <button 
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="w-10 h-10 rounded-full bg-[#00f3ff]/10 border border-[#00f3ff]/40 flex items-center justify-center font-bold text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.6)] shadow-[inset_0_0_10px_rgba(248,0,255,0.1)] transition-transform active:scale-95 hover:border-[#00f3ff]"
