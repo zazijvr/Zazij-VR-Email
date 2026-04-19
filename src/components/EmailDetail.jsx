@@ -955,6 +955,12 @@ ${ccLine}
                     line-height: 1.6;
                     padding: 2rem 2.5rem !important;
                   }
+
+                  @media (max-width: 600px) {
+                    body {
+                      padding: 10px !important;
+                    }
+                  }
                   
                   /* Linky držíme svítivě modré */
                   a, a * { color: #00f3ff !important; text-decoration: none !important; }
@@ -978,20 +984,34 @@ ${ccLine}
 
                   // Automatické zmenšení obřích tabulek tak, aby se na mobilu vešly na šířku
                   let stalyZoom = 1.0;
+                  
+                  function updateTransform() {
+                     document.body.style.transformOrigin = 'top left';
+                     document.body.style.transform = 'scale(' + stalyZoom + ')';
+                     document.body.style.width = (100 / stalyZoom) + '%';
+                  }
+
                   function fitToWidth() {
+                    // Reset stavu pro přesný re-kalkul šířky
+                    document.body.style.transform = 'none';
+                    document.body.style.width = 'auto';
+                    
                     const docWidth = document.documentElement.scrollWidth || document.body.scrollWidth;
                     const winWidth = window.innerWidth;
+                    
                     if (docWidth > winWidth && winWidth > 0 && docWidth > 0) {
-                       const ratio = winWidth / docWidth;
-                       stalyZoom = ratio;
-                       document.body.style.zoom = stalyZoom;
+                       stalyZoom = winWidth / docWidth;
+                    } else {
+                       stalyZoom = 1.0;
                     }
+                    updateTransform();
                   }
+
                   window.addEventListener('load', fitToWidth);
                   setTimeout(fitToWidth, 100);
                   setTimeout(fitToWidth, 500);
 
-                  // Izolovaný Pinch-To-Zoom pouze a jen pro tento obsah emailu!
+                  // Izolovaný Pinch-To-Zoom pouze a jen pro tento obsah emailu
                   let vzdalenostInit = 0;
                   let zoomInit = 1.0;
 
@@ -1001,13 +1021,12 @@ ${ccLine}
                         e.touches[0].clientX - e.touches[1].clientX,
                         e.touches[0].clientY - e.touches[1].clientY
                       );
-                      zoomInit = parseFloat(document.body.style.zoom) || 1.0;
+                      zoomInit = stalyZoom;
                     }
                   });
 
                   document.addEventListener('touchmove', function(e) {
                     if (e.touches.length === 2 && vzdalenostInit > 0) {
-                      // Blokování scrolování ven při zoomování
                       if (e.cancelable) e.preventDefault();
                       
                       const vzdalenostAktual = Math.hypot(
@@ -1016,13 +1035,13 @@ ${ccLine}
                       );
                       
                       const pomer = vzdalenostAktual / vzdalenostInit;
-                      let novyZoom = zoomInit * pomer;
+                      stalyZoom = zoomInit * pomer;
                       
                       // Zamezit přílišnému zmenšení/zvětšení
-                      if (novyZoom < 0.3) novyZoom = 0.3;
-                      if (novyZoom > 5.0) novyZoom = 5.0;
+                      if (stalyZoom < 0.2) stalyZoom = 0.2;
+                      if (stalyZoom > 5.0) stalyZoom = 5.0;
                       
-                      document.body.style.zoom = novyZoom;
+                      updateTransform();
                     }
                   }, { passive: false });
 
