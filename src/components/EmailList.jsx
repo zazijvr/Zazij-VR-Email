@@ -926,7 +926,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
                   className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#f800ff]/20 text-[#00f3ff] hover:text-[#f800ff] border border-transparent hover:border-[#f800ff]/50 transition-all font-bold uppercase tracking-wider text-xs"
                   title="Označit jako důležité"
                 >
-                  <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-[currentColor]/50' : 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse'}`}></div>
+                  <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-[#f800ff]/50' : 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse'}`}></div>
                   {isFirstStarred ? 'Odebrat' : 'Důležité'}
                 </button>
 
