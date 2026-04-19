@@ -9,6 +9,7 @@ import { saveNewContacts } from '../utils/contactManager';
 const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmail }) => {
   const [to, setTo] = useState(config?.initialTo || '');
   const [cc, setCc] = useState(config?.initialCc || '');
+  const [showCc, setShowCc] = useState(!!config?.initialCc);
   const [subject, setSubject] = useState(config?.initialSubject || config?.templateData?.subject || '');
   const getInitialBody = () => {
     let text = config?.initialBody || config?.templateData?.body || '';
@@ -366,23 +367,36 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             )}
 
             {config?.type !== 'template' && (
-              <>
-                <AutofillInput 
-                  label="Komu"
-                  value={to} 
-                  onChange={e => setTo(e.target.value)}
-                  userEmail={userEmail}
-                  className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a]  font-mono"
-                />
+              <div className="flex flex-col gap-4">
+                <div className="relative">
+                  <AutofillInput 
+                    label="Komu"
+                    value={to} 
+                    onChange={e => setTo(e.target.value)}
+                    userEmail={userEmail}
+                    className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 pr-14 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
+                  />
+                  {!showCc && (
+                    <button 
+                      onClick={(e) => { e.preventDefault(); setShowCc(true); }}
+                      className="absolute right-3 top-[30px] text-[10px] sm:text-xs font-bold text-[#00f3ff]/60 hover:text-[#00f3ff] px-2 py-1 bg-black/50 border border-[#00f3ff]/20 rounded transition-colors uppercase tracking-wider"
+                      title="Přidat Kopii (CC)"
+                    >
+                      + CC
+                    </button>
+                  )}
+                </div>
       
-                <AutofillInput 
-                  label="Kopie (CC)"
-                  value={cc} 
-                  onChange={e => setCc(e.target.value)}
-                  userEmail={userEmail}
-                  className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a]  font-mono"
-                />
-              </>
+                {showCc && (
+                  <AutofillInput 
+                    label="Kopie (CC)"
+                    value={cc} 
+                    onChange={e => setCc(e.target.value)}
+                    userEmail={userEmail}
+                    className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
+                  />
+                )}
+              </div>
             )}
   
             <div className="flex flex-col gap-2 relative">
@@ -431,10 +445,11 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto relative">
             <button
                onClick={() => fileInputRef.current?.click()}
-               className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-gray-600 hover:border-[#00f3ff] rounded-xl text-gray-400 hover:text-[#00f3ff] transition-all w-full sm:w-auto"
+               className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-gray-600 hover:border-[#00f3ff]/80 rounded-xl text-gray-400 hover:text-[#00f3ff] transition-all"
+               title="Příloha"
             >
                <Paperclip size={18} className="group-hover:scale-110 transition-transform" />
-               <span className="text-sm font-semibold tracking-wide">PŘÍLOHA</span>
+               <span className="hidden sm:block text-sm font-semibold tracking-wide">PŘÍLOHA</span>
             </button>
             <input 
               type="file" 
@@ -513,15 +528,15 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
             {config?.type === 'template' ? (
               <button 
                 onClick={handleSaveTemplate}
                 disabled={!templateTitle.trim()}
-                className="group flex flex-col items-center justify-center p-1 w-full sm:w-64 relative overflow-hidden rounded-xl border border-[#00f3ff]/50 hover:border-[#00f3ff]/80 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-[#00f3ff]/50 hover:border-[#00f3ff]/80 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#00f3ff]/10 group-hover:from-[#00f3ff]/30 group-hover:to-[#00f3ff]/30 transition-all duration-300"></div>
-                <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all">
+                <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all">
                    <Save size={18} className="text-[#00f3ff] group-hover:scale-110 transition-transform" />
                    <span className="font-black tracking-[0.1em] text-[#00f3ff] text-xs sm:text-sm group-hover:text-white transition-colors">ULOŽIT ŠABLONU</span>
                 </div>
@@ -531,32 +546,41 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 <button 
                   onClick={handleSaveDraft}
                   disabled={isSaving || isSending}
-                  className="group flex flex-col items-center justify-center p-1 w-full sm:w-48 lg:w-64 relative overflow-hidden rounded-xl border border-[#00f3ff]/30 hover:border-[#00f3ff]/60 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group flex-1 sm:w-48 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-white/10 hover:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <div className="absolute inset-0 bg-transparent group-hover:bg-[#00f3ff]/10 transition-all duration-300"></div>
-                  <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 transition-all">
+                  <div className="absolute inset-0 bg-transparent group-hover:bg-white/5 transition-all duration-300"></div>
+                  <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-3 px-2 flex items-center justify-center gap-2 transition-all">
                      {isSaving ? (
-                        <div className="w-5 h-5 rounded-full border-[2px] border-[#00f3ff]/30 border-t-[#00f3ff] animate-spin"></div>
+                        <div className="w-5 h-5 rounded-full border-[2px] border-gray-500 border-t-gray-300 animate-spin"></div>
                      ) : (
-                        <Save size={18} className="text-[#00f3ff] group-hover:scale-110 transition-transform" />
+                        <Save size={18} className="text-gray-500 group-hover:scale-110 transition-transform" />
                      )}
-                     <span className="font-black tracking-[0.1em] sm:tracking-[0.2em] text-[#00f3ff] text-xs sm:text-sm group-hover:text-white transition-colors">{isSaving ? 'UKLÁDÁM' : 'ULOŽIT KONCEPT'}</span>
+                     <span className="font-black tracking-widest text-gray-500 text-xs sm:text-sm group-hover:text-gray-300 transition-colors">
+                       {isSaving ? 'UKLÁDÁM' : (
+                         <>
+                           <span className="sm:hidden">ULOŽIT</span>
+                           <span className="hidden sm:inline">ULOŽIT KONCEPT</span>
+                         </>
+                       )}
+                     </span>
                   </div>
                 </button>
     
                 <button 
                   onClick={handleSend}
                   disabled={isSending || isSaving}
-                  className="group flex flex-col items-center justify-center p-1 w-full sm:w-48 lg:w-64 relative overflow-hidden rounded-xl border border-[#00f3ff]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-[#00f3ff]/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#00f3ff]/10 group-hover:from-[#00f3ff]/30 group-hover:to-[#00f3ff]/30 transition-all duration-300"></div>
-                  <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,243,255,0.2)] group-hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all">
+                  <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-3 px-2 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,243,255,0.2)] group-hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all">
                      {isSending ? (
                         <div className="w-5 h-5 rounded-full border-[2px] border-[#00f3ff]/30 border-t-[#00f3ff] animate-spin"></div>
                      ) : (
                         <Send size={18} className="text-[#00f3ff] group-hover:scale-110 transition-transform" />
                      )}
-                     <span className="font-black tracking-[0.1em] sm:tracking-[0.2em] text-[#00f3ff] text-xs sm:text-sm group-hover:text-white transition-colors">{isSending ? 'ODESÍLÁM' : 'ODESLAT'}</span>
+                     <span className="font-black tracking-widest text-[#00f3ff] text-xs sm:text-sm group-hover:text-white transition-colors">
+                       {isSending ? 'ODESÍLÁM' : 'ODESLAT'}
+                     </span>
                   </div>
                 </button>
               </>
