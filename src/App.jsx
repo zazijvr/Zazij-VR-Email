@@ -124,6 +124,14 @@ function App() {
   const [triggerCreateEvent, setTriggerCreateEvent] = useState(0);
   const [triggerMove, setTriggerMove] = useState(null);
 
+  const [bgHeight, setBgHeight] = useState('100vh');
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const h = window.screen?.height ? `${Math.max(window.screen.height, window.innerHeight)}px` : '100vh';
+      setBgHeight(h);
+    }
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -443,8 +451,9 @@ function App() {
 
       {/* Variace 1: Čistě CSS vykreslované obrazové pozadí pro dokonalý výkon */}
       <div 
-        className="fixed top-0 left-0 w-full h-[100lvh] md:h-full pointer-events-none opacity-[0.45] z-0" 
+        className="fixed top-0 left-0 w-full pointer-events-none opacity-[0.45] z-0" 
         style={{ 
+          height: bgHeight,
           backgroundImage: "url('/bg_trace.svg?v=3')", 
           backgroundSize: 'cover', 
           backgroundPosition: 'top center' 

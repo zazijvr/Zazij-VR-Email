@@ -118,7 +118,7 @@ export default function MobileHeader({
         <img
           src="/cropped-logo-neon-pruhledna-150x50.png"
           alt="ZažijVR"
-          className={`h-7 object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none transition-all duration-300 ease-in-out absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${isSearchActive ? 'opacity-0 invisible -translate-y-6 scale-95' : 'opacity-100 visible -translate-y-1/2 scale-100'}`}
+          className={`h-7 object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none transition-all duration-500 ease-out absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${isSearchActive ? 'opacity-0 invisible scale-50 blur-md' : 'opacity-100 visible scale-100 blur-0'}`}
         />
       </div>
 
