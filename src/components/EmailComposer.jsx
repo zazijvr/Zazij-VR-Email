@@ -543,7 +543,8 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 <>
                  <div 
                    className="fixed inset-0 z-[90]" 
-                   onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setShowTemplateMenu(false); }}
+                   onClick={(e) => { e.stopPropagation(); setShowTemplateMenu(false); }}
+                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowTemplateMenu(false); }}
                  />
                  <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-black/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
                    <div className="p-2 border-b border-white/10 text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vybrat Šablonu</div>
@@ -590,7 +591,8 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 <>
                  <div 
                    className="fixed inset-0 z-[90]" 
-                   onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setShowSignatureMenu(false); }}
+                   onClick={(e) => { e.stopPropagation(); setShowSignatureMenu(false); }}
+                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowSignatureMenu(false); }}
                  />
                  <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-black/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
                    <div className="p-2 border-b border-white/10 text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vložit Podpis</div>
