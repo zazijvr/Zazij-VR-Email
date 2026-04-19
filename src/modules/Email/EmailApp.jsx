@@ -378,13 +378,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                    </>
                 )}
                 
-                {selectedEmailId && (
-                  <div className="md:hidden flex items-center p-3 border-b border-[#00f3ff]/20 bg-black z-20 shadow-[0_0_20px_rgba(0,0,0,0.8)]">
-                    <button onClick={() => setSelectedEmailId(null)} className="text-[#00f3ff] font-bold tracking-widest flex items-center gap-3 px-4 py-3 hover:bg-[#00f3ff]/10 rounded-xl transition-all">
-                      <span className="text-2xl leading-none">←</span> ZPĚT DO SCHRÁNKY
-                    </button>
-                  </div>
-                )}
+                {/* Mobilní lišta byla přesunuta do komponenty EmailDetail pro snazší integraci do jednoho řádku */}
 
                 <EmailDetail
                   googleToken={googleToken}
@@ -394,6 +388,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                   onTrash={selectedEmailId ? () => handleGlobalTrash(selectedEmailId) : undefined}
                   onRestore={selectedEmailId ? () => handleGlobalRestore(selectedEmailId) : undefined}
                   onSpam={selectedEmailId ? () => handleGlobalSpam(selectedEmailId) : undefined}
+                  onMobileBack={() => setSelectedEmailId(null)}
                   onActionReply={(config) => setComposerConfig(config)}
                   autoResumeDraftId={autoResumeDraftId}
                   onDraftResumed={() => setAutoResumeDraftId(null)}

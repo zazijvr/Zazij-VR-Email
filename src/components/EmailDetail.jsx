@@ -577,9 +577,33 @@ ${ccLine}
            if (emailData?.isDraft) handleResumeDraft(emailData);
         }}
       >
+        {/* --- MOBILE TOP BAR --- */}
+        <div className="md:hidden flex items-center justify-between px-2 py-3 border-b border-[#00f3ff]/20 bg-[#0f172a] z-20 shadow-[0_5px_15px_rgba(0,0,0,0.5)] w-full">
+          {onMobileBack && (
+            <button onClick={onMobileBack} className="text-[#00f3ff] p-2 hover:bg-[#00f3ff]/10 rounded-xl transition-all">
+              <ArrowLeft size={24} />
+            </button>
+          )}
+          <div className="flex items-center gap-2 pr-2">
+            {emailData && (
+              <button 
+                onClick={toggleReadStatus} 
+                className={`p-2 rounded-xl transition-all ${emailData.isUnread ? 'text-[#00f3ff] bg-[#00f3ff]/10' : 'text-white/50 hover:text-white/80 hover:bg-white/10'}`}
+                title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
+              >
+                {emailData.isUnread ? <Mail size={22} /> : <MailOpen size={22} />}
+              </button>
+            )}
+            {onTrash && (
+              <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="p-2 rounded-xl text-[#ef4444]/80 hover:text-[#ef4444] hover:bg-[#ef4444]/20 transition-all">
+                <Trash2 size={22} />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Detail Hlaviček */}
-        <div className="shrink-0 px-4 py-5 md:p-8 border-b border-[#00f3ff]/10 bg-black/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-10 flex flex-col gap-4 relative w-full overflow-hidden">
+        <div className="shrink-0 px-4 py-4 md:p-8 border-b border-[#00f3ff]/10 bg-black/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-10 flex flex-col gap-4 relative w-full overflow-hidden">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full">
             <div className="flex-1 min-w-0 w-full">
               {emailData?.isDraft && (
@@ -596,77 +620,22 @@ ${ccLine}
                 </div>
               )}
               <div className="flex items-center gap-3 group w-full">
-                <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-md tracking-wide leading-tight break-words">
+                <h1 className="text-lg md:text-3xl font-bold md:font-black text-white drop-shadow-md tracking-wide leading-tight break-words">
                   {emailData?.subject}
                 </h1>
                 {emailData?.subject && (
                   <button 
                     onClick={() => handleCopyToClipboard(emailData.subject, 'subject')}
-                    className="opacity-20 hover:opacity-100 hover:bg-white/10 transition-all p-2 rounded-lg text-white mt-1 shrink-0" 
+                    className="opacity-20 hover:opacity-100 hover:bg-white/10 transition-all p-1 md:p-2 rounded-lg text-white shrink-0" 
                     title="Kopírovat předmět"
                   >
-                    {copiedId === 'subject' ? <Check size={20} className="text-green-400" /> : <Copy size={20} />}
+                    {copiedId === 'subject' ? <Check size={14} className="md:w-5 md:h-5 text-green-400" /> : <Copy size={14} className="md:w-5 md:h-5" />}
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center flex-wrap gap-2 shrink-0 w-full md:w-auto mt-2 md:mt-0">
-               {/* ---------------- MOBILE ACTION MENU (3-dots) ---------------- */}
-               <div className="md:hidden flex items-center justify-end w-full gap-2 relative">
-                 {onActionReply && !emailData?.isDraft && (
-                    <button
-                      onClick={handleReply}
-                      className="p-2 px-4 rounded-xl font-bold tracking-widest text-[#00f3ff] bg-[#00f3ff]/10 border border-[#00f3ff]/20 flex items-center gap-2"
-                    >
-                      <Reply size={20} /> Odpovědět
-                    </button>
-                 )}
-                 <div className="relative" ref={moreMenuRef}>
-                    <button
-                      onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                      className="p-2 rounded-xl text-white/70 bg-white/5 border border-white/10"
-                    >
-                      <MoreVertical size={22} />
-                    </button>
-                    {isMoreMenuOpen && (
-                      <div className="absolute top-12 right-0 w-56 bg-black/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 flex flex-col p-2 gap-1 animate-in fade-in slide-in-from-top-2">
-                        {onActionReply && !emailData?.isDraft && (
-                          <>
-                            <button onClick={() => { setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
-                              <ReplyAll size={18} /> Odpovědět všem
-                            </button>
-                            <button onClick={() => { setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
-                              <Forward size={18} /> Přeposlat
-                            </button>
-                            <div className="w-full h-px bg-white/10 my-1"></div>
-                          </>
-                        )}
-                        <button onClick={async () => {
-                           setIsMoreMenuOpen(false);
-                           const currentIsStarred = emailData.isStarred;
-                           setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
-                           try {
-                             await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
-                               method: 'POST',
-                               headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
-                               body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
-                             });
-                           } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
-                        }} className={`flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 w-full text-left ${emailData.isStarred ? 'text-[#f800ff]' : 'text-white/80'}`}>
-                          <Star size={18} fill={emailData.isStarred ? "currentColor" : "none"} /> {emailData.isStarred ? "Odebrat prioritu" : "Důležité"}
-                        </button>
-                        
-                        <div className="w-full h-px bg-white/10 my-1"></div>
-                        {onTrash && (
-                          <button onClick={() => { setIsMoreMenuOpen(false); onTrash(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#ef4444]/20 text-[#ef4444] w-full text-left">
-                            <Trash2 size={18} /> Smazat
-                          </button>
-                        )}
-                      </div>
-                    )}
-                 </div>
-               </div>
+            <div className="flex items-center flex-wrap gap-2 shrink-0 md:w-auto mt-2 md:mt-0">
 
                {/* ---------------- DESKTOP ACTIONS ---------------- */}
                <div className="hidden md:flex items-center gap-2">
@@ -769,25 +738,89 @@ ${ccLine}
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-start justify-between text-sm gap-3 w-full">
-            <div className="flex items-start gap-3 w-full md:w-auto min-w-0">
-              <div className="shrink-0 w-10 h-10 rounded-full bg-[#00f3ff]/20 text-[#00f3ff] font-bold text-lg flex items-center justify-center border border-[#00f3ff]/50 shadow-[0_0_10px_rgba(0,243,255,0.2)]">
-                {emailData?.from?.match(/[\p{L}\p{N}]/u)?.[0]?.toUpperCase() || emailData?.from?.charAt(0)?.toUpperCase()}
-              </div>
-              <div className="flex flex-col overflow-hidden pr-4 w-full">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-[#00f3ff] text-xl tracking-wide leading-tight truncate max-w-xl">{emailData?.from}</span>
-                  {emailData?.rawFrom && (
-                    <button onClick={() => handleCopyToClipboard(emailData.rawFrom, 'from')} className="opacity-60 hover:opacity-100 hover:bg-[#00f3ff]/20 transition-all p-1.5 rounded-lg text-[#00f3ff]" title="Kopírovat plnou adresu odesílatele">
-                      {copiedId === 'from' ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
-                    </button>
-                  )}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm gap-3 w-full">
+            <div className="flex items-center justify-between w-full md:w-auto min-w-0">
+              <div className="flex items-start gap-3 w-full md:w-auto min-w-0">
+                <div className="shrink-0 w-10 h-10 rounded-full bg-[#00f3ff]/20 text-[#00f3ff] font-bold text-lg flex items-center justify-center border border-[#00f3ff]/50 shadow-[0_0_10px_rgba(0,243,255,0.2)]">
+                  {emailData?.from?.match(/[\p{L}\p{N}]/u)?.[0]?.toUpperCase() || emailData?.from?.charAt(0)?.toUpperCase()}
                 </div>
-                <div className="flex flex-col text-gray-400 text-xs tracking-wider mt-0.5 max-w-full gap-1">
-                  {emailData?.to && (
-                    <div className="flex items-center gap-2">
-                      <span className="truncate max-w-xl" title={emailData.to}>Komu: <span className="opacity-70">{emailData.to}</span></span>
-                      <button onClick={() => handleCopyToClipboard(emailData.to, 'to')} className="opacity-50 hover:opacity-100 hover:bg-white/10 transition-all p-1 rounded-md text-white/80" title="Kopírovat adresu">
+                <div className="flex flex-col overflow-hidden pr-0 w-full">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-[#00f3ff] text-lg md:text-xl tracking-wide leading-tight truncate max-w-[150px] md:max-w-xl">{emailData?.from}</span>
+                    {emailData?.rawFrom && (
+                      <button onClick={() => handleCopyToClipboard(emailData.rawFrom, 'from')} className="opacity-60 hover:opacity-100 hover:bg-[#00f3ff]/20 transition-all p-1 rounded-lg text-[#00f3ff]" title="Kopírovat plnou adresu odesílatele">
+                        {copiedId === 'from' ? <Check size={14} className="md:w-4 md:h-4 text-green-400" /> : <Copy size={14} className="md:w-4 md:h-4" />}
+                      </button>
+                    )}
+                    <span className="text-gray-400 font-semibold md:hidden ml-1">{emailData?.date}</span>
+                  </div>
+                  <div className="flex flex-col text-gray-400 text-xs tracking-wider mt-0.5 max-w-full gap-1">
+                    {emailData?.to && (
+                      <div className="flex items-center gap-2">
+                        <span className="truncate max-w-xl" title={emailData.to}>Komu: <span className="opacity-70">{emailData.to}</span></span>
+                        <button onClick={() => handleCopyToClipboard(emailData.to, 'to')} className="opacity-50 hover:opacity-100 hover:bg-white/10 transition-all p-1 rounded-md text-white/80" title="Kopírovat adresu">
+                          {copiedId === 'to' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    )}
+                    {emailData?.cc && (
+                      <div className="flex items-center gap-2">
+                        <span className="truncate max-w-xl" title={emailData.cc}>Kopie: <span className="opacity-70">{emailData.cc}</span></span>
+                        <button onClick={() => handleCopyToClipboard(emailData.cc, 'cc')} className="opacity-50 hover:opacity-100 hover:bg-white/10 transition-all p-1 rounded-md text-white/80" title="Kopírovat adresu">
+                          {copiedId === 'cc' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="md:hidden flex items-center gap-1 shrink-0">
+                 {onActionReply && !emailData?.isDraft && (
+                    <button onClick={handleReply} className="p-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all shadow-[0_0_10px_rgba(0,243,255,0.2)]">
+                      <Reply size={22} />
+                    </button>
+                 )}
+                 <div className="relative" ref={moreMenuRef}>
+                    <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className="p-2 rounded-xl text-white/70 hover:bg-white/10 transition-all">
+                      <MoreVertical size={22} />
+                    </button>
+                    {isMoreMenuOpen && (
+                      <div className="absolute top-10 right-0 w-56 bg-black/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 flex flex-col p-2 gap-1 animate-in fade-in slide-in-from-top-2">
+                        {onActionReply && !emailData?.isDraft && (
+                          <button onClick={() => { setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
+                            <ReplyAll size={18} /> Odpovědět všem
+                          </button>
+                        )}
+                        {onActionReply && !emailData?.isDraft && (
+                          <button onClick={() => { setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
+                            <Forward size={18} /> Přeposlat
+                          </button>
+                        )}
+                        <div className="w-full h-px bg-white/10 my-1"></div>
+                        <button onClick={async () => {
+                           setIsMoreMenuOpen(false);
+                           const currentIsStarred = emailData.isStarred;
+                           setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
+                           try {
+                             await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+                               method: 'POST',
+                               headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+                               body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
+                             });
+                           } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
+                        }} className={`flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 w-full text-left ${emailData.isStarred ? 'text-[#f800ff]' : 'text-white/80'}`}>
+                          <Star size={18} fill={emailData.isStarred ? "currentColor" : "none"} /> {emailData.isStarred ? "Odebrat prioritu" : "Důležité"}
+                        </button>
+                        <button onClick={toggleReadStatus} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
+                          {emailData.isUnread ? <Mail size={18} /> : <MailOpen size={18} />} {emailData.isUnread ? "Značit jako přečtené" : "Značit jako nepřečtené"}
+                        </button>
+                      </div>
+                    )}
+                 </div>
+              </div>
+            </div>
+            <span className="hidden md:block shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10 md:self-auto">{emailData?.date}</span>
+          </div>
                         {copiedId === 'to' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
                       </button>
                     </div>
