@@ -783,7 +783,7 @@ ${ccLine}
         </div>
 
         {/* Samotné Iframe Tělo zprávy (Flush to edges na mobilu, rámeček jen jako horní dělící linka pro plynulost) */}
-        <div className="flex-1 flex flex-col w-full max-w-5xl mx-auto p-0 m-0 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-hidden bg-[#0a0f1d] relative">
+        <div className="flex-1 flex flex-col w-full max-w-5xl mx-auto p-0 m-0 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative">
           {/* Sender Info Block */}
           <div className="shrink-0 w-full px-4 py-3 md:px-6 md:py-4 border-b border-white/5 bg-[#0a0f1d] z-20">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm gap-3 w-full">
@@ -933,10 +933,7 @@ ${ccLine}
           )}
           </div>
           
-          <div className="flex-1 relative w-full min-h-0 bg-transparent flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar">
-            {/* Vizuální buffer (jemný stín) pod hlavičkou pro hladší mizející text při rolování mailu nahoru */}
-            <div className="absolute top-0 left-0 w-full h-[24px] bg-gradient-to-b from-[#0a0f1d] to-transparent pointer-events-none z-[100] border-t border-black/20"></div>
-          
+          <div className="flex-1 relative w-full min-h-0 bg-transparent flex flex-col pt-4">
             {emailData?.htmlBody ? (
               <iframe
               title="Email Content"
