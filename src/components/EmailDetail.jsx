@@ -19,7 +19,24 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
   const [previewBlob, setPreviewBlob] = useState(null);
   const [isPreparingForward, setIsPreparingForward] = useState(false);
   const [icsDetails, setIcsDetails] = useState({});
-  const { showAlert } = useAlert();
+  const { showAlert, showConfirm } = useAlert();
+  const handleTrashClick = (e) => {
+    if (e) e.stopPropagation();
+    if (emailData?.labelIds?.includes('TRASH')) {
+      showConfirm(
+        'Tímto trvale odstraníš konverzaci z koše. Tuto akci nelze vzít zpět. Opravdu chceš pokračovat?',
+        'Trvalé smazání',
+        () => {
+          if (onMobileBack) onMobileBack();
+          if (onTrash) onTrash();
+        },
+        { confirmText: 'Smazat navždy', type: 'error' }
+      );
+    } else {
+      if (onMobileBack) onMobileBack();
+      if (onTrash) onTrash();
+    }
+  };
   const [iframeHeight, setIframeHeight] = useState('100%');
 
   const [copiedId, setCopiedId] = useState(null);
@@ -688,7 +705,10 @@ ${ccLine}
               </button>
             )}
             {onTrash && (
-              <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/80 text-[#ef4444] drop-shadow-[0_0_15px_rgba(239,68,68,1)] shadow-[inset_0_0_20px_rgba(239,68,68,0.4)] transition-all active:scale-95 hover:bg-[#ef4444]/20">
+              <button 
+                onClick={handleTrashClick} 
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/80 text-[#ef4444] drop-shadow-[0_0_15px_rgba(239,68,68,1)] shadow-[inset_0_0_20px_rgba(239,68,68,0.4)] transition-all active:scale-95 hover:bg-[#ef4444]/20"
+              >
                 <Trash2 size={20} />
               </button>
             )}
@@ -839,7 +859,7 @@ ${ccLine}
 
               {onTrash && (
                 <button
-                  onClick={onTrash}
+                  onClick={handleTrashClick}
                   className="p-2 rounded-xl text-[#ef4444]/70 bg-[#ef4444]/5 border border-[#ef4444]/20 hover:text-[#ef4444] hover:bg-[#ef4444]/15 hover:border-[#ef4444]/50 transition-all shadow-[0_0_5px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
                   title="Smazat (Delete)"
                 >

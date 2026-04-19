@@ -160,7 +160,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   const [showOnlyUnread, setShowOnlyUnread] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const { showAlert } = useAlert();
+  const { showAlert, showConfirm } = useAlert();
 
   const [mobileDeletePending, setMobileDeletePending] = useState(null);
 
@@ -248,14 +248,26 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const handleTrashEmail = (email, e) => {
-    if (e) e.stopPropagation();
+  const performTrash = (email) => {
     if (email.isUnread && setUnreadCounts) {
       setUnreadCounts(prev => ({ ...prev, [activeFolder]: Math.max(0, (prev[activeFolder] || 0) - 1) }));
     }
-    
     setEmails(prev => prev.filter(p => p.id !== email.id));
     if (onTrash) onTrash(email);
+  };
+
+  const handleTrashEmail = (email, e) => {
+    if (e) e.stopPropagation();
+    if (activeFolder === 'Koš') {
+      showConfirm(
+        'Tímto trvale odstraníš konverzaci z koše. Tuto akci nelze vzít zpět. Opravdu chceš pokračovat?',
+        'Trvalé smazání',
+        () => performTrash(email),
+        { confirmText: 'Smazat navždy', type: 'error' }
+      );
+    } else {
+      performTrash(email);
+    }
   };
 
   const handleSpamEmail = (email, e) => {
@@ -550,10 +562,22 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
   const handleBulkTrash = () => {
     const selected = emails.filter(e => selectedMailIds.has(e.id));
-    selected.forEach(email => {
-      handleTrashEmail(email, null);
-    });
-    setSelectedMailIds(new Set());
+    if (selected.length === 0) return;
+    
+    if (activeFolder === 'Koš') {
+      showConfirm(
+        `Opravdu chceš trvale smazat ${selected.length} konverzací? Tuto akci nelze vzít zpět.`,
+        'Trvalé hromadné smazání',
+        () => {
+          selected.forEach(email => performTrash(email));
+          setSelectedMailIds(new Set());
+        },
+        { confirmText: 'Smazat navždy', type: 'error' }
+      );
+    } else {
+      selected.forEach(email => performTrash(email));
+      setSelectedMailIds(new Set());
+    }
   };
 
   const handleBulkRestore = () => {

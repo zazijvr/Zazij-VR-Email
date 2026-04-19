@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, CheckCircle, XCircle, Info, X } from 'lucide-react';
 
-export default function CustomAlert({ isOpen, title, message, type = 'info', onClose }) {
+export default function CustomAlert({ isOpen, title, message, type = 'info', onClose, onConfirm, confirmText, cancelText }) {
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -80,13 +80,27 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
           </div>
         </div>
 
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={onClose}
-            className={`px-6 py-2.5 rounded-lg border font-bold tracking-widest uppercase transition-all ${colorClass} ${borderClass} hover:bg-white/5 hover:scale-105`}
-          >
-            ROZUMÍM
-          </button>
+        <div className="mt-4 flex gap-3 justify-end">
+          {onConfirm ? (
+             <>
+               <button onClick={onClose} className="px-6 py-2.5 rounded-lg border border-gray-600/50 font-bold tracking-widest uppercase transition-all text-gray-400 hover:text-white hover:bg-white/10 hover:border-gray-500">
+                 {cancelText || 'Zrušit'}
+               </button>
+               <button
+                 onClick={() => { onConfirm(); onClose(); }}
+                 className={`shadow-[0_0_15px_rgba(0,0,0,0.5)] px-6 py-2.5 rounded-lg border font-bold tracking-widest uppercase transition-all ${colorClass} ${borderClass} hover:bg-[currentColor]/10 hover:scale-105`}
+               >
+                 {confirmText || 'Potvrdit'}
+               </button>
+             </>
+          ) : (
+            <button
+              onClick={onClose}
+              className={`px-6 py-2.5 rounded-lg border font-bold tracking-widest uppercase transition-all ${colorClass} ${borderClass} hover:bg-[currentColor]/10 hover:scale-105`}
+            >
+              ROZUMÍM
+            </button>
+          )}
         </div>
       </div>
     </div>,

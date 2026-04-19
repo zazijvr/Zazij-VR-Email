@@ -18,12 +18,26 @@ export const AlertProvider = ({ children }) => {
     setAlertConfig({ message, title, type, isOpen: true });
   }, []);
 
+  const showConfirm = useCallback((message, title = 'Potvrzení', confirmCallback, options = {}) => {
+    setAlertConfig({ 
+      message, 
+      title, 
+      type: options.type || 'warning', 
+      isOpen: true, 
+      onConfirm: () => {
+        if (confirmCallback) confirmCallback();
+      },
+      confirmText: options.confirmText || 'Potvrdit',
+      cancelText: options.cancelText || 'Zrušit'
+    });
+  }, []);
+
   const hideAlert = useCallback(() => {
     setAlertConfig(prev => (prev ? { ...prev, isOpen: false } : null));
   }, []);
 
   return (
-    <AlertContext.Provider value={{ showAlert }}>
+    <AlertContext.Provider value={{ showAlert, showConfirm }}>
       {children}
       {alertConfig && (
         <CustomAlert
@@ -32,6 +46,9 @@ export const AlertProvider = ({ children }) => {
           message={alertConfig.message}
           type={alertConfig.type}
           onClose={hideAlert}
+          onConfirm={alertConfig.onConfirm}
+          confirmText={alertConfig.confirmText}
+          cancelText={alertConfig.cancelText}
         />
       )}
     </AlertContext.Provider>
