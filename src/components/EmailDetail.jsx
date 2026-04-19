@@ -587,38 +587,42 @@ ${ccLine}
 
   // Samotný E-mail čtecí panel
   return (
-    <div className={`flex-1 flex flex-col bg-[#0f172a] overflow-hidden fixed inset-0 z-50 md:relative md:inset-auto md:z-auto ${slideAnimationClass}`}>
+    <div className="flex-1 flex flex-col bg-[#0f172a] overflow-hidden fixed inset-0 z-[60] md:relative md:inset-auto md:z-auto animate-in fade-in duration-300">
+      {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER --- */}
+      <div className="md:hidden flex items-center justify-between px-4 h-16 bg-[#0f172a] border-b border-[#00f3ff]/20 z-20 shadow-[0_5px_15px_rgba(0,0,0,0.5)] w-full shrink-0">
+        {onMobileBack && (
+          <button 
+            onClick={onMobileBack} 
+            className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all animate-in spin-in-[180deg] fade-in duration-500 fill-mode-both"
+          >
+            <ArrowLeft size={26} strokeWidth={2.5} />
+          </button>
+        )}
+        <div className="flex items-center gap-2 pr-0 animate-in slide-in-from-right fade-in duration-500 delay-150 fill-mode-both">
+          {emailData && (
+            <button 
+              onClick={toggleReadStatus} 
+              className={`p-2 rounded-xl transition-all ${emailData.isUnread ? 'text-[#00f3ff] bg-[#00f3ff]/10' : 'text-white/50 hover:text-white/80 hover:bg-white/10'}`}
+              title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
+            >
+              {emailData.isUnread ? <Mail size={22} /> : <MailOpen size={22} />}
+            </button>
+          )}
+          {onTrash && (
+            <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="p-2 rounded-xl text-[#ef4444]/80 hover:text-[#ef4444] hover:bg-[#ef4444]/20 transition-all">
+              <Trash2 size={22} />
+            </button>
+          )}
+        </div>
+      </div>
+
       <div 
         key={emailData?.messageId || "loading"} 
-        className="flex-1 flex flex-col h-full overflow-hidden"
+        className={`flex-1 flex flex-col h-full overflow-hidden ${slideAnimationClass}`}
         onDoubleClick={() => {
            if (emailData?.isDraft) handleResumeDraft(emailData);
         }}
       >
-        {/* --- MOBILE TOP BAR --- */}
-        <div className="md:hidden flex items-center justify-between px-2 py-3 border-b border-[#00f3ff]/20 bg-[#0f172a] z-20 shadow-[0_5px_15px_rgba(0,0,0,0.5)] w-full">
-          {onMobileBack && (
-            <button onClick={onMobileBack} className="text-[#00f3ff] p-2 hover:bg-[#00f3ff]/10 rounded-xl transition-all">
-              <ArrowLeft size={24} />
-            </button>
-          )}
-          <div className="flex items-center gap-2 pr-2">
-            {emailData && (
-              <button 
-                onClick={toggleReadStatus} 
-                className={`p-2 rounded-xl transition-all ${emailData.isUnread ? 'text-[#00f3ff] bg-[#00f3ff]/10' : 'text-white/50 hover:text-white/80 hover:bg-white/10'}`}
-                title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
-              >
-                {emailData.isUnread ? <Mail size={22} /> : <MailOpen size={22} />}
-              </button>
-            )}
-            {onTrash && (
-              <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="p-2 rounded-xl text-[#ef4444]/80 hover:text-[#ef4444] hover:bg-[#ef4444]/20 transition-all">
-                <Trash2 size={22} />
-              </button>
-            )}
-          </div>
-        </div>
 
         {/* Detail Hlaviček */}
         <div className="shrink-0 px-4 py-4 md:p-8 border-b border-[#00f3ff]/10 bg-black/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-10 flex flex-col gap-4 relative w-full overflow-hidden">
