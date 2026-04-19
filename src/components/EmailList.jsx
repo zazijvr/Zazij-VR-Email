@@ -791,8 +791,16 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   return (
     <div className="flex-1 relative bg-[#0f172a]/80 backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
 
+      {/* Mobilní Nadpis Složky */}
+      <div className="md:hidden px-6 pt-5 pb-3 border-b border-[#00f3ff]/20 bg-gradient-to-b from-black/60 to-transparent shrink-0">
+        <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
+           {activeFolder}
+        </h1>
+        <div className="text-[10px] uppercase tracking-widest text-[#00f3ff]/60 mt-1">Systém // Výpis {visibleEmails.length} konverzací</div>
+      </div>
+
       {/* Sub-toolbar */}
-      <div className="flex items-center pl-7 py-2 pr-[38px] bg-black/40 border-b border-[#00f3ff]/10 z-20 shrink-0">
+      <div className="hidden md:flex items-center pl-7 py-2 pr-[38px] bg-black/40 border-b border-[#00f3ff]/10 z-20 shrink-0">
         
         {/* Placeholder šířky pro sloupec s Checkboxy */}
         <div className="w-[40px] pr-2" />
@@ -845,7 +853,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
       <div className="flex-1 w-full overflow-y-auto custom-scrollbar flex flex-col relative">
         {/* Sticky Header uvnitř kontejneru pro zachování scrollbar šířky a pixel-perfect zarovnání */}
-        <div className="sticky top-0 flex items-center px-7 py-4 bg-[#0f172a]/95 backdrop-blur-md border-b border-[#00f3ff]/20 text-sm font-semibold tracking-wider uppercase shadow-[0_5px_15px_-5px_rgba(0,0,0,0.5)] shrink-0 z-30 w-full rounded-t-xl mt-3">
+        <div className="hidden md:flex sticky top-0 flex items-center px-7 py-4 bg-[#0f172a]/95 backdrop-blur-md border-b border-[#00f3ff]/20 text-sm font-semibold tracking-wider uppercase shadow-[0_5px_15px_-5px_rgba(0,0,0,0.5)] shrink-0 z-30 w-full rounded-t-xl mt-3">
           <div 
             className="w-[40px] pr-2 flex justify-center cursor-pointer text-[#00f3ff] hover:text-white transition-colors"
             onClick={toggleSelectAll}
