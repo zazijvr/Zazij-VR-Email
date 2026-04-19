@@ -612,7 +612,7 @@ ${ccLine}
             {emailData && (
               <button 
                 onClick={toggleReadStatus} 
-                className={`w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-[#00f3ff] border-[#00f3ff]/60 drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)]' : 'text-white/60 border-white/30 hover:border-white/60 hover:text-white'}`}
+                className={`w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-[#00f3ff] border-[#00f3ff]/60 drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)]' : 'text-white/60 border-white/30 drop-shadow-[0_0_4px_rgba(255,255,255,0.3)] shadow-[inset_0_0_8px_rgba(255,255,255,0.1)] hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] hover:border-white/60 hover:text-white'}`}
                 title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
               >
                 {emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}
