@@ -1133,6 +1133,13 @@ ${ccLine}
                     }
                   }
                   
+                  @media (min-width: 768px) {
+                    body {
+                      font-size: 16px;
+                      zoom: 1.15; /* Skutečné zvětšení e-mailů odeslaných z klientů (jako Gmail) s natvrdo nastaveným malým fontem */
+                    }
+                  }
+                  
                   /* Linky držíme svítivě modré */
                   a, a * { color: #00f3ff !important; text-decoration: none !important; }
                   a:hover, a:hover * { text-decoration: underline !important; color: #f800ff !important; text-shadow: 0 0 10px #f800ff !important; }
