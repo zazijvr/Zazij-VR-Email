@@ -922,12 +922,12 @@ ${ccLine}
           )}
         </div>
 
-        {/* Samotné Iframe Tělo zprávy (Aggressive Dark Mode na Námořnické modré) */}
-        <div className="flex-1 w-full max-w-5xl mx-auto p-0 m-0 mt-2 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-0 md:border border-white/10 shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] overflow-hidden bg-[#0f172a]/40 backdrop-blur-md">
+        {/* Samotné Iframe Tělo zprávy (Čistý solidní Dark Mode, bez prosvítání a rušivých stínů) */}
+        <div className="flex-1 w-full max-w-5xl mx-auto p-0 m-0 mt-2 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-0 md:border border-white/10 overflow-hidden bg-[#0a0f1d]">
           {emailData?.htmlBody ? (
             <iframe
               title="Email Content"
-              className="w-full h-full border-none rounded-2xl bg-transparent"
+              className="w-full h-full border-none rounded-none md:rounded-2xl bg-transparent"
               sandbox="allow-popups allow-same-origin allow-scripts"
               srcDoc={`
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
@@ -958,17 +958,18 @@ ${ccLine}
                   body, html {
                     box-sizing: border-box !important;
                     margin: 0 !important;
+                    padding: 0 !important;
                   }
 
                   body {
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
                     line-height: 1.6;
-                    padding: 2rem 2.5rem !important;
+                    padding: 1rem !important; /* Mírnější padding úhledný pro desktop */
                   }
 
                   @media (max-width: 600px) {
                     body {
-                      padding: 15px !important;
+                      padding: 0px 4px !important; /* Skoro nulový okraj pro mobil, ať emaily využijí 100% plochy */
                     }
                   }
                   
