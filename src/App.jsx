@@ -213,18 +213,7 @@ function App() {
   const loginWithGoogle = async () => {
     try {
       if (!window.__TAURI_INTERNALS__) {
-        console.log('Spuštěno v klasickém prohlížeči, přepínám na Webový OAuth tok...');
-        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-        const redirectUri = window.location.origin; // Např http://localhost:5173
-        const scopes = [
-          'https://mail.google.com/',
-          'https://www.googleapis.com/auth/calendar.events',
-          'email',
-          'profile'
-        ].join(' ');
-        
-        const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scopes)}&prompt=consent`;
-        window.location.href = url;
+        showAlert('Google zablokuje pokus o přihlášení z neověřené lokální sítě (Error 400: redirect_uri_mismatch).\n\nPro vývoj mobilního UI:\n1. Otevři appku klasicky na Linuxu (Tauri).\n2. Zmáčkni F12 (Konzole).\n3. Po zobrazení mailů zkopíruj vygenerovaný testovací DEV URL odkaz a otevři si ho v mobilním prohlížeči.', 'Jste ve webovém prohlížeči', 'info');
         return;
       }
       console.log('Navazuji zabezpečené oAuth spojení přes Rust backend...');
