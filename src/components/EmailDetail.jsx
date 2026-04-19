@@ -644,16 +644,19 @@ ${ccLine}
         }}
       >
 
-        {/* Detail Hlaviček - IDEA 3: REACTIVE STATUS BOARD */}
-        <div className="shrink-0 px-4 py-5 md:p-8 border-t-2 md:border-t-4 border-[#f800ff]/60 bg-[#050810] shadow-[0_15px_40px_rgba(0,0,0,0.6)] z-[70] flex flex-col gap-4 relative w-full overflow-hidden">
+        {/* Detail Hlaviček - IDEA 3 jen pro Mobil, původní pro Desktop */}
+        <div className="shrink-0 px-4 py-5 md:py-4 md:px-8 border-t-2 md:border-t-0 md:border-b border-[#f800ff]/60 md:border-[#00f3ff]/10 bg-[#050810] md:bg-black/20 shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-[70] flex flex-col gap-4 relative w-full overflow-hidden">
           
-          {/* Dekorační levé zakončení */}
-          <div className="absolute top-0 left-0 w-1 md:w-2 h-full bg-[#f800ff]/20"></div>
+          {/* Dekorační levé zakončení (Pouze mobil) */}
+          <div className="md:hidden absolute top-0 left-0 w-1 h-full bg-[#f800ff]/20"></div>
           
-          {/* Velmi jemný radialní odlesk v pozadí */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(0,243,255,0.06)_0%,transparent_60%)] pointer-events-none"></div>
+          {/* Velmi jemný radialní odlesk v pozadí (Pouze mobil) */}
+          <div className="md:hidden absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(0,243,255,0.06)_0%,transparent_60%)] pointer-events-none"></div>
 
-          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full pl-2 md:pl-4">
+          {/* Laserová linka dole (Z návrhu 1, žádané uživatelem, pouze mobil) */}
+          <div className="md:hidden absolute bottom-0 left-0 w-[50%] h-[2px] bg-gradient-to-r from-[#00f3ff] via-[#00f3ff] to-transparent drop-shadow-[0_0_8px_#00f3ff] pointer-events-none z-20"></div>
+
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full pl-2 md:pl-0">
             <div className="flex-1 min-w-0 w-full">
               {emailData?.isDraft && (
                 <div className="mb-4">
@@ -669,8 +672,8 @@ ${ccLine}
                 </div>
               )}
               
-              {/* STATUS BOARD BADGES */}
-              <div className="flex flex-wrap items-center gap-2 mb-3">
+              {/* STATUS BOARD BADGES (Pouze mobil) */}
+              <div className="md:hidden flex flex-wrap items-center gap-2 mb-3">
                 
                 {/* Odesilatel status */}
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#00f3ff]/10 border border-[#00f3ff]/30">
@@ -697,7 +700,7 @@ ${ccLine}
               </div>
 
               <div className="flex items-center gap-3 group w-full">
-                <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] tracking-wide leading-tight break-words">
+                <h1 className="text-2xl md:text-3xl font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-tight break-words">
                   {emailData?.subject}
                 </h1>
                 {emailData?.subject && (
