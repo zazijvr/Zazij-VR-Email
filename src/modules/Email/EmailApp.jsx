@@ -369,20 +369,6 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               </div>
 
               <div className={`flex-1 overflow-hidden relative bg-[#0f172a] z-10 ${selectedEmailId ? 'flex' : 'hidden md:flex'} flex-col ${isVerticalLayout ? 'md:min-h-[50%]' : 'md:min-w-[50%]'}`}>
-                {isVerticalLayout ? (
-                   <>
-                     <div className="hidden md:block absolute left-0 top-0 right-0 h-[10px] bg-gradient-to-b from-[#00f3ff]/5 to-transparent pointer-events-none z-[5]" />
-                     <div className="hidden md:block absolute left-0 top-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00f3ff]/30 to-transparent z-[5]" />
-                   </>
-                ) : (
-                   <>
-                     <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[10px] bg-gradient-to-r from-[#00f3ff]/5 to-transparent pointer-events-none z-[5]" />
-                     <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-[#00f3ff]/30 to-transparent z-[5]" />
-                   </>
-                )}
-                
-                {/* Mobilní lišta byla přesunuta do komponenty EmailDetail pro snazší integraci do jednoho řádku */}
-
                 <EmailDetail
                   googleToken={googleToken}
                   isVerticalLayout={isVerticalLayout}
