@@ -91,8 +91,11 @@ export default function MobileHeader({
         <Menu size={26} strokeWidth={2.5} />
       </button>
 
-      <div id="mobile-logo" className="relative z-10 flex-1 flex justify-center transition-all duration-500">
-        {isSearchActive ? (
+      <div id="mobile-logo" className="relative z-10 flex-1 flex items-center justify-center h-full">
+        {/* Search Input Box */}
+        <div 
+          className={`absolute w-full px-4 flex items-center justify-center transition-all duration-300 ease-in-out ${isSearchActive ? 'opacity-100 visible z-20 translate-y-0' : 'opacity-0 invisible z-0 translate-y-1'}`}
+        >
           <div className="w-full max-w-[250px] relative flex items-center">
             <Search size={16} className="absolute left-3 text-[#00f3ff]/50" />
             <input 
@@ -101,7 +104,7 @@ export default function MobileHeader({
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Hledat e-mail..." 
-              className="w-full bg-[#00f3ff]/10 border border-[#00f3ff]/30 rounded-xl py-1.5 pl-9 pr-8 text-white text-sm outline-none focus:border-[#00f3ff] transition-all placeholder:text-[#00f3ff]/30"
+              className="w-full bg-[#00f3ff]/10 border border-[#00f3ff]/30 rounded-xl py-1.5 pl-9 pr-8 text-white text-sm outline-none focus:border-[#00f3ff] transition-colors placeholder:text-[#00f3ff]/30"
             />
             {searchQuery && (
               <button onClick={closeSearch} className="absolute right-2 text-[#00f3ff]/60 hover:text-[#00f3ff]">
@@ -109,13 +112,14 @@ export default function MobileHeader({
               </button>
             )}
           </div>
-        ) : (
-          <img
-            src="/cropped-logo-neon-pruhledna-150x50.png"
-            alt="ZažijVR"
-            className="h-7 object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none"
-          />
-        )}
+        </div>
+
+        {/* Logo */}
+        <img
+          src="/cropped-logo-neon-pruhledna-150x50.png"
+          alt="ZažijVR"
+          className={`h-7 object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none transition-all duration-300 ease-in-out absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${isSearchActive ? 'opacity-0 invisible -translate-y-6 scale-95' : 'opacity-100 visible -translate-y-1/2 scale-100'}`}
+        />
       </div>
 
       <div id="mobile-user" ref={dropdownRef} className={`relative z-50 transition-all duration-500 ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
