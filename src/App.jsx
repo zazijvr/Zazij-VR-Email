@@ -138,13 +138,15 @@ function App() {
   // Tichý auto-refresh tokenu, stabilní odkaz přes useCallback
   const checkSilentLogin = useCallback(async () => {
     try {
-      console.log("Hledám uložené Google pověření a případně potají žádám o čerstvý Token...");
+      if (!window.__TAURI_INTERNALS__) return; // Vynechá kontrolu tauri, pokud běží v prohlížeči
+      console.log("Hledám uložené Google pověření a případně potají žádám o čerstvy Token...");
       const token = await invoke('check_existing_login', {
         clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
       });
       if (token) {
         console.log("Automatické přihlášení na pozadí proběhlo úspěšně!");
+        console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${token}`);
         setGoogleToken(token);
       }
     } catch (err) {
@@ -154,6 +156,16 @@ function App() {
 
   // Vyvolat při úplně prvním spuštění aplikace
   useEffect(() => {
+    // DEV MODE: Obejít Tauri a načíst token z URL
+    const params = new URLSearchParams(window.location.search);
+    const devToken = params.get('devToken');
+    if (devToken && !window.__TAURI_INTERNALS__) {
+       console.log("DEV MODE OVERRIDE: Nalezen devToken v URL! Spouštím aplikaci v testovacím režimu bez napojení na Tauri backend.");
+       setGoogleToken(devToken);
+       setUserInfo({ email: 'dev.tester@zazijvr.cz', name: 'ZVR Tester' }); // Mock
+       return;
+    }
+
     checkSilentLogin();
   }, [checkSilentLogin]);
 
@@ -183,6 +195,7 @@ function App() {
         clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
       });
       console.log('Spojení navázáno, token úspěšně přijat.');
+      console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${accessToken}`);
       setGoogleToken(accessToken);
     } catch (error) {
       console.error('Kriticky selhalo spojení s backendem:', error);
