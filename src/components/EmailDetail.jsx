@@ -64,9 +64,14 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
     const handleMessage = async (e) => {
       if (e.data && e.data.type === 'open-link' && e.data.url) {
         try {
-          await open(e.data.url);
+          if (window.__TAURI_INTERNALS__) {
+            await open(e.data.url);
+          } else {
+            window.open(e.data.url, '_blank', 'noopener,noreferrer');
+          }
         } catch (err) {
           console.error("Failed to open link via Tauri shell:", err);
+          window.open(e.data.url, '_blank', 'noopener,noreferrer');
         }
       }
       if (e.data && e.data.type === 'content-height') {
