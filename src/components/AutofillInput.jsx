@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getStoredContacts } from '../utils/contactManager';
 
-export default function AutofillInput({ userEmail, label, value, onChange, placeholder, className }) {
+export default function AutofillInput({ userEmail, label, value, onChange, placeholder, className, headerRight }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -113,9 +113,16 @@ export default function AutofillInput({ userEmail, label, value, onChange, place
 
   return (
     <div className="flex flex-col gap-2 relative" ref={wrapperRef}>
-      <label className="text-[10px] text-[#00f3ff] uppercase tracking-widest font-bold ml-1 opacity-70">
-        {label}
-      </label>
+      <div className="flex justify-between items-center px-1">
+        <label className="text-[10px] text-[#00f3ff] uppercase tracking-widest font-bold opacity-70">
+          {label}
+        </label>
+        {headerRight && (
+          <div className="flex items-center gap-2">
+            {headerRight}
+          </div>
+        )}
+      </div>
       <input 
         ref={inputRef}
         type="text" 

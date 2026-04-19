@@ -394,34 +394,36 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
 
             {config?.type !== 'template' && (
               <div className="flex flex-col gap-4">
-                <div className="relative">
+                <div className="relative w-full">
                   <AutofillInput 
                     label="Komu"
                     value={to} 
                     onChange={e => setTo(e.target.value)}
                     userEmail={userEmail}
-                    className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 pr-24 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
+                    className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
+                    headerRight={
+                      <>
+                        {config?.type === 'reply' && !hasUpgradedToReplyAll && (config?.originalCc || config?.originalTo) && (
+                          <button 
+                            onClick={(e) => { e.preventDefault(); handleUpgradeToReplyAll(); }}
+                            className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#00f3ff]/60 hover:text-yellow-400 p-0.5 transition-colors uppercase font-bold tracking-widest"
+                            title="Odpovědět všem"
+                          >
+                            <ReplyAll size={12} /> <span className="hidden sm:inline">VŠEM</span>
+                          </button>
+                        )}
+                        {!showCc && (
+                          <button 
+                            onClick={(e) => { e.preventDefault(); setShowCc(true); }}
+                            className="text-[9px] sm:text-[10px] uppercase font-bold text-[#00f3ff]/60 hover:text-[#00f3ff] px-1.5 py-0.5 bg-[#0f172a]/80 border border-[#00f3ff]/20 rounded transition-colors tracking-widest"
+                            title="Přidat Kopii (CC)"
+                          >
+                            + CC
+                          </button>
+                        )}
+                      </>
+                    }
                   />
-                  <div className="absolute right-3 top-[30px] flex items-center gap-1.5">
-                    {config?.type === 'reply' && !hasUpgradedToReplyAll && (config?.originalCc || config?.originalTo) && (
-                      <button 
-                        onClick={(e) => { e.preventDefault(); handleUpgradeToReplyAll(); }}
-                        className="text-[#00f3ff]/60 hover:text-yellow-400 p-1.5 bg-black/50 border border-[#00f3ff]/20 hover:border-yellow-400/50 rounded transition-colors"
-                        title="Odpovědět všem"
-                      >
-                        <ReplyAll size={14} />
-                      </button>
-                    )}
-                    {!showCc && (
-                      <button 
-                        onClick={(e) => { e.preventDefault(); setShowCc(true); }}
-                        className="text-[10px] sm:text-xs font-bold text-[#00f3ff]/60 hover:text-[#00f3ff] px-2 py-1 bg-black/50 border border-[#00f3ff]/20 rounded transition-colors uppercase tracking-wider"
-                        title="Přidat Kopii (CC)"
-                      >
-                        + CC
-                      </button>
-                    )}
-                  </div>
                 </div>
       
                 {showCc && (
