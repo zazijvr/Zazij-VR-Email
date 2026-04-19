@@ -950,6 +950,16 @@ ${ccLine}
                     color: #e2e8f0 !important;
                   }
                   
+                  /* Odstřelovač neviditelných prvků co rozbíjí layout (Sledovací pixely, dlouhé URL) */
+                  img, video { max-width: 100% !important; height: auto !important; }
+                  * { overflow-wrap: break-word !important; }
+                  pre, code { white-space: pre-wrap !important; }
+
+                  body, html {
+                    box-sizing: border-box !important;
+                    margin: 0 !important;
+                  }
+
                   body {
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
                     line-height: 1.6;
@@ -958,7 +968,7 @@ ${ccLine}
 
                   @media (max-width: 600px) {
                     body {
-                      padding: 10px !important;
+                      padding: 15px !important;
                     }
                   }
                   
