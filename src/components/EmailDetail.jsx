@@ -922,8 +922,8 @@ ${ccLine}
           )}
         </div>
 
-        {/* Samotné Iframe Tělo zprávy (Vylepšený rámeček jako na desktopu pro zatažení okrajů) */}
-        <div className="flex-1 w-full max-w-5xl mx-auto p-0 mx-2 mb-2 mt-2 md:m-6 md:mb-8 rounded-2xl border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-hidden bg-[#0a0f1d]">
+        {/* Samotné Iframe Tělo zprávy (Flush to edges na mobilu, rámeček jen jako horní dělící linka pro plynulost) */}
+        <div className="flex-1 w-full max-w-5xl mx-auto p-0 m-0 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-hidden bg-[#0a0f1d]">
           {emailData?.htmlBody ? (
             <iframe
               title="Email Content"
