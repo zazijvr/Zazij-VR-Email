@@ -893,9 +893,10 @@ ${ccLine}
 
                         {/* Celostránkový neviditelný štít pro odchytnutí kliku (blokuje naprosto VŠECHNO pod sebou) */}
                         <div 
-                          className="absolute inset-0 bg-black/40 touch-none"
+                          className="absolute inset-0 bg-black/40"
                           style={{ animation: 'mobileSheetFadeIn 0.3s ease-out forwards' }}
-                          onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); setIsMoreMenuOpen(false); }}
+                          onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); }}
+                          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); setIsMoreMenuOpen(false); }}
                         ></div>
                         
                         {/* Moderní Mobile Bottom Sheet místo plovoucího okna */}
