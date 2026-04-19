@@ -462,8 +462,8 @@ function App() {
       {/* Levá navigace */}
       <div className={`fixed inset-y-0 left-0 z-50 md:relative md:z-10 h-full shrink-0 overflow-visible transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${googleToken ? 'flex' : 'hidden'}`}>
         {/* Levé spodní zrcadlové rozhraní sběrnice (Crisp část v Sidebar) */}
-        <div className="absolute left-0 bottom-0 h-[70px] md:h-[114px] w-[256px] overflow-hidden z-[30] pointer-events-none">
-           <div className="absolute left-[-20px] md:left-0 bottom-[-40px] md:bottom-0 h-[114px] w-[400px] opacity-40 rotate-180 scale-[0.6] md:scale-100 origin-center">
+        <div className="absolute left-0 bottom-0 h-[73px] md:h-[114px] w-[256px] overflow-hidden z-[30] pointer-events-none">
+           <div className="absolute left-0 bottom-0 w-full md:w-[400px] h-full md:h-[114px] opacity-40 rotate-180">
              <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
                <defs>
                  <filter id="bottomLeftMiniGlow" x="-20%" y="-20%" width="140%" height="140%">
