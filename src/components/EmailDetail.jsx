@@ -921,7 +921,7 @@ ${ccLine}
         </div>
 
         {/* Samotné Iframe Tělo zprávy (Aggressive Dark Mode na Námořnické modré) */}
-        <div className="flex-1 p-0 m-0 mt-2 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-0 md:border border-white/10 shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] overflow-hidden bg-[#0f172a]/40 backdrop-blur-md">
+        <div className="flex-1 w-full max-w-5xl mx-auto p-0 m-0 mt-2 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-0 md:border border-white/10 shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] overflow-hidden bg-[#0f172a]/40 backdrop-blur-md">
           {emailData?.htmlBody ? (
             <iframe
               title="Email Content"
