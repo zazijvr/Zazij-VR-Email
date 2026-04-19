@@ -318,7 +318,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
         ) : (
            <>
               <div className={`flex-1 overflow-hidden relative z-0 ${selectedEmailId ? 'hidden md:flex' : 'flex'} flex-col ${isVerticalLayout ? 'md:max-h-[50%] md:min-h-[50%] border-b border-[#00f3ff]/10' : 'md:max-w-[50%] md:min-w-[50%] border-r border-[#00f3ff]/10'}`}>
-                <div className="absolute left-0 bottom-0 h-[114px] w-[144px] overflow-hidden z-[0] pointer-events-none opacity-40 blur-[3px]">
+                <div className="hidden md:block absolute left-0 bottom-0 h-[114px] w-[144px] overflow-hidden z-[0] pointer-events-none opacity-40 blur-[3px]">
                    <div className="absolute left-[-256px] bottom-0 h-[114px] w-[400px] rotate-180">
                      <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
                        <defs>
