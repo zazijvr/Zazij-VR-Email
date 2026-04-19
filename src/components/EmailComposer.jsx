@@ -10,6 +10,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   const [to, setTo] = useState(config?.initialTo || '');
   const [cc, setCc] = useState(config?.initialCc || '');
   const [showCc, setShowCc] = useState(!!config?.initialCc);
+  const [hasUpgradedToReplyAll, setHasUpgradedToReplyAll] = useState(false);
   const [subject, setSubject] = useState(config?.initialSubject || config?.templateData?.subject || '');
   const getInitialBody = () => {
     let text = config?.initialBody || config?.templateData?.body || '';
@@ -57,6 +58,31 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       setSavedSignatures(signatures);
     } catch(e) {}
   }, []);
+
+  const handleUpgradeToReplyAll = () => {
+     let allTo = [config?.originalFrom, config?.originalTo].filter(Boolean).join(', ');
+     let allCc = config?.originalCc || '';
+     
+     if (userEmail) {
+        const userEmailClean = userEmail.trim().toLowerCase();
+        // Odstranění vlastního emailu ze seznamu přes RegExp s respektem k okolním znakům
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const emailRegex = new RegExp(`([^,]*${escapeRegExp(userEmailClean)}[^,]*)`, 'gi');
+        
+        allTo = allTo.replace(emailRegex, '').replace(/,\s*,/g, ',').trim().replace(/^,|,$/g, '');
+        allCc = allCc.replace(emailRegex, '').replace(/,\s*,/g, ',').trim().replace(/^,|,$/g, '');
+     }
+     
+     // Pokud by allTo po našem odstranění bylo prázdné a my odstranili sebe, dáme ho zpět k odesilateli
+     if (!allTo.trim() && config?.originalFrom) {
+         allTo = config.originalFrom;
+     }
+
+     setTo(allTo);
+     setCc(allCc);
+     if (allCc) setShowCc(true);
+     setHasUpgradedToReplyAll(true);
+  };
 
   const handleAttemptClose = () => {
     let isDirty = false;
@@ -396,6 +422,16 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                     className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
                   />
                 )}
+
+                {config?.type === 'reply' && !hasUpgradedToReplyAll && (config?.originalCc || config?.originalTo) && (
+                   <button 
+                     onClick={(e) => { e.preventDefault(); handleUpgradeToReplyAll(); }}
+                     className="self-start text-[10px] sm:text-xs font-bold text-yellow-400/80 hover:text-yellow-400 hover:bg-yellow-400/10 px-3 py-1.5 border border-yellow-400/30 rounded-lg transition-colors uppercase tracking-widest flex items-center gap-2 mt-1"
+                   >
+                     <span>Původní zpráva měla více adresátů</span>
+                     <span className="bg-yellow-400/20 px-2 py-0.5 rounded text-yellow-300">Přidat všechny do Kopie</span>
+                   </button>
+                )}
               </div>
             )}
   
@@ -556,12 +592,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                         <Save size={18} className="text-gray-500 group-hover:scale-110 transition-transform" />
                      )}
                      <span className="font-black tracking-widest text-gray-500 text-xs sm:text-sm group-hover:text-gray-300 transition-colors">
-                       {isSaving ? 'UKLÁDÁM' : (
-                         <>
-                           <span className="sm:hidden">ULOŽIT</span>
-                           <span className="hidden sm:inline">ULOŽIT KONCEPT</span>
-                         </>
-                       )}
+                       {isSaving ? 'UKLÁDÁM' : 'ULOŽIT'}
                      </span>
                   </div>
                 </button>

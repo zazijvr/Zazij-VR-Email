@@ -407,7 +407,19 @@ ${ccLine}
 
   const handleReply = () => {
     const quotedBody = `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid #00f3ff;padding-left:1ex">${emailData?.htmlBody || ''}</blockquote>`;
-    onActionReply({ type: 'reply', initialTo: emailData?.from, initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, messageId: emailData?.messageId, threadId: emailData?.threadId, rfcMessageId: emailData?.rfcMessageId, htmlBody: getHistoryHeader('reply') + quotedBody, initialBody: '' });
+    onActionReply({ 
+      type: 'reply', 
+      initialTo: emailData?.from, 
+      initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, 
+      messageId: emailData?.messageId, 
+      threadId: emailData?.threadId, 
+      rfcMessageId: emailData?.rfcMessageId, 
+      htmlBody: getHistoryHeader('reply') + quotedBody, 
+      initialBody: '',
+      originalFrom: emailData?.from,
+      originalTo: emailData?.to,
+      originalCc: emailData?.cc
+    });
   };
 
   const handleReplyAll = () => {
