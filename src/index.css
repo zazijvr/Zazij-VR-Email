@@ -5,9 +5,14 @@
 @tailwind utilities;
 
 @layer base {
-  body {
+  html, body {
     background-color: #0f172a; /* Slate 900 for that deep space dark mode */
     color: white;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    width: 100%;
+    height: 100%;
   }
 }
 
