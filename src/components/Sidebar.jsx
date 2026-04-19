@@ -137,8 +137,8 @@ export default function Sidebar({
       }
     } catch(e) {}
   };  return (
-    <div className="min-w-[16rem] w-max max-w-[26rem] bg-[#02050e] md:bg-black/40 backdrop-blur-3xl md:backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
-      <div className="flex justify-center w-full px-4 mb-8">
+    <div className="min-w-[16rem] w-max max-w-[26rem] bg-[#02050e] md:bg-black/40 backdrop-blur-3xl md:backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col py-4 md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
+      <div className="flex justify-center w-full px-4 mb-4 md:mb-8">
         <img
           src="/cropped-logo-neon-pruhledna-150x50.png"
           alt="ZažijVR"
@@ -147,7 +147,7 @@ export default function Sidebar({
         />
       </div>
 
-      <div className="flex justify-center gap-4 mb-10 px-4">
+      <div className="flex justify-center gap-4 mb-4 md:mb-10 px-4">
         <div
           onClick={() => setAppMode('email')}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'email'
@@ -174,22 +174,22 @@ export default function Sidebar({
         </div>
       </div>
 
-      <div className="px-4 mb-8">
+      <div className="px-4 mb-4 md:mb-8">
         {appMode === 'email' ? (
-          <button 
-            onClick={onComposeNew}
-            className="w-full relative group overflow-hidden rounded-xl border-2 border-[#00f3ff]/50 bg-[#00f3ff]/10 py-3.5 flex justify-center items-center transition-all hover:bg-[#00f3ff]/20 hover:border-[#00f3ff] hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
-          >
+            <button 
+              onClick={onComposeNew}
+              className="w-full relative group overflow-hidden rounded-xl border-2 border-[#00f3ff]/50 bg-[#00f3ff]/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-[#00f3ff]/20 hover:border-[#00f3ff] hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
+            >
             <span className="font-bold text-base tracking-widest text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
               <Mail size={18} strokeWidth={2.5} />
               Napsat e-mail
             </span>
           </button>
         ) : (
-          <button 
-            onClick={onCreateNewEvent}
-            className="w-full relative group overflow-hidden rounded-xl border-2 border-[#00f3ff]/50 bg-[#00f3ff]/10 py-3.5 flex justify-center items-center transition-all hover:bg-[#00f3ff]/20 hover:border-[#00f3ff] hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
-          >
+            <button 
+              onClick={onCreateNewEvent}
+              className="w-full relative group overflow-hidden rounded-xl border-2 border-[#00f3ff]/50 bg-[#00f3ff]/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-[#00f3ff]/20 hover:border-[#00f3ff] hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
+            >
             <span className="font-bold text-base tracking-widest text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
               <Calendar size={18} strokeWidth={2.5} />
               Nová událost
