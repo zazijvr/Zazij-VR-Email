@@ -821,23 +821,6 @@ ${ccLine}
             </div>
             <span className="hidden md:block shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10 md:self-auto">{emailData?.date}</span>
           </div>
-                        {copiedId === 'to' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                      </button>
-                    </div>
-                  )}
-                  {emailData?.cc && (
-                    <div className="flex items-center gap-2">
-                      <span className="truncate max-w-xl" title={emailData.cc}>Kopie: <span className="opacity-70">{emailData.cc}</span></span>
-                      <button onClick={() => handleCopyToClipboard(emailData.cc, 'cc')} className="opacity-50 hover:opacity-100 hover:bg-white/10 transition-all p-1 rounded-md text-white/80" title="Kopírovat adresu">
-                        {copiedId === 'cc' ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <span className="shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10 md:self-auto">{emailData?.date}</span>
-          </div>
 
           {/* Přílohy */}
           {emailData?.attachments?.length > 0 && (
