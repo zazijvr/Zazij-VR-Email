@@ -62,7 +62,7 @@ export default function SettingsModal({
         
         {activeTab === 'general' && (
         <div className="flex flex-col gap-8 mt-2 overflow-y-auto custom-scrollbar pr-2 max-h-[60vh]">
-          <div>
+          <div className="hidden sm:block">
             <h3 className="text-xl font-bold text-gray-200 mb-4 border-b border-white/10 pb-2">Vzhled a Zobrazení</h3>
             <div className="flex items-center gap-4 bg-black/40 border border-[#00f3ff]/10 p-5 rounded-2xl w-full">
               <div className="flex-1 flex flex-col gap-1">
@@ -86,7 +86,7 @@ export default function SettingsModal({
             </div>
           </div>
 
-          <div className="mt-2">
+          <div className="mt-0 sm:mt-2">
             <h3 className="text-xl font-bold text-gray-200 mb-4 border-b border-white/10 pb-2">Propojené Účty</h3>
             <div className="flex flex-col gap-4">
               
