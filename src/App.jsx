@@ -173,6 +173,10 @@ function App() {
 
   const loginWithGoogle = async () => {
     try {
+      if (!window.__TAURI_INTERNALS__) {
+        showAlert('Jste v testovacím režimu prohlížeče (vývoj mobilního vzhledu).\n\nZde není dostupné nativní přesměrování a paměťový trezor. Pro reálné přihlášení spusťte aplikaci normálně jako desktop klienta na Linuxu/Windows přes Tauri.', 'Jste ve webovém prohlížeči', 'info');
+        return;
+      }
       console.log('Navazuji zabezpečené oAuth spojení přes Rust backend...');
       const accessToken = await invoke('start_google_login', {
         clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
