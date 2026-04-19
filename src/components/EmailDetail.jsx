@@ -587,10 +587,10 @@ ${ccLine}
 
   // Samotný E-mail čtecí panel
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0f172a] overflow-hidden relative">
+    <div className={`flex-1 flex flex-col bg-[#0f172a] overflow-hidden fixed inset-0 z-50 md:relative md:inset-auto md:z-auto ${slideAnimationClass}`}>
       <div 
         key={emailData?.messageId || "loading"} 
-        className={`flex-1 flex flex-col h-full overflow-hidden ${slideAnimationClass}`}
+        className="flex-1 flex flex-col h-full overflow-hidden"
         onDoubleClick={() => {
            if (emailData?.isDraft) handleResumeDraft(emailData);
         }}
@@ -957,26 +957,7 @@ ${ccLine}
             </div>
           )}
         </div>
-        
-        {/* Velká akční tlačítka pod mailem jen pro mobily */}
-        {onActionReply && !emailData?.isDraft && (
-          <div className="md:hidden flex flex-col gap-3 px-4 pb-8 w-full mt-auto">
-            <button
-               onClick={handleReply}
-               className="w-full py-4 bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 border border-[#00f3ff]/40 rounded-2xl flex items-center justify-center gap-3 text-[#00f3ff] font-bold tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(0,243,255,0.2)]"
-            >
-              <Reply size={22} /> Odpovědět odesílateli
-            </button>
-            <button
-               onClick={handleForward}
-               disabled={isPreparingForward}
-               className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-white/80 font-bold tracking-widest uppercase transition-all disabled:opacity-50"
-            >
-              {isPreparingForward ? <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin"></div> : <Forward size={22} />} 
-              Přeposlat zprávu
-            </button>
-          </div>
-        )}
+        {/* Velká akční tlačítka pod mailem jen pro mobily byla dočasně skryta na žádost */}
       </div>
 
       {/* Zobrazovač příloh In-App (pomocí Portal vytrženo z CSS kontextu) */}
