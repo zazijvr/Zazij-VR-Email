@@ -409,7 +409,7 @@ function App() {
       
 
       {/* Vizuální scelení celé aplikace shora - kyberpunkový top okraj rozhraní */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] z-[100] pointer-events-none"></div>
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] z-30 md:z-[100] pointer-events-none"></div>
 
       {/* Variace 1: Čistě CSS vykreslované obrazové pozadí pro dokonalý výkon */}
       <div 
