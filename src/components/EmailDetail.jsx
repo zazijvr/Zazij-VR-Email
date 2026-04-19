@@ -44,19 +44,45 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
     }
   }, [previewBlob]);
 
+  const bottomSheetRef = useRef(null);
+
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+    const handleClickOutside = (event) => {
+      // Check if the click was outside the dropdown/bottom-sheet container
+      // If we clicked the MoreMenu toggle button, let its own onClick handle it
+      if (moreMenuRef.current && moreMenuRef.current.contains(event.target)) {
+        return;
+      }
+      
+      let isOutside = false;
+      if (bottomSheetRef.current) {
+        // We are using Portaled Bottom Sheet
+        isOutside = !bottomSheetRef.current.contains(event.target);
+      } else if (moreMenuRef.current) {
+        // Fallback for non-portaled
+        isOutside = !moreMenuRef.current.contains(event.target);
+      }
+
+      if (isOutside) {
+        event.stopPropagation();
+        event.preventDefault();
         setIsMoreMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside, { passive: true, capture: true });
+
+    if (isMoreMenuOpen) {
+      // Use capture phase to brutally intercept the click/touch before it reaches other elements
+      document.addEventListener('click', handleClickOutside, true);
+      document.addEventListener('touchstart', handleClickOutside, true);
+      document.addEventListener('mousedown', handleClickOutside, true);
+    }
+    
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside, { capture: true });
+      document.removeEventListener('click', handleClickOutside, true);
+      document.removeEventListener('touchstart', handleClickOutside, true);
+      document.removeEventListener('mousedown', handleClickOutside, true);
     };
-  }, []);
+  }, [isMoreMenuOpen]);
 
   // Odstraněn globální viewport toggle (nesmí se tak ovlivnit UI)
 
@@ -891,19 +917,15 @@ ${ccLine}
                           }
                         `}</style>
 
-                        {/* Celostránkový neviditelný štít pro odchytnutí kliku (blokuje naprosto VŠECHNO pod sebou) */}
+                        {/* Celostránkový neviditelný štít pro odchytnutí kliku (nyní řešen globálním click trapem v capture fázi viz useEffect) */}
                         <div 
                           className="absolute inset-0 bg-black/40"
                           style={{ animation: 'mobileSheetFadeIn 0.3s ease-out forwards' }}
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            e.preventDefault();
-                            setTimeout(() => setIsMoreMenuOpen(false), 50); 
-                          }}
                         ></div>
                         
                         {/* Moderní Mobile Bottom Sheet místo plovoucího okna */}
                         <div 
+                          ref={bottomSheetRef}
                           className="relative w-full max-w-lg bg-[#050810] border-t border-[#00f3ff]/40 rounded-t-[30px] shadow-[0_-15px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,243,255,0.15)] flex flex-col p-6 pb-12 gap-1 z-10"
                           style={{ animation: 'mobileSheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
                         >
@@ -911,12 +933,12 @@ ${ccLine}
                           <div className="w-12 h-1.5 bg-[#00f3ff]/30 rounded-full mx-auto mb-6 shrink-0"></div>
 
                           {onActionReply && !emailData?.isDraft && (
-                            <button onClick={(e) => { e.stopPropagation(); setTimeout(() => setIsMoreMenuOpen(false), 50); handleReplyAll(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
+                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
                               <div className="w-10 h-10 rounded-full bg-[#00f3ff]/10 flex items-center justify-center shrink-0"><ReplyAll size={20} /></div> Odpovědět všem
                             </button>
                           )}
                           {onActionReply && !emailData?.isDraft && (
-                            <button onClick={(e) => { e.stopPropagation(); setTimeout(() => setIsMoreMenuOpen(false), 50); handleForward(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
+                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
                               <div className="w-10 h-10 rounded-full bg-[#00f3ff]/10 flex items-center justify-center shrink-0"><Forward size={20} /></div> Přeposlat
                             </button>
                           )}
@@ -925,7 +947,7 @@ ${ccLine}
                           
                           <button onClick={async (e) => {
                              e.stopPropagation();
-                             setTimeout(() => setIsMoreMenuOpen(false), 50);
+                             setIsMoreMenuOpen(false);
                              const currentIsStarred = emailData.isStarred;
                              setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
                              try {
@@ -939,7 +961,7 @@ ${ccLine}
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-[#f800ff]/10' : 'bg-yellow-400/10'}`}><Star size={20} fill={emailData.isStarred ? "currentColor" : "none"} /></div> {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                           </button>
                           
-                          <button onClick={(e) => { e.stopPropagation(); setTimeout(() => setIsMoreMenuOpen(false), 50); toggleReadStatus(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/10 text-white/80 hover:text-white transition-all w-full text-left font-bold tracking-wide active:bg-white/20">
+                          <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); toggleReadStatus(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/10 text-white/80 hover:text-white transition-all w-full text-left font-bold tracking-wide active:bg-white/20">
                             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0">{emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}</div> {emailData.isUnread ? "Značit jako přečtené" : "Značit jako nepřečtené"}
                           </button>
                         </div>
