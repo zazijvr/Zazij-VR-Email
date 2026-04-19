@@ -204,7 +204,10 @@ export default function EmailListItem({
               {email.subject}
             </span>
             {email.isUnread && (
-              <span className="shrink-0 w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]"></span>
+              <span className="shrink-0 w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]" title="Nepřečteno"></span>
+            )}
+            {email.isStarred && (
+              <span className="shrink-0 w-2 h-2 rounded-full bg-[#f800ff] shadow-[0_0_8px_#f800ff]" title="Důležité"></span>
             )}
           </div>
           <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors">
