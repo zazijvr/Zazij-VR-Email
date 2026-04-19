@@ -162,6 +162,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   const [searchQuery, setSearchQuery] = useState('');
   const { showAlert } = useAlert();
 
+  const [mobileDeletePending, setMobileDeletePending] = useState(null);
+
   const [selectedMailIds, setSelectedMailIds] = useState(new Set());
   const [keyboardIndex, setKeyboardIndex] = useState(-1);
   const visibleEmailsRef = useRef([]);
@@ -942,6 +944,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
                 onDraftClick={onDraftClick}
                 handleToggleStar={handleToggleStar}
                 handleTrashEmail={handleTrashEmail}
+                onSwipeDelete={(email) => setMobileDeletePending(email)}
               />
             ))}
             {/* Load More Button */}
@@ -959,6 +962,33 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           </div>
         )}
       </div>
+
+      {/* Mobile Delete Confirmation Modal */}
+      {mobileDeletePending && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#0f172a] border-2 border-[#ff3366]/50 rounded-2xl p-6 w-full max-w-sm shadow-[0_0_40px_rgba(255,51,102,0.3)]">
+            <h3 className="text-xl font-black text-[#ff3366] tracking-widest uppercase mb-2">Potvrdit smazání</h3>
+            <p className="text-gray-300 mb-6 font-semibold">Opravdu chcete tento e-mail přesunout do koše?</p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setMobileDeletePending(null)}
+                className="flex-1 py-3 rounded-xl border border-gray-600 text-gray-300 font-bold tracking-widest uppercase transition-colors hover:bg-gray-800"
+              >
+                Zrušit
+              </button>
+              <button
+                onClick={() => {
+                  handleTrashEmail(mobileDeletePending, null);
+                  setMobileDeletePending(null);
+                }}
+                className="flex-1 py-3 rounded-xl bg-[#ff3366]/10 border border-[#ff3366] text-[#ff3366] font-bold tracking-widest uppercase transition-colors hover:bg-[#ff3366]/30 shadow-[inset_0_0_15px_rgba(255,51,102,0.2)]"
+              >
+                Smazat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

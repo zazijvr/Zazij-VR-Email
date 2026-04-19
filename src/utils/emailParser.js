@@ -194,3 +194,9 @@ export const encodeHeaderName = (headerStr) => {
   }
   return headerStr;
 };
+
+export const getAvatarInitial = (name) => {
+  if (!name) return '?';
+  const match = name.match(/\p{L}|\p{N}/u);
+  return match ? match[0].toUpperCase() : '?';
+};

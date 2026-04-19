@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { CheckSquare, Square, Mail, MailOpen, FileEdit, Star, Trash2, Paperclip } from 'lucide-react';
+import { getAvatarInitial } from '../utils/emailParser';
 
 export default function EmailListItem({
   email,
@@ -20,144 +21,193 @@ export default function EmailListItem({
   handleToggleRead,
   onDraftClick,
   handleToggleStar,
-  handleTrashEmail
+  handleTrashEmail,
+  onSwipeDelete // nový handler z listu
 }) {
   const isSelected = selectedEmailId === email.id;
   const isMultiSelected = selectedMailIds.has(email.id);
   const isActiveRow = isSelected || isMultiSelected;
   const isKeyboardFocus = keyboardIndex === index;
 
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const swipeStartRef = useRef(null);
+
+  const SWIPE_THRESHOLD = 80;
+
+  const onTouchStart = (e) => {
+    swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const onTouchMove = (e) => {
+    if (!swipeStartRef.current) return;
+    const dx = e.touches[0].clientX - swipeStartRef.current.x;
+    const dy = e.touches[0].clientY - swipeStartRef.current.y;
+    // Povolit scrollování (y) versus swipe (x)
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      if(e.cancelable) e.preventDefault();
+      setSwipeOffset(dx);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (swipeStartRef.current) {
+      if (swipeOffset > SWIPE_THRESHOLD) {
+        // Swipe vpravo -> Read / Unread
+        handleToggleRead(email.id, email.isUnread, null);
+      } else if (swipeOffset < -SWIPE_THRESHOLD) {
+        // Swipe vlevo -> Delete
+        if (onSwipeDelete) {
+           onSwipeDelete(email);
+        } else {
+           handleTrashEmail(email, null);
+        }
+      }
+    }
+    swipeStartRef.current = null;
+    setSwipeOffset(0);
+  };
+
   return (
-                <div
-                  id={`email-row-${email.id}`}
-                  key={email.id}
-                  draggable={draggableEmailId === email.id}
-                  onPointerDown={() => { handlePointerDown(email.id); setKeyboardIndex(index); }}
-                  onPointerUp={clearDragTimer}
-                  onPointerLeave={clearDragTimer}
-                  onPointerCancel={clearDragTimer}
-                  onDragEnd={(e) => {
-                    handleDragEnd();
-                    if (e.dataTransfer.dropEffect !== 'none') {
-                      if (selectedMailIds.has(email.id)) {
-                        setSelectedMailIds(new Set());
-                      }
-                    }
-                  }}
-                  onDragStart={(e) => {
-                    clearDragTimer();
-                    e.dataTransfer.effectAllowed = 'move';
-                    if (selectedMailIds.has(email.id) && selectedMailIds.size > 1) {
-                      const itemsToMove = emails
-                        .filter(em => selectedMailIds.has(em.id))
-                        .map(em => ({ id: em.id, sourceLabel: activeFolder, emailData: em }));
-                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'EMAIL_MULTI', items: itemsToMove }));
-                      
-                      const dragVisual = document.createElement('div');
-                      dragVisual.className = 'bg-[#0f172a] border border-[#00f3ff] rounded-xl p-3 text-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.4)] flex items-center font-black tracking-widest absolute -left-[9999px]';
-                      dragVisual.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>PŘESOUVÁTE ${selectedMailIds.size} ZPRÁV`;
-                      document.body.appendChild(dragVisual);
-                      e.dataTransfer.setDragImage(dragVisual, 20, 20);
-                      setTimeout(() => {
-                        if (document.body.contains(dragVisual)) {
-                           document.body.removeChild(dragVisual);
-                        }
-                      }, 0);
-                    } else {
-                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'EMAIL', id: email.id, sourceLabel: activeFolder, emailData: email }));
-                    }
-                  }}
-                  onClick={() => { handleEmailClick(email); setKeyboardIndex(index); }}
-                  className={`flex items-center px-4 py-3 rounded-xl cursor-pointer select-none transition-all border group relative overflow-hidden ${email._newArrival ? 'animate-new-email ' : ''}${isKeyboardFocus && !isActiveRow ? 'bg-white/[0.08] border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10 ' : ''}${isActiveRow
-                      ? 'bg-gradient-to-r from-[#00f3ff]/20 to-[#00f3ff]/5 border-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.2)]'
-                      : email.isUnread
-                        ? 'bg-gradient-to-r from-[#00f3ff]/10 to-transparent border-[#00f3ff]/30 hover:border-[#00f3ff]/60 shadow-[inset_3px_0_0_#00f3ff]'
-                        : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.08] hover:border-white/20'
-                    }`}
-                >
-                  <div 
-                    className="w-[40px] pr-2 flex justify-center items-center text-[#00f3ff] opacity-80 hover:opacity-100 transition-opacity z-10" 
-                    onClick={(e) => toggleSelectEmail(email.id, e)}
-                  >
-                    {selectedMailIds.has(email.id) ? <CheckSquare size={18} /> : <Square size={18} className="opacity-40 group-hover:opacity-100" />}
-                  </div>
+    <div className="relative group mb-1 md:mb-0">
+      {/* Background Layers pro Swipe akce na mobilu */}
+      <div className="absolute inset-0 flex justify-between items-center px-6 md:hidden rounded-xl overflow-hidden pointer-events-none">
+        <div className={`flex items-center gap-2 text-green-400 font-bold ${swipeOffset > 20 ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
+          {email.isUnread ? <MailOpen size={24}/> : <Mail size={24} />}
+          <span className="tracking-widest uppercase text-[10px]">{email.isUnread ? 'Přečíst' : 'Nepřečteno'}</span>
+        </div>
+        <div className={`flex items-center gap-2 text-[#ff3366] font-bold ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
+          <span className="tracking-widest uppercase text-[10px]">Smazat</span>
+          <Trash2 size={24} />
+        </div>
+      </div>
 
-                  {/* Sender OR Recipient (if Sent folder) */}
-                  <div className={`w-[20%] pr-4 font-bold truncate shrink-0 ${email.isUnread || isActiveRow ? 'text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-gray-200'}`}>
-                    {activeFolder === 'Odeslané' ? (
-                      email.to
-                    ) : (
-                      email.from
-                    )}
-                  </div>
+      <div
+        id={`email-row-${email.id}`}
+        style={swipeOffset !== 0 ? { transform: `translateX(${swipeOffset}px)`, transition: 'none' } : { transform: 'translateX(0)', transition: 'transform 0.3s ease-out' }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        draggable={draggableEmailId === email.id}
+        onPointerDown={(e) => { 
+           if (e.pointerType === 'mouse') { handlePointerDown(email.id); } 
+           setKeyboardIndex(index); 
+        }}
+        onPointerUp={clearDragTimer}
+        onPointerLeave={clearDragTimer}
+        onPointerCancel={clearDragTimer}
+        onDragEnd={(e) => {
+          handleDragEnd();
+          if (e.dataTransfer.dropEffect !== 'none') {
+            if (selectedMailIds.has(email.id)) setSelectedMailIds(new Set());
+          }
+        }}
+        onDragStart={(e) => {
+          clearDragTimer();
+          e.dataTransfer.effectAllowed = 'move';
+          if (selectedMailIds.has(email.id) && selectedMailIds.size > 1) {
+            const itemsToMove = emails
+              .filter(em => selectedMailIds.has(em.id))
+              .map(em => ({ id: em.id, sourceLabel: activeFolder, emailData: em }));
+            e.dataTransfer.setData('application/json', JSON.stringify({ type: 'EMAIL_MULTI', items: itemsToMove }));
+          } else {
+            e.dataTransfer.setData('application/json', JSON.stringify({ type: 'EMAIL', id: email.id, sourceLabel: activeFolder, emailData: email }));
+          }
+        }}
+        onClick={() => { if (Math.abs(swipeOffset) < 10) { handleEmailClick(email); setKeyboardIndex(index); } }}
+        className={`relative flex flex-col md:flex-row md:items-center px-4 py-4 md:py-3 rounded-xl cursor-pointer select-none border overflow-hidden ${email._newArrival ? 'animate-new-email ' : ''}${isKeyboardFocus && !isActiveRow ? 'bg-white/[0.08] border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10 ' : ''}${isActiveRow
+            ? 'bg-gradient-to-r from-[#00f3ff]/20 to-[#00f3ff]/5 border-[#00f3ff] md:shadow-[0_0_20px_rgba(0,243,255,0.2)]'
+            : email.isUnread
+              ? 'bg-[#0f172a] md:bg-gradient-to-r md:from-[#00f3ff]/10 md:to-transparent border-[#00f3ff]/30 md:hover:border-[#00f3ff]/60 shadow-[inset_3px_0_0_#00f3ff]'
+              : 'bg-[#0f172a] md:bg-white/[0.02] border-white/5 md:hover:bg-white/[0.08] md:hover:border-white/20 shadow-[0_4px_15px_rgba(0,0,0,0.5)] md:shadow-none'
+          }`}
+      >
+        {/* Checkbox (Desktop only) */}
+        <div 
+          className="hidden md:flex w-[40px] pr-2 justify-center items-center text-[#00f3ff] opacity-80 hover:opacity-100 transition-opacity z-10" 
+          onClick={(e) => toggleSelectEmail(email.id, e)}
+        >
+          {selectedMailIds.has(email.id) ? <CheckSquare size={18} /> : <Square size={18} className="opacity-40 group-hover:opacity-100" />}
+        </div>
 
-                  {/* Subject and Snippet */}
-                  <div className="flex-1 pr-4 flex flex-col overflow-hidden">
-                    <div className="flex items-center gap-2">
-                      <span className={`truncate text-sm ${email.isUnread || isActiveRow ? 'text-white font-bold' : 'text-gray-300 font-semibold'}`}>
-                        {email.subject}
-                      </span>
-                      {email.isUnread && (
-                        <span className="shrink-0 w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]"></span>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors">
-                      {email.snippet}
-                    </span>
-                  </div>
+        {/* Sender / Initial */}
+        <div className="flex w-full md:w-[20%] items-center mb-1 md:mb-0 shrink-0">
+          <div className="md:hidden flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[#00f3ff]/20 to-[#f800ff]/20 border border-[#00f3ff]/40 flex items-center justify-center font-black text-lg text-[#00f3ff] mr-3 shadow-[0_0_10px_rgba(0,243,255,0.2)]">
+            {getAvatarInitial(activeFolder === 'Odeslané' ? email.to : email.from)}
+          </div>
+          <div className={`font-bold truncate w-full md:pr-4 ${email.isUnread || isActiveRow ? 'text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-gray-200'}`}>
+            {activeFolder === 'Odeslané' ? email.to : email.from}
+            <span className="md:hidden float-right text-xs text-[#00f3ff]/60 font-normal mt-1">
+              {email.dateText && email.dateText !== 'Dnes' ? email.dateText : email.timeText}
+            </span>
+          </div>
+        </div>
 
-                  {/* Date / Time */}
-                  <div className={`w-[150px] text-right pr-4 whitespace-nowrap flex flex-col justify-center items-end leading-tight ${email.isUnread || isActiveRow ? 'text-[#00f3ff]' : 'text-gray-400'}`}>
-                    {email.dateText && <span className="text-[10px] opacity-60 tracking-wider mb-0.5">{email.dateText}</span>}
-                    <span className={`font-bold tracking-widest ${email.dateText ? 'text-xs' : 'text-sm'}`}>{email.timeText}</span>
-                  </div>
+        {/* Subject and Snippet */}
+        <div className="flex-1 md:pr-4 flex flex-col overflow-hidden w-full pl-[52px] md:pl-0">
+          <div className="flex items-center gap-2">
+            <span className={`truncate text-sm ${email.isUnread || isActiveRow ? 'text-white font-bold' : 'text-gray-300 font-semibold'}`}>
+              {email.subject}
+            </span>
+            {email.isUnread && (
+              <span className="shrink-0 w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]"></span>
+            )}
+          </div>
+          <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors">
+            {email.snippet}
+          </span>
+        </div>
 
-                  {/* Size */}
-                  <div className="w-[120px] pr-4 text-right text-xs text-gray-400 whitespace-nowrap">
-                    {email.sizeText}
-                  </div>
+        {/* Desktop Specific */}
+        <div className={`hidden md:flex w-[150px] text-right pr-4 whitespace-nowrap flex-col justify-center items-end leading-tight ${email.isUnread || isActiveRow ? 'text-[#00f3ff]' : 'text-gray-400'}`}>
+          {email.dateText && <span className="text-[10px] opacity-60 tracking-wider mb-0.5">{email.dateText}</span>}
+          <span className={`font-bold tracking-widest ${email.dateText ? 'text-xs' : 'text-sm'}`}>{email.timeText}</span>
+        </div>
 
-                  {/* Attachment */}
-                  <div className="w-[60px] flex justify-center text-gray-400">
-                    {email.hasAttachment && <Paperclip size={16} className={email.isUnread || isSelected ? 'text-[#00f3ff]/80' : 'text-gray-500'} />}
-                  </div>
+        <div className="hidden md:block w-[120px] pr-4 text-right text-xs text-gray-400 whitespace-nowrap">
+          {email.sizeText}
+        </div>
 
-                  {/* Actions (Toggle Read + Trash) */}
-                  <div className="w-[110px] flex justify-end gap-1 pr-2 shrink-0">
-                    <button
-                      onClick={(e) => handleToggleRead(email.id, email.isUnread, e)}
-                      className={`p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${email.isUnread ? 'hover:bg-[#00f3ff]/20 text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]' : 'hover:bg-white/10 text-gray-500 hover:text-white'}`}
-                      title={email.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
-                    >
-                      {email.isUnread ? <Mail size={16} /> : <MailOpen size={16} />}
-                    </button>
+        <div className="hidden md:flex w-[60px] justify-center text-gray-400">
+          {email.hasAttachment && <Paperclip size={16} className={email.isUnread || isSelected ? 'text-[#00f3ff]/80' : 'text-gray-500'} />}
+        </div>
 
-                    {email.labelIds?.includes('DRAFT') ? (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); if (typeof onDraftClick === 'function') onDraftClick(email.id); }}
-                        className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 hover:bg-[#00f3ff]/20 text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]"
-                        title="Ihned upravit koncept"
-                      >
-                        <FileEdit size={16} />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={(e) => handleToggleStar(email.id, email.isStarred, e)}
-                        className={`p-1.5 rounded-md transition-all ${email.isStarred ? 'opacity-100 text-[#f800ff] hover:text-[#f800ff] hover:bg-[#f800ff]/20 drop-shadow-[0_0_8px_rgba(248,0,255,0.8)]' : 'opacity-0 group-hover:opacity-100 hover:bg-[#f800ff]/10 text-gray-500 hover:text-[#f800ff]'}`}
-                        title={email.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
-                      >
-                        <Star size={16} fill={email.isStarred ? "currentColor" : "none"} />
-                      </button>
-                    )}
+        {/* Desktop Actions */}
+        <div className="hidden md:flex w-[110px] justify-end gap-1 pr-2 shrink-0">
+          <button
+            onClick={(e) => handleToggleRead(email.id, email.isUnread, e)}
+            className={`p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${email.isUnread ? 'hover:bg-[#00f3ff]/20 text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]' : 'hover:bg-white/10 text-gray-500 hover:text-white'}`}
+            title={email.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
+          >
+            {email.isUnread ? <Mail size={16} /> : <MailOpen size={16} />}
+          </button>
 
-                    <button
-                      onClick={(e) => handleTrashEmail(email, e)}
-                      className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 hover:bg-[#ef4444]/20 text-gray-500 hover:text-[#ef4444]"
-                      title="Smazat (Delete)"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
+          {email.labelIds?.includes('DRAFT') ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); if (typeof onDraftClick === 'function') onDraftClick(email.id); }}
+              className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 hover:bg-[#00f3ff]/20 text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]"
+              title="Ihned upravit koncept"
+            >
+              <FileEdit size={16} />
+            </button>
+          ) : (
+            <button
+              onClick={(e) => handleToggleStar(email.id, email.isStarred, e)}
+              className={`p-1.5 rounded-md transition-all ${email.isStarred ? 'opacity-100 text-[#f800ff] hover:text-[#f800ff] hover:bg-[#f800ff]/20 drop-shadow-[0_0_8px_rgba(248,0,255,0.8)]' : 'opacity-0 group-hover:opacity-100 hover:bg-[#f800ff]/10 text-gray-500 hover:text-[#f800ff]'}`}
+              title={email.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
+            >
+              <Star size={16} fill={email.isStarred ? "currentColor" : "none"} />
+            </button>
+          )}
+
+          <button
+            onClick={(e) => { e.stopPropagation(); if (onSwipeDelete) onSwipeDelete(email); else handleTrashEmail(email, e); }}
+            className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 hover:bg-[#ef4444]/20 text-gray-500 hover:text-[#ef4444]"
+            title="Smazat (Delete)"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
