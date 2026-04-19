@@ -35,11 +35,17 @@ export default function EmailListItem({
   const SWIPE_THRESHOLD = 80;
 
   const onTouchStart = (e) => {
+    if (e.touches.length > 1) return;
     swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   };
 
   const onTouchMove = (e) => {
     if (!swipeStartRef.current) return;
+    if (e.touches.length > 1) {
+      swipeStartRef.current = null;
+      setSwipeOffset(0);
+      return;
+    }
     const dx = e.touches[0].clientX - swipeStartRef.current.x;
     const dy = e.touches[0].clientY - swipeStartRef.current.y;
     // Povolit scrollování (y) versus swipe (x)
