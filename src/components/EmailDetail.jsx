@@ -895,8 +895,11 @@ ${ccLine}
                         <div 
                           className="absolute inset-0 bg-black/40"
                           style={{ animation: 'mobileSheetFadeIn 0.3s ease-out forwards' }}
-                          onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); }}
-                          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); setIsMoreMenuOpen(false); }}
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            e.preventDefault();
+                            setTimeout(() => setIsMoreMenuOpen(false), 50); 
+                          }}
                         ></div>
                         
                         {/* Moderní Mobile Bottom Sheet místo plovoucího okna */}
@@ -908,12 +911,12 @@ ${ccLine}
                           <div className="w-12 h-1.5 bg-[#00f3ff]/30 rounded-full mx-auto mb-6 shrink-0"></div>
 
                           {onActionReply && !emailData?.isDraft && (
-                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
+                            <button onClick={(e) => { e.stopPropagation(); setTimeout(() => setIsMoreMenuOpen(false), 50); handleReplyAll(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
                               <div className="w-10 h-10 rounded-full bg-[#00f3ff]/10 flex items-center justify-center shrink-0"><ReplyAll size={20} /></div> Odpovědět všem
                             </button>
                           )}
                           {onActionReply && !emailData?.isDraft && (
-                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
+                            <button onClick={(e) => { e.stopPropagation(); setTimeout(() => setIsMoreMenuOpen(false), 50); handleForward(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] transition-all w-full text-left font-bold tracking-wide active:bg-[#00f3ff]/20">
                               <div className="w-10 h-10 rounded-full bg-[#00f3ff]/10 flex items-center justify-center shrink-0"><Forward size={20} /></div> Přeposlat
                             </button>
                           )}
@@ -922,7 +925,7 @@ ${ccLine}
                           
                           <button onClick={async (e) => {
                              e.stopPropagation();
-                             setIsMoreMenuOpen(false);
+                             setTimeout(() => setIsMoreMenuOpen(false), 50);
                              const currentIsStarred = emailData.isStarred;
                              setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
                              try {
@@ -936,7 +939,7 @@ ${ccLine}
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-[#f800ff]/10' : 'bg-yellow-400/10'}`}><Star size={20} fill={emailData.isStarred ? "currentColor" : "none"} /></div> {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                           </button>
                           
-                          <button onClick={(e) => { e.stopPropagation(); toggleReadStatus(); setIsMoreMenuOpen(false); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/10 text-white/80 hover:text-white transition-all w-full text-left font-bold tracking-wide active:bg-white/20">
+                          <button onClick={(e) => { e.stopPropagation(); setTimeout(() => setIsMoreMenuOpen(false), 50); toggleReadStatus(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/10 text-white/80 hover:text-white transition-all w-full text-left font-bold tracking-wide active:bg-white/20">
                             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0">{emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}</div> {emailData.isUnread ? "Značit jako přečtené" : "Značit jako nepřečtené"}
                           </button>
                         </div>
