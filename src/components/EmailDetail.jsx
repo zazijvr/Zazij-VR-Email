@@ -717,14 +717,29 @@ ${ccLine}
                 </div>
               )}
               
-              {/* STATUS BOARD BADGES (Pouze mobil) */}
-              <div className="md:hidden flex flex-wrap items-center gap-2 mb-3">
+              {/* STATUS BOARD BADGES */}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
                 
-                {/* Odesilatel status */}
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm border ${emailData?.isStarred ? 'bg-[#f800ff]/10 border-[#f800ff]/30 text-[#f800ff]' : 'bg-[#00f3ff]/10 border-[#00f3ff]/30 text-[#00f3ff]'}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${emailData?.isStarred ? 'bg-[#f800ff] shadow-[0_0_5px_#f800ff]' : 'bg-[#00f3ff] shadow-[0_0_5px_#00f3ff]'}`}></div>
+                {/* Odesilatel / Star status */}
+                <button 
+                  onClick={async (e) => {
+                     e.stopPropagation();
+                     const currentIsStarred = emailData.isStarred;
+                     setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
+                     try {
+                       await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+                         method: 'POST',
+                         headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+                         body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
+                       });
+                     } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm border cursor-pointer hover:brightness-125 active:scale-95 transition-all ${emailData?.isStarred ? 'bg-[#f800ff]/10 border-[#f800ff]/30 text-[#f800ff] drop-shadow-[0_0_5px_rgba(248,0,255,0.4)]' : 'bg-[#00f3ff]/10 border-[#00f3ff]/30 text-[#00f3ff]'}`}
+                  title={emailData?.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
+                >
+                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${emailData?.isStarred ? 'bg-[#f800ff] shadow-[0_0_8px_#f800ff]' : 'bg-[#00f3ff] shadow-[0_0_5px_#00f3ff]'}`}></div>
                   <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-current">Link_Active</span>
-                </div>
+                </button>
 
                 {/* Attachments status */}
                 {emailData?.attachments?.length > 0 && (
@@ -758,28 +773,6 @@ ${ccLine}
 
                {/* ---------------- DESKTOP ACTIONS ---------------- */}
                <div className="hidden md:flex items-center gap-2">
-                 {emailData && (
-                   <>
-                     <button
-                       onClick={async () => {
-                         const currentIsStarred = emailData.isStarred;
-                         setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
-                         try {
-                           await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
-                             method: 'POST',
-                             headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
-                             body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
-                           });
-                         } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
-                       }}
-                    className={`p-2 rounded-xl border transition-all ${emailData.isStarred ? 'text-[#f800ff] bg-[#f800ff]/10 border-[#f800ff]/40 shadow-[0_0_15px_rgba(248,0,255,0.4)]' : 'text-[#f800ff]/50 bg-[#f800ff]/5 border-[#f800ff]/10 hover:text-[#f800ff] hover:bg-[#f800ff]/15 hover:border-[#f800ff]/50 shadow-[0_0_5px_rgba(248,0,255,0.1)] hover:shadow-[0_0_15px_rgba(248,0,255,0.4)]'}`}
-                    title={emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
-                  >
-                    <Star size={22} fill={emailData.isStarred ? "currentColor" : "none"} />
-                  </button>
-                  <div className="w-px h-6 bg-[#00f3ff]/20 mx-1"></div>
-                </>
-              )}
 
               {onActionReply && !emailData?.isDraft && (
                 <>
