@@ -870,40 +870,49 @@ ${ccLine}
                     </button>
                  )}
                  <div className="relative" ref={moreMenuRef}>
-                    <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className="p-2 rounded-xl text-white/70 hover:bg-white/10 transition-all">
+                    <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className={`p-2 rounded-xl transition-all ${isMoreMenuOpen ? 'text-[#00f3ff] bg-[#00f3ff]/20 shadow-[0_0_15px_rgba(0,243,255,0.3)]' : 'text-[#00f3ff]/70 hover:bg-[#00f3ff]/10 hover:shadow-[0_0_10px_rgba(0,243,255,0.2)]'}`}>
                       <MoreVertical size={22} />
                     </button>
                     {isMoreMenuOpen && (
-                      <div className="absolute top-10 right-0 w-56 bg-black/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 flex flex-col p-2 gap-1 anim-ui-fade-in">
-                        {onActionReply && !emailData?.isDraft && (
-                          <button onClick={() => { setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
-                            <ReplyAll size={18} /> Odpovědět všem
+                      <>
+                        {/* Celostránkový neviditelný štít pro odchytnutí kliku mimo (zabrání kliku na linky) */}
+                        <div 
+                          className="fixed inset-0 z-[400] bg-transparent"
+                          onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); }}
+                        ></div>
+                        
+                        <div className="absolute top-14 right-[-10px] w-64 bg-black/95 backdrop-blur-2xl border border-[#00f3ff]/30 rounded-2xl shadow-[0_10px_50px_rgba(0,0,0,0.9),0_0_20px_rgba(0,243,255,0.2)] z-[410] flex flex-col p-2 gap-1 anim-ui-fade-in origin-top-right">
+                          {onActionReply && !emailData?.isDraft && (
+                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] hover:shadow-[inset_3px_0_0_#00f3ff] transition-all w-full text-left font-medium tracking-wide">
+                              <ReplyAll size={18} /> <span className="pt-0.5">Odpovědět všem</span>
+                            </button>
+                          )}
+                          {onActionReply && !emailData?.isDraft && (
+                            <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-[#00f3ff]/10 text-[#00f3ff]/80 hover:text-[#00f3ff] hover:shadow-[inset_3px_0_0_#00f3ff] transition-all w-full text-left font-medium tracking-wide">
+                              <Forward size={18} /> <span className="pt-0.5">Přeposlat</span>
+                            </button>
+                          )}
+                          <div className="w-full h-px bg-gradient-to-r from-transparent via-[#00f3ff]/30 to-transparent my-1.5 opacity-50"></div>
+                          <button onClick={async (e) => {
+                             e.stopPropagation();
+                             setIsMoreMenuOpen(false);
+                             const currentIsStarred = emailData.isStarred;
+                             setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
+                             try {
+                               await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+                                 method: 'POST',
+                                 headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+                                 body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
+                               });
+                             } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
+                          }} className={`flex items-center gap-3 p-3.5 rounded-xl transition-all w-full text-left font-medium tracking-wide ${emailData.isStarred ? 'hover:bg-[#f800ff]/10 text-[#f800ff]/90 hover:text-[#f800ff] hover:shadow-[inset_3px_0_0_#f800ff]' : 'hover:bg-yellow-400/10 text-yellow-400/80 hover:text-yellow-400 hover:shadow-[inset_3px_0_0_#facc15]'}`}>
+                            <Star size={18} fill={emailData.isStarred ? "currentColor" : "none"} /> <span className="pt-0.5">{emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}</span>
                           </button>
-                        )}
-                        {onActionReply && !emailData?.isDraft && (
-                          <button onClick={() => { setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
-                            <Forward size={18} /> Přeposlat
+                          <button onClick={(e) => { e.stopPropagation(); toggleReadStatus(); setIsMoreMenuOpen(false); }} className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-all w-full text-left font-medium tracking-wide">
+                            {emailData.isUnread ? <Mail size={18} /> : <MailOpen size={18} />} <span className="pt-0.5">{emailData.isUnread ? "Značit jako přečtené" : "Značit jako nepřečtené"}</span>
                           </button>
-                        )}
-                        <div className="w-full h-px bg-white/10 my-1"></div>
-                        <button onClick={async () => {
-                           setIsMoreMenuOpen(false);
-                           const currentIsStarred = emailData.isStarred;
-                           setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
-                           try {
-                             await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
-                               method: 'POST',
-                               headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
-                               body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
-                             });
-                           } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
-                        }} className={`flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 w-full text-left ${emailData.isStarred ? 'text-[#f800ff]' : 'text-white/80'}`}>
-                          <Star size={18} fill={emailData.isStarred ? "currentColor" : "none"} /> {emailData.isStarred ? "Odebrat prioritu" : "Důležité"}
-                        </button>
-                        <button onClick={toggleReadStatus} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
-                          {emailData.isUnread ? <Mail size={18} /> : <MailOpen size={18} />} {emailData.isUnread ? "Značit jako přečtené" : "Značit jako nepřečtené"}
-                        </button>
-                      </div>
+                        </div>
+                      </>
                     )}
                  </div>
               </div>
