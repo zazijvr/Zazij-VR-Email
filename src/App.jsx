@@ -443,11 +443,11 @@ function App() {
 
       {/* Variace 1: Čistě CSS vykreslované obrazové pozadí pro dokonalý výkon */}
       <div 
-        className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.45] z-0" 
+        className="fixed top-0 left-0 w-full h-[100lvh] md:h-full pointer-events-none opacity-[0.45] z-0" 
         style={{ 
           backgroundImage: "url('/bg_trace.svg?v=3')", 
           backgroundSize: 'cover', 
-          backgroundPosition: 'center' 
+          backgroundPosition: 'top center' 
         }} 
       />
 
