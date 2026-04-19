@@ -156,7 +156,7 @@ function App() {
 
   // Vyvolat při úplně prvním spuštění aplikace
   useEffect(() => {
-    // DEV MODE: Obejít Tauri a načíst token z URL
+    // DEV MODE: Obejít Tauri a načíst token z GET URL (např. ruční poslání dev URL do jiného zařízení)
     const params = new URLSearchParams(window.location.search);
     const devToken = params.get('devToken');
     if (devToken && !window.__TAURI_INTERNALS__) {
@@ -164,6 +164,33 @@ function App() {
        setGoogleToken(devToken);
        setUserInfo({ email: 'dev.tester@zazijvr.cz', name: 'ZVR Tester' }); // Mock
        return;
+    }
+
+    // WEB OAUTH FALLBACK (Implicit Grant Flow)
+    if (!window.__TAURI_INTERNALS__ && window.location.hash.includes('access_token')) {
+       // Google OAuth přesměroval zpět s #access_token=... v URL
+       const hashParams = new URLSearchParams(window.location.hash.substring(1));
+       const accessToken = hashParams.get('access_token');
+       
+       if (accessToken) {
+          console.log("Úspěšný login webového prohlížeče! Detekován token v URL.");
+          // Smažeme Hash z adresní lišty aby URL nevypadalo ošklivě a nezůstal tam token
+          window.location.hash = ''; 
+          
+          setGoogleToken(accessToken);
+          
+          // U webového přihlášení musíme ručně načíst osobní info přes Google Profile API, protože Rust backend to teď neudělá.
+          fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+             headers: { Authorization: `Bearer ${accessToken}` }
+          })
+          .then(res => res.json())
+          .then(data => {
+             setUserInfo({ email: data.email, name: data.name, picture: data.picture });
+          })
+          .catch(err => console.error("Chyba při načítání profilu u webového přihlášení:", err));
+          
+          return;
+       }
     }
 
     checkSilentLogin();
@@ -186,7 +213,18 @@ function App() {
   const loginWithGoogle = async () => {
     try {
       if (!window.__TAURI_INTERNALS__) {
-        showAlert('Jste v testovacím režimu prohlížeče (vývoj mobilního vzhledu).\n\nZde není dostupné nativní přesměrování a paměťový trezor. Pro reálné přihlášení spusťte aplikaci normálně jako desktop klienta na Linuxu/Windows přes Tauri.', 'Jste ve webovém prohlížeči', 'info');
+        console.log('Spuštěno v klasickém prohlížeči, přepínám na Webový OAuth tok...');
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        const redirectUri = window.location.origin; // Např http://localhost:5173
+        const scopes = [
+          'https://mail.google.com/',
+          'https://www.googleapis.com/auth/calendar.events',
+          'email',
+          'profile'
+        ].join(' ');
+        
+        const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scopes)}&prompt=consent`;
+        window.location.href = url;
         return;
       }
       console.log('Navazuji zabezpečené oAuth spojení přes Rust backend...');
