@@ -638,7 +638,7 @@ ${ccLine}
       >
 
         {/* Detail Hlaviček */}
-        <div className="shrink-0 px-4 py-4 md:p-8 border-b border-[#00f3ff]/10 bg-black/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-10 flex flex-col gap-4 relative w-full overflow-hidden">
+        <div className="shrink-0 px-4 py-4 md:p-8 border-b border-[#00f3ff]/10 bg-black/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-[70] flex flex-col gap-4 relative w-full">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full">
             <div className="flex-1 min-w-0 w-full">
               {emailData?.isDraft && (
@@ -928,7 +928,15 @@ ${ccLine}
               className="w-full h-full border-none rounded-2xl bg-transparent"
               sandbox="allow-popups allow-same-origin allow-scripts"
               srcDoc={`
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
                 <style>
+                  /* Umožníme pinch-zoom a zajistíme touch gesta skrz Iframe */
+                  html, body {
+                    touch-action: pan-x pan-y pinch-zoom !important;
+                    max-width: 100%;
+                    overflow-x: auto;
+                  }
+                  
                   /* Naprosté zprůhlednění všech pozadí, ať sklem prosvítá ZažijVR modř */
                   body, html, table, tr, td, div, span, font, center, tbody, thead { 
                     background-color: transparent !important; 
