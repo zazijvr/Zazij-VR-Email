@@ -982,60 +982,90 @@ ${ccLine}
                     }
                   });
 
-                  // Automatické zmenšení obřích tabulek tak, aby se na mobilu vešly na šířku bez zbytečných prázdných okrajů
+                  // Automatické zmenšení obřích tabulek tak, aby se na mobilu vešly
                   let stalyZoom = 1.0;
+                  let vychoziZoom = 1.0;
                   
                   function fitToWidth() {
                     document.body.style.zoom = 1.0;
+                    document.documentElement.style.overflowX = 'hidden';
+                    document.body.style.overflowX = 'hidden';
                     
                     const docWidth = document.documentElement.scrollWidth || document.body.scrollWidth;
                     const winWidth = window.innerWidth;
                     
-                    // Aplikujeme zoom zmenšení pouze pokud obsah reálně a výrazně přesahuje okno (ignorance malých paddingů)
-                    if (docWidth > winWidth + 10 && winWidth > 0) {
+                    // Zoom aplikujeme na přizpůsobení obrazovky
+                    if (docWidth > winWidth + 5 && winWidth > 0) {
                        stalyZoom = winWidth / docWidth;
-                       document.body.style.zoom = stalyZoom;
                     } else {
                        stalyZoom = 1.0;
                     }
+                    vychoziZoom = stalyZoom;
+                    document.body.style.zoom = stalyZoom;
                   }
 
                   window.addEventListener('load', fitToWidth);
                   setTimeout(fitToWidth, 100);
                   setTimeout(fitToWidth, 500);
 
-                  // Izolovaný Pinch-To-Zoom pouze a jen pro tento obsah emailu
+                  // Vylepšený Pinch-To-Zoom, ukotvený na střed mezi prsty
                   let vzdalenostInit = 0;
                   let zoomInit = 1.0;
+                  let pinchStartX = 0;
+                  let pinchStartY = 0;
 
                   document.addEventListener('touchstart', function(e) {
                     if (e.touches.length === 2) {
-                       // Ošetření pro scrollování a pinch-zoom
                        vzdalenostInit = Math.hypot(
                          e.touches[0].clientX - e.touches[1].clientX,
                          e.touches[0].clientY - e.touches[1].clientY
                        );
                        zoomInit = stalyZoom;
+                       
+                       pinchStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                       pinchStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                     }
                   });
 
                   document.addEventListener('touchmove', function(e) {
                     if (e.touches.length === 2 && vzdalenostInit > 0) {
-                      if (e.cancelable) e.preventDefault();
+                      if (e.cancelable) e.preventDefault(); // Zákaz výchozího posunu
                       
                       const vzdalenostAktual = Math.hypot(
                         e.touches[0].clientX - e.touches[1].clientX,
                         e.touches[0].clientY - e.touches[1].clientY
                       );
                       
+                      const aktualX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                      const aktualY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                      
                       const pomer = vzdalenostAktual / vzdalenostInit;
-                      stalyZoom = zoomInit * pomer;
+                      let novyZoom = zoomInit * pomer;
                       
-                      // Zamezit přílišnému zmenšení/zvětšení. Default zmenšení může být až např 0.2
-                      if (stalyZoom < 0.15) stalyZoom = 0.15;
-                      if (stalyZoom > 5.0) stalyZoom = 5.0;
+                      if (novyZoom < 0.15) novyZoom = 0.15;
+                      if (novyZoom > 5.0) novyZoom = 5.0;
                       
+                      // Souřadnice fokusu prstu vztažené na nezvětšený dokument
+                      const docFokusX = (aktualX + window.scrollX) / stalyZoom;
+                      const docFokusY = (aktualY + window.scrollY) / stalyZoom;
+                      
+                      stalyZoom = novyZoom;
                       document.body.style.zoom = stalyZoom;
+                      
+                      // Povolíme nebo zakážeme scrollování do stran dle zoomu
+                      if (stalyZoom > vychoziZoom + 0.05) {
+                          document.documentElement.style.overflowX = 'auto';
+                          document.body.style.overflowX = 'auto';
+                      } else {
+                          document.documentElement.style.overflowX = 'hidden';
+                          document.body.style.overflowX = 'hidden';
+                      }
+                      
+                      // Posuneme osu tak, aby dokument zůstal ukotvený na místě prstů
+                      window.scrollTo(
+                         docFokusX * stalyZoom - aktualX,
+                         docFokusY * stalyZoom - aktualY
+                      );
                     }
                   }, { passive: false });
 
