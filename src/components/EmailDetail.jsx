@@ -1135,8 +1135,7 @@ ${ccLine}
                   
                   @media (min-width: 768px) {
                     body {
-                      font-size: 16px;
-                      zoom: 1.15; /* Skutečné zvětšení e-mailů odeslaných z klientů (jako Gmail) s natvrdo nastaveným malým fontem */
+                      font-size: 16px !important;
                     }
                   }
                   
