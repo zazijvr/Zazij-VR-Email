@@ -400,7 +400,7 @@ function App() {
 
       <MobileHeader 
          toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-         userEmail={userInfo?.email} 
+         userEmail={userInfo?.email || (googleToken ? 'test@zazijvr.cz' : undefined)} 
          logoutGoogleAccount={logoutGoogleAccount}
       />
 
