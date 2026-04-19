@@ -254,8 +254,11 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {googleToken && (
-        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-b border-[#00f3ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
+        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
           
+          {/* Synchronizovaná horní neonová linka (Úplně stejná jako u EmailDetail) */}
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
+
           {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
           <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
                <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -302,8 +305,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               </div>
             </div>
           </div>
-          {/* Aplikace neonové lajny zespodu hlavní hlavičky složek */}
-          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#00f3ff]/80 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] pointer-events-none"></div>
+          {/* Aplikace neonové lajny zespodu hlavní hlavičky složek - Synchronizováno s Emailem */}
+          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff] via-[#00f3ff]/50 to-[#00f3ff]/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
         </div>
       )}
 
