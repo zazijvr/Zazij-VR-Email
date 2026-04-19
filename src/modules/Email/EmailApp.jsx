@@ -253,65 +253,16 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
-      <div className="flex flex-shrink-0 items-center justify-between gap-4 p-8 border-b border-[#00f3ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
-        
-        {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
-        <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
-             <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <defs>
-                 <filter id="headerRightGlowSVG" x="-20%" y="-20%" width="140%" height="140%">
-                   <feGaussianBlur stdDeviation="3" result="blur1" />
-                   <feGaussianBlur stdDeviation="6" result="blur2" />
-                   <feMerge>
-                       <feMergeNode in="blur2" />
-                       <feMergeNode in="blur1" />
-                       <feMergeNode in="SourceGraphic" />
-                   </feMerge>
-                 </filter>
-               </defs>
-               <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#headerRightGlowSVG)" />
-               <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
-               <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#headerRightGlowSVG)" />
-               <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
-               <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
-               <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
-               <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#headerRightGlowSVG)" />
-               <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
-               <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
-             </svg>
-        </div>
-
-        <div className="flex items-center gap-6 relative z-10">
-          <div className="p-2 md:p-3 rounded-2xl bg-[#00f3ff]/10 border-2 border-[#00f3ff]/40 shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all">
-            {getFolderIcon(activeFolder)}
-          </div>
-          <div className="flex flex-col justify-center relative mt-1 select-none">
-            <div className="flex items-center gap-3 ml-2 mb-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#f800ff] shadow-[0_0_8px_rgba(248,0,255,0.8)]"></div>
-              <span className="text-[#00f3ff] text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
-                System // Directory // 0xE9
-              </span>
-            </div>
-            <div className="flex flex-row items-baseline">
-              <span className="text-[#00f3ff] text-4xl md:text-5xl font-light mr-4 opacity-70">[</span>
-              <h1 className="text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal">
-                {activeFolder}
-              </h1>
-              <span className="text-[#00f3ff] text-4xl md:text-5xl font-light ml-4 opacity-70">]</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
-        <div className={`flex-1 flex flex-col overflow-hidden relative z-0 ${isVerticalLayout ? 'max-h-[50%] min-h-[50%] border-b border-[#00f3ff]/10' : 'max-w-[50%] min-w-[50%] border-r border-[#00f3ff]/10'}`}>
-          <div className="absolute left-0 bottom-0 h-[114px] w-[144px] overflow-hidden z-[0] pointer-events-none opacity-40 blur-[3px]">
-             <div className="absolute left-[-256px] bottom-0 h-[114px] w-[400px] rotate-180">
+      {googleToken && (
+        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-b border-[#00f3ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
+          
+          {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
+          <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
                <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
                  <defs>
-                   <filter id="bottomLeftMiniGlowBlurred" x="-20%" y="-20%" width="140%" height="140%">
+                   <filter id="headerRightGlowSVG" x="-20%" y="-20%" width="140%" height="140%">
                      <feGaussianBlur stdDeviation="3" result="blur1" />
-                     <feGaussianBlur stdDeviation="8" result="blur2" />
+                     <feGaussianBlur stdDeviation="6" result="blur2" />
                      <feMerge>
                          <feMergeNode in="blur2" />
                          <feMergeNode in="blur1" />
@@ -319,66 +270,138 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                      </feMerge>
                    </filter>
                  </defs>
-                 <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#bottomLeftMiniGlowBlurred)" />
-                 <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                 <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#bottomLeftMiniGlowBlurred)" />
-                 <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                 <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                 <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
-                 <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#bottomLeftMiniGlowBlurred)" />
-                 <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                 <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
+                 <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#headerRightGlowSVG)" />
+                 <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
+                 <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#headerRightGlowSVG)" />
+                 <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
+                 <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
+                 <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
+                 <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#headerRightGlowSVG)" />
+                 <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
+                 <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
                </svg>
-             </div>
           </div>
 
-          <EmailList
-            googleToken={googleToken}
-            activeFolder={activeFolder}
-            selectedEmailId={selectedEmailId}
-            setSelectedEmailId={setSelectedEmailId}
-            onExpand={(id) => setModalEmailId(id)}
-            onDraftClick={(id) => setAutoResumeDraftId(id)}
-            trashedEmails={trashedEmails}
-            spamEmails={spamEmails}
-            hiddenEmailIds={hiddenEmailIds}
-            optimisticMoves={optimisticMoves}
-            onTrash={handleGlobalTrash}
-            onRestore={handleGlobalRestore}
-            onSpam={handleGlobalSpam}
-            setUnreadCounts={setUnreadCounts}
-            unreadCounts={unreadCounts}
-            loginWithGoogle={loginWithGoogle}
-            customLabels={customLabels}
-            userEmail={userEmail}
-            refreshTriggerList={refreshTriggerList}
-          />
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="p-2 md:p-3 rounded-2xl bg-[#00f3ff]/10 border-2 border-[#00f3ff]/40 shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all">
+              {getFolderIcon(activeFolder)}
+            </div>
+            <div className="flex flex-col justify-center relative mt-1 select-none">
+              <div className="flex items-center gap-3 ml-2 mb-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#f800ff] shadow-[0_0_8px_rgba(248,0,255,0.8)]"></div>
+                <span className="text-[#00f3ff] text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
+                  System // Directory // 0xE9
+                </span>
+              </div>
+              <div className="flex flex-row items-baseline">
+                <span className="text-[#00f3ff] text-4xl md:text-5xl font-light mr-4 opacity-70">[</span>
+                <h1 className="text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal">
+                  {activeFolder}
+                </h1>
+                <span className="text-[#00f3ff] text-4xl md:text-5xl font-light ml-4 opacity-70">]</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className={`flex-1 flex flex-col overflow-hidden relative bg-transparent z-10 ${isVerticalLayout ? 'min-h-[50%]' : 'min-w-[50%]'}`}>
-          {isVerticalLayout ? (
-             <>
-               <div className="absolute left-0 top-0 right-0 h-[10px] bg-gradient-to-b from-[#00f3ff]/5 to-transparent pointer-events-none z-[5]" />
-               <div className="absolute left-0 top-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00f3ff]/30 to-transparent z-[5]" />
-             </>
-          ) : (
-             <>
-               <div className="absolute left-0 top-0 bottom-0 w-[10px] bg-gradient-to-r from-[#00f3ff]/5 to-transparent pointer-events-none z-[5]" />
-               <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-[#00f3ff]/30 to-transparent z-[5]" />
-             </>
-          )}
-          <EmailDetail
-            googleToken={googleToken}
-            isVerticalLayout={isVerticalLayout}
-            selectedEmailId={selectedEmailId}
-            onExpand={selectedEmailId ? () => setModalEmailId(selectedEmailId) : undefined}
-            onTrash={selectedEmailId ? () => handleGlobalTrash(selectedEmailId) : undefined}
-            onRestore={selectedEmailId ? () => handleGlobalRestore(selectedEmailId) : undefined}
-            onSpam={selectedEmailId ? () => handleGlobalSpam(selectedEmailId) : undefined}
-            onActionReply={(config) => setComposerConfig(config)}
-            autoResumeDraftId={autoResumeDraftId}
-            onDraftResumed={() => setAutoResumeDraftId(null)}
-          />
-        </div>
+      )}
+
+      <div className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
+        {!googleToken ? (
+           <div 
+             className="flex-1 flex w-full h-full cursor-pointer flex-col" 
+             onClick={() => loginWithGoogle && loginWithGoogle()}
+           >
+             <EmailList googleToken={googleToken} loginWithGoogle={loginWithGoogle} />
+           </div>
+        ) : (
+           <>
+              <div className={`flex-1 overflow-hidden relative z-0 ${selectedEmailId ? 'hidden md:flex' : 'flex'} flex-col ${isVerticalLayout ? 'md:max-h-[50%] md:min-h-[50%] border-b border-[#00f3ff]/10' : 'md:max-w-[50%] md:min-w-[50%] border-r border-[#00f3ff]/10'}`}>
+                <div className="absolute left-0 bottom-0 h-[114px] w-[144px] overflow-hidden z-[0] pointer-events-none opacity-40 blur-[3px]">
+                   <div className="absolute left-[-256px] bottom-0 h-[114px] w-[400px] rotate-180">
+                     <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <defs>
+                         <filter id="bottomLeftMiniGlowBlurred" x="-20%" y="-20%" width="140%" height="140%">
+                           <feGaussianBlur stdDeviation="3" result="blur1" />
+                           <feGaussianBlur stdDeviation="8" result="blur2" />
+                           <feMerge>
+                               <feMergeNode in="blur2" />
+                               <feMergeNode in="blur1" />
+                               <feMergeNode in="SourceGraphic" />
+                           </feMerge>
+                         </filter>
+                       </defs>
+                       <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#bottomLeftMiniGlowBlurred)" />
+                       <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
+                       <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#bottomLeftMiniGlowBlurred)" />
+                       <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
+                       <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
+                       <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
+                       <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#bottomLeftMiniGlowBlurred)" />
+                       <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
+                       <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
+                     </svg>
+                   </div>
+                </div>
+
+                <EmailList
+                  googleToken={googleToken}
+                  activeFolder={activeFolder}
+                  selectedEmailId={selectedEmailId}
+                  setSelectedEmailId={setSelectedEmailId}
+                  onExpand={(id) => setModalEmailId(id)}
+                  onDraftClick={(id) => setAutoResumeDraftId(id)}
+                  trashedEmails={trashedEmails}
+                  spamEmails={spamEmails}
+                  hiddenEmailIds={hiddenEmailIds}
+                  optimisticMoves={optimisticMoves}
+                  onTrash={handleGlobalTrash}
+                  onRestore={handleGlobalRestore}
+                  onSpam={handleGlobalSpam}
+                  setUnreadCounts={setUnreadCounts}
+                  unreadCounts={unreadCounts}
+                  loginWithGoogle={loginWithGoogle}
+                  customLabels={customLabels}
+                  userEmail={userEmail}
+                  refreshTriggerList={refreshTriggerList}
+                />
+              </div>
+
+              <div className={`flex-1 overflow-hidden relative bg-[#0f172a] z-10 ${selectedEmailId ? 'flex' : 'hidden md:flex'} flex-col ${isVerticalLayout ? 'md:min-h-[50%]' : 'md:min-w-[50%]'}`}>
+                {isVerticalLayout ? (
+                   <>
+                     <div className="hidden md:block absolute left-0 top-0 right-0 h-[10px] bg-gradient-to-b from-[#00f3ff]/5 to-transparent pointer-events-none z-[5]" />
+                     <div className="hidden md:block absolute left-0 top-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00f3ff]/30 to-transparent z-[5]" />
+                   </>
+                ) : (
+                   <>
+                     <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[10px] bg-gradient-to-r from-[#00f3ff]/5 to-transparent pointer-events-none z-[5]" />
+                     <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-[#00f3ff]/30 to-transparent z-[5]" />
+                   </>
+                )}
+                
+                {selectedEmailId && (
+                  <div className="md:hidden flex items-center p-3 border-b border-[#00f3ff]/20 bg-black z-20 shadow-[0_0_20px_rgba(0,0,0,0.8)]">
+                    <button onClick={() => setSelectedEmailId(null)} className="text-[#00f3ff] font-bold tracking-widest flex items-center gap-3 px-4 py-3 hover:bg-[#00f3ff]/10 rounded-xl transition-all">
+                      <span className="text-2xl leading-none">←</span> ZPĚT DO SCHRÁNKY
+                    </button>
+                  </div>
+                )}
+
+                <EmailDetail
+                  googleToken={googleToken}
+                  isVerticalLayout={isVerticalLayout}
+                  selectedEmailId={selectedEmailId}
+                  onExpand={selectedEmailId ? () => setModalEmailId(selectedEmailId) : undefined}
+                  onTrash={selectedEmailId ? () => handleGlobalTrash(selectedEmailId) : undefined}
+                  onRestore={selectedEmailId ? () => handleGlobalRestore(selectedEmailId) : undefined}
+                  onSpam={selectedEmailId ? () => handleGlobalSpam(selectedEmailId) : undefined}
+                  onActionReply={(config) => setComposerConfig(config)}
+                  autoResumeDraftId={autoResumeDraftId}
+                  onDraftResumed={() => setAutoResumeDraftId(null)}
+                />
+              </div>
+           </>
+        )}
       </div>
 
       {modalEmailId && createPortal(

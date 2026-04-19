@@ -354,11 +354,13 @@ function App() {
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0f172a] relative border border-[#00f3ff]/20 shadow-2xl select-none">
 
 
-      <MobileHeader 
-         toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-         userEmail={userInfo?.email} 
-         logoutGoogleAccount={logoutGoogleAccount}
-      />
+      {googleToken && (
+        <MobileHeader 
+           toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+           userEmail={userInfo?.email} 
+           logoutGoogleAccount={logoutGoogleAccount}
+        />
+      )}
 
       
       <div className="flex flex-1 overflow-hidden relative">
@@ -378,7 +380,7 @@ function App() {
       />
 
       {/* Overlay pro mobilní menu */}
-      {isMobileMenuOpen && (
+      {isMobileMenuOpen && googleToken && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" 
           onClick={() => setIsMobileMenuOpen(false)} 
@@ -386,7 +388,7 @@ function App() {
       )}
 
       {/* Levá navigace */}
-      <div className={`fixed inset-y-0 left-0 z-50 md:relative md:z-10 h-full flex shrink-0 overflow-visible transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className={`fixed inset-y-0 left-0 z-50 md:relative md:z-10 h-full shrink-0 overflow-visible transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${googleToken ? 'flex' : 'hidden'}`}>
         {/* Levé spodní zrcadlové rozhraní sběrnice (Crisp část v Sidebar) */}
         <div className="absolute left-0 bottom-0 h-[114px] w-[256px] overflow-hidden z-[30] pointer-events-none">
            <div className="absolute left-0 bottom-0 h-[114px] w-[400px] opacity-40 rotate-180">
