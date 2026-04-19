@@ -771,13 +771,13 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           <p className="text-gray-400 text-sm tracking-widest font-mono uppercase opacity-70">Zabezpečená zóna: Vyžaduje se autentizace operátora</p>
           
           <button 
-            onClick={() => loginWithGoogle && loginWithGoogle()}
-            className="mt-8 px-10 py-4 relative group overflow-hidden bg-transparent border-2 border-[#00f3ff] text-[#00f3ff] font-black uppercase tracking-widest rounded-sm hover:text-black transition-all duration-300"
+            onClick={(e) => { e.stopPropagation(); loginWithGoogle && loginWithGoogle(); }}
+            className="mt-8 px-10 py-4 relative group overflow-hidden bg-transparent border-2 border-[#00f3ff] text-[#00f3ff] font-black uppercase tracking-widest rounded-sm hover:text-black transition-all duration-300 cursor-pointer"
           >
-            <div className="absolute inset-0 w-full h-full bg-[#00f3ff] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0"></div>
-            <span className="relative z-10 flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-[#f800ff] group-hover:bg-black shadow-[0_0_8px_#f800ff]"></span>
-              Zahájit přihlášení
+            <div className="absolute inset-0 w-full h-full bg-[#00f3ff] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 pointer-events-none"></div>
+            <span className="relative z-10 flex items-center gap-3 pointer-events-none">
+              <span className="w-2 h-2 rounded-full bg-[#f800ff] group-hover:bg-black shadow-[0_0_8px_#f800ff] transition-colors duration-300"></span>
+              Přihlásit se
             </span>
           </button>
         </div>

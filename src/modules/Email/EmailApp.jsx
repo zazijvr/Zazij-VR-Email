@@ -307,10 +307,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
       <div className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
         {!googleToken ? (
-           <div 
-             className="flex-1 flex w-full h-full cursor-pointer flex-col" 
-             onClick={() => loginWithGoogle && loginWithGoogle()}
-           >
+           <div className="flex-1 flex w-full h-full flex-col">
              <EmailList googleToken={googleToken} loginWithGoogle={loginWithGoogle} />
            </div>
         ) : (
