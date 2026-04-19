@@ -45,7 +45,7 @@ export default function SettingsModal({
           </button>
         </div>
 
-        <div className="flex gap-2 sm:gap-4 mb-4 border-b border-white/5 pb-4 overflow-x-auto custom-scrollbar">
+        <div className="flex gap-2 sm:gap-4 mb-4 border-b border-white/5 pb-6 pt-4 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto custom-scrollbar">
           <button onClick={() => setActiveTab('general')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'general' ? 'bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff]/50 shadow-[0_0_15px_rgba(0,243,255,0.2)]' : 'bg-black/20 text-gray-400 border border-white/5 hover:bg-white/5 hover:text-white'}`}>
             <SettingsIcon size={16} className="sm:w-[18px] sm:h-[18px]" /> OBECNÉ
           </button>
