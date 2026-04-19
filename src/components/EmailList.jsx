@@ -926,8 +926,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
                   className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#f800ff]/20 text-[#00f3ff] hover:text-[#f800ff] border border-transparent hover:border-[#f800ff]/50 transition-all font-bold uppercase tracking-wider text-xs"
                   title="Označit jako důležité"
                 >
-                  <Star size={16} className={isFirstStarred ? "" : "fill-current text-[#f800ff] drop-shadow-[0_0_5px_rgba(248,0,255,0.8)]"} />
-                  {isFirstStarred ? 'Odebrat Hvězdu' : 'Důležité'}
+                  <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-[currentColor]/50' : 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse'}`}></div>
+                  {isFirstStarred ? 'Odebrat' : 'Důležité'}
                 </button>
 
                 {activeFolder === 'Koš' && (
@@ -1040,7 +1040,9 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
              </button>
              
              <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-[#f800ff] hover:text-white transition-colors">
-               <div className="p-3 rounded-xl bg-[#f800ff]/10 shadow-[inset_0_0_10px_rgba(248,0,255,0.2)]"><Star size={20} className={isFirstStarred ? "" : "fill-current"} /></div>
+               <div className="p-3 rounded-xl bg-[#f800ff]/10 shadow-[inset_0_0_10px_rgba(248,0,255,0.2)]">
+                  <div className={`w-5 h-5 rounded-full transition-all ${isFirstStarred ? 'border-2 border-[#f800ff]/50' : 'bg-[#f800ff] shadow-[0_0_10px_#f800ff] animate-pulse'}`}></div>
+               </div>
                <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstStarred ? 'Odebrat' : 'Důležité'}</span>
              </button>
 

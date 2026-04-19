@@ -978,7 +978,10 @@ ${ccLine}
                                });
                              } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
                           }} className={`flex items-center gap-4 p-4 rounded-2xl transition-all w-full text-left font-bold tracking-wide active:scale-[0.98] ${emailData.isStarred ? 'hover:bg-[#f800ff]/10 text-[#f800ff]/90 active:bg-[#f800ff]/20' : 'hover:bg-[#f800ff]/10 text-[#f800ff]/50 active:bg-[#f800ff]/20'}`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-[#f800ff]/10' : 'bg-[#f800ff]/5'}`}><Star size={20} fill={emailData.isStarred ? "currentColor" : "none"} /></div> {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-transparent border-2 border-[#f800ff]/30' : 'bg-[#f800ff]/10'}`}>
+                               <div className={`w-4 h-4 rounded-full transition-all ${emailData.isStarred ? 'border-2 border-[#f800ff]/50' : 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse'}`}></div>
+                            </div>
+                            {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                           </button>
                           
                           <button onClick={(e) => { e.stopPropagation(); setIsMoreMenuOpen(false); toggleReadStatus(); }} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/10 text-white/80 hover:text-white transition-all w-full text-left font-bold tracking-wide active:bg-white/20">
