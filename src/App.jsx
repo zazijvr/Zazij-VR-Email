@@ -156,15 +156,24 @@ function App() {
 
   // Vyvolat při úplně prvním spuštění aplikace
   useEffect(() => {
-    // DEV MODE: Obejít Tauri a načíst token z GET URL (např. ruční poslání dev URL do jiného zařízení)
+    // DEV MODE: Obejít Tauri a načíst token z GET URL (nebo z lokální paměti po F5)
     const params = new URLSearchParams(window.location.search);
-    const devToken = params.get('devToken');
+    let devToken = params.get('devToken');
+    
+    // Zkusit vytáhnout z paměti pro případ refreshnutí (F5) na webu
+    if (!devToken && !window.__TAURI_INTERNALS__) {
+       devToken = sessionStorage.getItem('zazij_dev_token');
+    }
+
     if (devToken && !window.__TAURI_INTERNALS__) {
-       console.log("DEV MODE OVERRIDE: Nalezen devToken v URL! Spouštím aplikaci v testovacím režimu bez napojení na Tauri backend.");
+       console.log("DEV MODE OVERRIDE: Nalezen devToken! Spouštím aplikaci v testovacím režimu bez napojení na Tauri backend.");
        setGoogleToken(devToken);
+       sessionStorage.setItem('zazij_dev_token', devToken);
        
        // Smažeme devToken z URL lišty, aby se to uživateli pořád nepletlo do odkazů
-       window.history.replaceState({}, document.title, "/");
+       if (params.get('devToken')) {
+          window.history.replaceState({}, document.title, "/");
+       }
        
        // Načteme skutečná data z Google, testér chce vidět svou vlastní mailovou schránku a obličej
        fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -172,7 +181,13 @@ function App() {
        })
        .then(res => res.json())
        .then(data => {
-          setUserInfo({ email: data.email, name: data.name, picture: data.picture });
+          if (data.email) {
+             setUserInfo({ email: data.email, name: data.name, picture: data.picture });
+          } else {
+             // Token propadl nebo nemáme scopes
+             sessionStorage.removeItem('zazij_dev_token');
+             console.error("Profil nevrátil email, token je zřejmě mrtvý");
+          }
        })
        .catch(err => {
           console.error("Chyba načítání profilu z devTokenu:", err);
