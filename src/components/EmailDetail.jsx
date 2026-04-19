@@ -596,38 +596,42 @@ ${ccLine}
 
   // Samotný E-mail čtecí panel
   return (
-    <div className="flex-1 flex flex-col bg-transparent overflow-hidden fixed inset-0 z-[60] pointer-events-none md:bg-[#0f172a] md:relative md:inset-auto md:z-auto md:pointer-events-auto">
-      {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER --- */}
-      <div className="md:hidden flex items-center justify-between px-4 h-16 bg-transparent border-b border-[#00f3ff]/20 z-20 w-full shrink-0 pointer-events-auto">
-        {onMobileBack && (
-          <button 
-            onClick={onMobileBack} 
-            className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all anim-spin-in-arrow"
-          >
-            <ArrowLeft size={26} strokeWidth={2.5} />
-          </button>
-        )}
-        <div className="flex items-center gap-2 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' }}>
-          {emailData && (
+    <>
+      {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER (PORTALLED) --- */}
+      {createPortal(
+        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 h-16 bg-transparent border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto">
+          {onMobileBack && (
             <button 
-              onClick={toggleReadStatus} 
-              className={`p-2 rounded-xl transition-all ${emailData.isUnread ? 'text-[#00f3ff] bg-[#00f3ff]/10' : 'text-white/50 hover:text-white/80 hover:bg-white/10'}`}
-              title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
+              onClick={onMobileBack} 
+              className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all anim-spin-in-arrow"
             >
-              {emailData.isUnread ? <Mail size={22} /> : <MailOpen size={22} />}
+              <ArrowLeft size={26} strokeWidth={2.5} />
             </button>
           )}
-          {onTrash && (
-            <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="p-2 rounded-xl text-[#ef4444]/80 hover:text-[#ef4444] hover:bg-[#ef4444]/20 transition-all">
-              <Trash2 size={22} />
-            </button>
-          )}
-        </div>
-      </div>
+          <div className="flex items-center gap-2 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' }}>
+            {emailData && (
+              <button 
+                onClick={toggleReadStatus} 
+                className={`p-2 rounded-xl transition-all ${emailData.isUnread ? 'text-[#00f3ff] bg-[#00f3ff]/10' : 'text-white/50 hover:text-white/80 hover:bg-white/10'}`}
+                title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
+              >
+                {emailData.isUnread ? <Mail size={22} /> : <MailOpen size={22} />}
+              </button>
+            )}
+            {onTrash && (
+              <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="p-2 rounded-xl text-[#ef4444]/80 hover:text-[#ef4444] hover:bg-[#ef4444]/20 transition-all">
+                <Trash2 size={22} />
+              </button>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
 
+      {/* Hlavní Tělo Detailu */}
       <div 
         key={emailData?.messageId || "loading"} 
-        className={`flex-1 flex flex-col h-full bg-[#0f172a] overflow-hidden shadow-[0_-5px_20px_rgba(0,0,0,0.5)] pointer-events-auto md:shadow-none ${slideAnimationClass}`}
+        className={`flex-1 flex flex-col bg-[#0f172a] overflow-hidden fixed inset-0 z-50 md:relative md:inset-auto md:z-auto pointer-events-auto shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none ${slideAnimationClass}`}
         onDoubleClick={() => {
            if (emailData?.isDraft) handleResumeDraft(emailData);
         }}
@@ -1009,6 +1013,7 @@ ${ccLine}
         document.body
       )}
       {/* --- Konec flex-containeru --- */}
-    </div>
+      </div>
+    </>
   );
 }
