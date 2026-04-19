@@ -645,8 +645,11 @@ ${ccLine}
       >
 
         {/* Detail Hlaviček - IDEA 3 jen pro Mobil, původní pro Desktop */}
-        <div className="shrink-0 px-4 py-5 md:py-4 md:px-8 border-t-2 md:border-t-0 md:border-b border-[#f800ff]/60 md:border-[#00f3ff]/10 bg-[#050810] md:bg-black/20 shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-[70] flex flex-col gap-4 relative w-full overflow-hidden">
+        <div className="shrink-0 px-4 py-5 md:py-4 md:px-8 border-t-0 md:border-b border-transparent md:border-[#00f3ff]/10 bg-[#050810] md:bg-black/20 shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-[70] flex flex-col gap-4 relative w-full overflow-hidden">
           
+          {/* Horní neonová linka ze Seznamu Emailů (Pouze mobil) */}
+          <div className="md:hidden absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
+
           {/* Dekorační levé zakončení (Pouze mobil) */}
           <div className="md:hidden absolute top-0 left-0 w-1 h-full bg-[#f800ff]/20"></div>
           
