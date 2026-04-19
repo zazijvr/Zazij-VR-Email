@@ -969,7 +969,7 @@ ${ccLine}
 
                   @media (max-width: 600px) {
                     body {
-                      padding: 0px 4px !important; /* Skoro nulový okraj pro mobil, ať emaily využijí 100% plochy */
+                      padding: 0px !important; /* Absolutní nula okrajů, ať se to dotýká fyzických bezela displeje */
                     }
                   }
                   
