@@ -189,9 +189,17 @@ export default function EmailListItem({
               <Check className="text-black" size={20} strokeWidth={4} />
             </div>
           </div>
-          <div className={`font-bold truncate w-full md:pr-4 ${email.isUnread || isActiveRow ? 'text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-gray-200'}`}>
-            {activeFolder === 'Odeslané' ? email.to : email.from}
-            <span className="md:hidden float-right text-xs text-[#00f3ff]/60 font-normal mt-1">
+          <div className={`font-bold truncate w-full md:pr-4 flex items-center gap-2 ${email.isUnread || isActiveRow ? 'text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-gray-200'}`}>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {email.isUnread && (
+                <span className="w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]" title="Nepřečteno"></span>
+              )}
+              {email.isStarred && (
+                <span className="w-2 h-2 rounded-full bg-[#f800ff] shadow-[0_0_8px_#f800ff]" title="Důležité"></span>
+              )}
+            </div>
+            <span className="truncate">{activeFolder === 'Odeslané' ? email.to : email.from}</span>
+            <span className="md:hidden ml-auto flex-shrink-0 text-xs text-[#00f3ff]/60 font-normal">
               {email.dateText && email.dateText !== 'Dnes' ? email.dateText : email.timeText}
             </span>
           </div>
@@ -203,12 +211,6 @@ export default function EmailListItem({
             <span className={`truncate text-sm ${email.isUnread || isActiveRow ? 'text-white font-bold' : 'text-gray-300 font-semibold'}`}>
               {email.subject}
             </span>
-            {email.isUnread && (
-              <span className="shrink-0 w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]" title="Nepřečteno"></span>
-            )}
-            {email.isStarred && (
-              <span className="shrink-0 w-2 h-2 rounded-full bg-[#f800ff] shadow-[0_0_8px_#f800ff]" title="Důležité"></span>
-            )}
           </div>
           <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors">
             {email.snippet}
