@@ -657,7 +657,7 @@ ${ccLine}
           <div className="md:hidden absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(0,243,255,0.06)_0%,transparent_60%)] pointer-events-none"></div>
 
           {/* Laserová linka dole (Z návrhu 1, žádané uživatelem, pouze mobil) */}
-          <div className="md:hidden absolute bottom-0 left-0 w-[50%] h-[2px] bg-gradient-to-r from-[#00f3ff] via-[#00f3ff] to-transparent drop-shadow-[0_0_8px_#00f3ff] pointer-events-none z-20"></div>
+          <div className="md:hidden absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff] via-[#00f3ff]/50 to-[#00f3ff]/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
 
           <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full pl-2 md:pl-0">
             <div className="flex-1 min-w-0 w-full">
