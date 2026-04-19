@@ -507,10 +507,9 @@ function App() {
         />
       </div>
 
-      {/* Hlavní obsahová oblast s plynulým maskováním na okrajích */}
+      {/* Hlavní obsahová oblast s plynulým maskováním na okrajích (pouze na desktopu, aby mobilní view šlo ostře ke kraji displeje) */}
       <div 
-         className="flex-1 h-full z-10 relative overflow-hidden"
-         style={{ maskImage: "linear-gradient(to right, transparent, black 15px, black calc(100% - 15px), transparent)" }}
+         className="flex-1 h-full z-10 relative overflow-hidden md:[mask-image:linear-gradient(to_right,transparent,black_15px,black_calc(100%-15px),transparent)]"
       >
         {/* Dekorativní hexagon maska napravo */}
         <div className="absolute right-[-100px] top-[10%] w-[400px] h-[800px] bg-[#f800ff] opacity-5 mix-blend-screen blur-[100px] pointer-events-none rounded-[100%] z-0"></div>
