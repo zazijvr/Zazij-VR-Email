@@ -644,21 +644,16 @@ ${ccLine}
         }}
       >
 
-        {/* Detail Hlaviček - IDEA 2: CYBERPUNK GRADIENT TEXT + WATERMARK */}
-        <div className="shrink-0 px-4 py-8 md:p-8 border-b border-[#00f3ff]/5 bg-black/40 backdrop-blur-2xl shadow-[0_15px_40px_rgba(0,0,0,0.4)] z-[70] flex flex-col gap-4 relative w-full overflow-hidden">
+        {/* Detail Hlaviček - IDEA 3: REACTIVE STATUS BOARD */}
+        <div className="shrink-0 px-4 py-5 md:p-8 border-t-2 md:border-t-4 border-[#f800ff]/60 bg-[#050810] shadow-[0_15px_40px_rgba(0,0,0,0.6)] z-[70] flex flex-col gap-4 relative w-full overflow-hidden">
           
-          {/* Obří vodoznak v pozadí */}
-          <div className="absolute -top-12 -right-6 md:-right-12 opacity-[0.04] pointer-events-none -rotate-12 select-none text-[#00f3ff]">
-            <Mail size={320} strokeWidth={0.5} />
-          </div>
+          {/* Dekorační levé zakončení */}
+          <div className="absolute top-0 left-0 w-1 md:w-2 h-full bg-[#f800ff]/20"></div>
+          
+          {/* Velmi jemný radialní odlesk v pozadí */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(0,243,255,0.06)_0%,transparent_60%)] pointer-events-none"></div>
 
-          {/* Crosshairs - Tech Uzly v rozích */}
-          <div className="absolute top-4 left-4 text-[#00f3ff]/40 text-[10px] font-mono leading-none">+</div>
-          <div className="absolute top-4 right-4 text-[#00f3ff]/40 text-[10px] font-mono leading-none">+</div>
-          <div className="absolute bottom-4 left-4 text-[#00f3ff]/40 text-[10px] font-mono leading-none">+</div>
-          <div className="absolute bottom-4 right-4 text-[#00f3ff]/40 text-[10px] font-mono leading-none">+</div>
-
-          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full px-2">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full pl-2 md:pl-4">
             <div className="flex-1 min-w-0 w-full">
               {emailData?.isDraft && (
                 <div className="mb-4">
@@ -674,8 +669,35 @@ ${ccLine}
                 </div>
               )}
               
+              {/* STATUS BOARD BADGES */}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                
+                {/* Odesilatel status */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#00f3ff]/10 border border-[#00f3ff]/30">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse shadow-[0_0_5px_#00f3ff]"></div>
+                  <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-[#00f3ff]">Link_Active</span>
+                </div>
+
+                {/* Attachments status */}
+                {emailData?.attachments?.length > 0 && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#f800ff]/10 border border-[#f800ff]/30">
+                    <Paperclip size={12} strokeWidth={3} className="text-[#f800ff]" />
+                    <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-[#f800ff]">Datacore_{emailData.attachments.length}</span>
+                  </div>
+                )}
+                
+                {/* Priority status */}
+                {emailData?.isStarred && (
+                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-yellow-400/10 border border-yellow-400/30 shadow-[0_0_10px_rgba(250,204,21,0.2)]">
+                    <Star size={12} fill="currentColor" strokeWidth={1} className="text-yellow-400" />
+                    <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-yellow-500">High_Priority</span>
+                  </div>
+                )}
+
+              </div>
+
               <div className="flex items-center gap-3 group w-full">
-                <h1 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#00f3ff]/90 drop-shadow-[0_0_15px_rgba(0,243,255,0.3)] tracking-wide leading-tight break-words">
+                <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] tracking-wide leading-tight break-words">
                   {emailData?.subject}
                 </h1>
                 {emailData?.subject && (
