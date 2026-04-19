@@ -640,7 +640,7 @@ ${ccLine}
       >
 
         {/* Detail Hlaviček */}
-        <div className="shrink-0 px-4 py-4 md:p-8 border-b border-[#00f3ff]/10 bg-black/20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-[70] flex flex-col gap-4 relative w-full">
+        <div className="shrink-0 px-4 py-4 md:p-8 border-b-0 md:border-b border-[#00f3ff]/10 bg-black/20 shadow-none md:shadow-[0_10px_30px_rgba(0,0,0,0.3)] z-[70] flex flex-col gap-4 relative w-full">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full">
             <div className="flex-1 min-w-0 w-full">
               {emailData?.isDraft && (
@@ -923,7 +923,7 @@ ${ccLine}
         </div>
 
         {/* Samotné Iframe Tělo zprávy (Čistý solidní Dark Mode, bez prosvítání a rušivých stínů) */}
-        <div className="flex-1 w-full max-w-5xl mx-auto p-0 m-0 mt-2 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-0 md:border border-white/10 overflow-hidden bg-[#0a0f1d]">
+        <div className="flex-1 w-full max-w-5xl mx-auto p-0 m-0 mt-0 md:mt-6 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-0 md:border border-white/10 overflow-hidden bg-[#0a0f1d]">
           {emailData?.htmlBody ? (
             <iframe
               title="Email Content"
