@@ -4,7 +4,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { open } from '@tauri-apps/plugin-shell';
 import { downloadDir, join } from '@tauri-apps/api/path';
-import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, Star, CalendarPlus, Copy, Check } from 'lucide-react';
+import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, Star, CalendarPlus, Copy, Check, MoreVertical } from 'lucide-react';
 import ICAL from 'ical.js';
 import DOMPurify from 'dompurify';
 
@@ -34,12 +34,28 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
   };
 
   const modalRef = useRef(null);
+  const moreMenuRef = useRef(null);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   useEffect(() => {
     if (previewBlob) {
       setTimeout(() => { if (modalRef.current) modalRef.current.focus() }, 50);
     }
   }, [previewBlob]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true, capture: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside, { capture: true });
+    };
+  }, []);
 
   useEffect(() => {
     const handleMessage = async (e) => {
@@ -418,9 +434,27 @@ ${ccLine}
         const dateRaw = getHeader(headers, 'Date');
         const rfcMessageId = getHeader(headers, 'Message-ID');
 
-        // Pěkné naformátování data (odeselekční string z GMailu je moc ošklivý)
+        // Pěkné naformátování data
         const dateObj = new Date(dateRaw);
-        const niceDate = isNaN(dateObj.getTime()) ? dateRaw : dateObj.toLocaleString('cs-CZ');
+        let niceDate = dateRaw;
+        if (!isNaN(dateObj.getTime())) {
+          const today = new Date();
+          const isToday = dateObj.getDate() === today.getDate() && dateObj.getMonth() === today.getMonth() && dateObj.getFullYear() === today.getFullYear();
+          niceDate = isToday 
+              ? dateObj.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })
+              : dateObj.toLocaleDateString('cs-CZ');
+        }
+
+        // Zkrácení odesílatele na jméno (odříznutí <email>)
+        let displayFrom = from;
+        if (from) {
+          const fromMatch = from.match(/^"?([^"<]+)"?\s*<([^>]+)>/);
+          if (fromMatch && fromMatch[1].trim() !== '') {
+            displayFrom = fromMatch[1].trim();
+          } else {
+            displayFrom = from.replace(/[<>]/g, '');
+          }
+        }
 
         let bodyExtract = getMessageBody(data.payload);
 
@@ -477,7 +511,8 @@ ${ccLine}
 
         setEmailData({
           subject,
-          from,
+          from: displayFrom,
+          rawFrom: from,
           to,
           date: niceDate,
           cc,
@@ -577,20 +612,78 @@ ${ccLine}
             </div>
 
             <div className="flex items-center flex-wrap gap-2 shrink-0 w-full md:w-auto mt-2 md:mt-0">
-              {emailData && (
-                <>
-                  <button
-                    onClick={async () => {
-                      const currentIsStarred = emailData.isStarred;
-                      setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
-                      try {
-                        await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
-                          method: 'POST',
-                          headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
-                          body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
-                        });
-                      } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
-                    }}
+               {/* ---------------- MOBILE ACTION MENU (3-dots) ---------------- */}
+               <div className="md:hidden flex items-center justify-end w-full gap-2 relative">
+                 {onActionReply && !emailData?.isDraft && (
+                    <button
+                      onClick={handleReply}
+                      className="p-2 px-4 rounded-xl font-bold tracking-widest text-[#00f3ff] bg-[#00f3ff]/10 border border-[#00f3ff]/20 flex items-center gap-2"
+                    >
+                      <Reply size={20} /> Odpovědět
+                    </button>
+                 )}
+                 <div className="relative" ref={moreMenuRef}>
+                    <button
+                      onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                      className="p-2 rounded-xl text-white/70 bg-white/5 border border-white/10"
+                    >
+                      <MoreVertical size={22} />
+                    </button>
+                    {isMoreMenuOpen && (
+                      <div className="absolute top-12 right-0 w-56 bg-black/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 flex flex-col p-2 gap-1 animate-in fade-in slide-in-from-top-2">
+                        {onActionReply && !emailData?.isDraft && (
+                          <>
+                            <button onClick={() => { setIsMoreMenuOpen(false); handleReplyAll(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
+                              <ReplyAll size={18} /> Odpovědět všem
+                            </button>
+                            <button onClick={() => { setIsMoreMenuOpen(false); handleForward(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-white/80 w-full text-left">
+                              <Forward size={18} /> Přeposlat
+                            </button>
+                            <div className="w-full h-px bg-white/10 my-1"></div>
+                          </>
+                        )}
+                        <button onClick={async () => {
+                           setIsMoreMenuOpen(false);
+                           const currentIsStarred = emailData.isStarred;
+                           setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
+                           try {
+                             await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+                               method: 'POST',
+                               headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+                               body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
+                             });
+                           } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
+                        }} className={`flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 w-full text-left ${emailData.isStarred ? 'text-[#f800ff]' : 'text-white/80'}`}>
+                          <Star size={18} fill={emailData.isStarred ? "currentColor" : "none"} /> {emailData.isStarred ? "Odebrat prioritu" : "Důležité"}
+                        </button>
+                        
+                        <div className="w-full h-px bg-white/10 my-1"></div>
+                        {onTrash && (
+                          <button onClick={() => { setIsMoreMenuOpen(false); onTrash(); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#ef4444]/20 text-[#ef4444] w-full text-left">
+                            <Trash2 size={18} /> Smazat
+                          </button>
+                        )}
+                      </div>
+                    )}
+                 </div>
+               </div>
+
+               {/* ---------------- DESKTOP ACTIONS ---------------- */}
+               <div className="hidden md:flex items-center gap-2">
+                 {emailData && (
+                   <>
+                     <button
+                       onClick={async () => {
+                         const currentIsStarred = emailData.isStarred;
+                         setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
+                         try {
+                           await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+                             method: 'POST',
+                             headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+                             body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
+                           });
+                         } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
+                       }}
                     className={`p-2 rounded-xl border transition-all ${emailData.isStarred ? 'text-[#f800ff] bg-[#f800ff]/10 border-[#f800ff]/40 shadow-[0_0_15px_rgba(248,0,255,0.4)]' : 'text-[#f800ff]/50 bg-[#f800ff]/5 border-[#f800ff]/10 hover:text-[#f800ff] hover:bg-[#f800ff]/15 hover:border-[#f800ff]/50 shadow-[0_0_5px_rgba(248,0,255,0.1)] hover:shadow-[0_0_15px_rgba(248,0,255,0.4)]'}`}
                     title={emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                   >
@@ -654,7 +747,7 @@ ${ccLine}
               {onExpand && (
                 <button
                   onClick={onExpand}
-                  className="p-2 rounded-xl text-[#00f3ff]/70 bg-[#00f3ff]/5 border border-[#00f3ff]/20 hover:text-[#00f3ff] hover:bg-[#00f3ff]/15 hover:border-[#00f3ff]/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                  className="hidden md:block p-2 rounded-xl text-[#00f3ff]/70 bg-[#00f3ff]/5 border border-[#00f3ff]/20 hover:text-[#00f3ff] hover:bg-[#00f3ff]/15 hover:border-[#00f3ff]/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
                   title="Otevřít v plné velikosti"
                 >
                   <Maximize2 size={22} />
@@ -662,16 +755,17 @@ ${ccLine}
               )}
               {onClose && (
                 <>
-                  <div className="w-px h-6 bg-white/20 mx-1"></div>
+                  <div className="hidden md:block w-px h-6 bg-white/20 mx-1"></div>
                   <button
                     onClick={onClose}
-                    className="p-2 bg-white/5 hover:bg-[#ef4444]/20 text-gray-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
+                    className="hidden md:flex p-2 bg-white/5 hover:bg-[#ef4444]/20 text-gray-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
                     title="Zavřít"
                   >
                     <X size={22} strokeWidth={2} />
                   </button>
                 </>
               )}
+              </div>
             </div>
           </div>
 
@@ -682,9 +776,9 @@ ${ccLine}
               </div>
               <div className="flex flex-col overflow-hidden pr-4 w-full">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-[#00f3ff] text-lg tracking-wide leading-tight truncate max-w-xl">{emailData?.from}</span>
-                  {emailData?.from && (
-                    <button onClick={() => handleCopyToClipboard(emailData.from, 'from')} className="opacity-60 hover:opacity-100 hover:bg-[#00f3ff]/20 transition-all p-1.5 rounded-lg text-[#00f3ff]" title="Kopírovat adresu odesílatele">
+                  <span className="font-bold text-[#00f3ff] text-xl tracking-wide leading-tight truncate max-w-xl">{emailData?.from}</span>
+                  {emailData?.rawFrom && (
+                    <button onClick={() => handleCopyToClipboard(emailData.rawFrom, 'from')} className="opacity-60 hover:opacity-100 hover:bg-[#00f3ff]/20 transition-all p-1.5 rounded-lg text-[#00f3ff]" title="Kopírovat plnou adresu odesílatele">
                       {copiedId === 'from' ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
                     </button>
                   )}
@@ -829,6 +923,26 @@ ${ccLine}
             </div>
           )}
         </div>
+        
+        {/* Velká akční tlačítka pod mailem jen pro mobily */}
+        {onActionReply && !emailData?.isDraft && (
+          <div className="md:hidden flex flex-col gap-3 px-4 pb-8 w-full mt-auto">
+            <button
+               onClick={handleReply}
+               className="w-full py-4 bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 border border-[#00f3ff]/40 rounded-2xl flex items-center justify-center gap-3 text-[#00f3ff] font-bold tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(0,243,255,0.2)]"
+            >
+              <Reply size={22} /> Odpovědět odesílateli
+            </button>
+            <button
+               onClick={handleForward}
+               disabled={isPreparingForward}
+               className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-white/80 font-bold tracking-widest uppercase transition-all disabled:opacity-50"
+            >
+              {isPreparingForward ? <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin"></div> : <Forward size={22} />} 
+              Přeposlat zprávu
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Zobrazovač příloh In-App (pomocí Portal vytrženo z CSS kontextu) */}
