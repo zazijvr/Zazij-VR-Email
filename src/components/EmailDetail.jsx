@@ -982,29 +982,22 @@ ${ccLine}
                     }
                   });
 
-                  // Automatické zmenšení obřích tabulek tak, aby se na mobilu vešly na šířku
+                  // Automatické zmenšení obřích tabulek tak, aby se na mobilu vešly na šířku bez zbytečných prázdných okrajů
                   let stalyZoom = 1.0;
                   
-                  function updateTransform() {
-                     document.body.style.transformOrigin = 'top left';
-                     document.body.style.transform = 'scale(' + stalyZoom + ')';
-                     document.body.style.width = (100 / stalyZoom) + '%';
-                  }
-
                   function fitToWidth() {
-                    // Reset stavu pro přesný re-kalkul šířky
-                    document.body.style.transform = 'none';
-                    document.body.style.width = 'auto';
+                    document.body.style.zoom = 1.0;
                     
                     const docWidth = document.documentElement.scrollWidth || document.body.scrollWidth;
                     const winWidth = window.innerWidth;
                     
-                    if (docWidth > winWidth && winWidth > 0 && docWidth > 0) {
+                    // Aplikujeme zoom zmenšení pouze pokud obsah reálně a výrazně přesahuje okno (ignorance malých paddingů)
+                    if (docWidth > winWidth + 10 && winWidth > 0) {
                        stalyZoom = winWidth / docWidth;
+                       document.body.style.zoom = stalyZoom;
                     } else {
                        stalyZoom = 1.0;
                     }
-                    updateTransform();
                   }
 
                   window.addEventListener('load', fitToWidth);
@@ -1017,11 +1010,12 @@ ${ccLine}
 
                   document.addEventListener('touchstart', function(e) {
                     if (e.touches.length === 2) {
-                      vzdalenostInit = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                      );
-                      zoomInit = stalyZoom;
+                       // Ošetření pro scrollování a pinch-zoom
+                       vzdalenostInit = Math.hypot(
+                         e.touches[0].clientX - e.touches[1].clientX,
+                         e.touches[0].clientY - e.touches[1].clientY
+                       );
+                       zoomInit = stalyZoom;
                     }
                   });
 
@@ -1037,11 +1031,11 @@ ${ccLine}
                       const pomer = vzdalenostAktual / vzdalenostInit;
                       stalyZoom = zoomInit * pomer;
                       
-                      // Zamezit přílišnému zmenšení/zvětšení
-                      if (stalyZoom < 0.2) stalyZoom = 0.2;
+                      // Zamezit přílišnému zmenšení/zvětšení. Default zmenšení může být až např 0.2
+                      if (stalyZoom < 0.15) stalyZoom = 0.15;
                       if (stalyZoom > 5.0) stalyZoom = 5.0;
                       
-                      updateTransform();
+                      document.body.style.zoom = stalyZoom;
                     }
                   }, { passive: false });
 
