@@ -56,25 +56,25 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
       <div 
         ref={modalRef}
         tabIndex={-1}
-        className={`relative w-full max-w-md p-6 rounded-2xl border-2 ${borderClass} bg-[#02050e] ${shadowClass} flex flex-col gap-4 animate-in zoom-in-95 duration-200 outline-none`}
+        className={`relative w-[92%] sm:w-full max-w-md p-5 sm:p-6 rounded-2xl border-2 ${borderClass} bg-[#02050e] ${shadowClass} flex flex-col gap-4 animate-in zoom-in-95 duration-200 outline-none`}
         onClick={(e) => e.stopPropagation()}
       >
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-[#ef4444]/20 text-gray-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 bg-white/5 hover:bg-[#ef4444]/20 text-gray-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center z-10"
         >
-          <X size={22} strokeWidth={2} />
+          <X size={20} className="sm:w-[22px] sm:h-[22px]" strokeWidth={2} />
         </button>
 
-        <div className="flex items-start gap-4">
-          <div className={`p-3 rounded-full ${bgClass} ${colorClass} shrink-0`}>
-            <Icon size={32} strokeWidth={2} />
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className={`p-2 sm:p-3 rounded-full ${bgClass} ${colorClass} shrink-0`}>
+            <Icon size={24} className="sm:w-8 sm:h-8" strokeWidth={2} />
           </div>
-          <div className="flex-1 pt-1">
-            <h3 className={`text-xl font-black uppercase tracking-widest ${colorClass} mb-2`}>
+          <div className="flex-1 pt-0.5 sm:pt-1 pr-6 sm:pr-8">
+            <h3 className={`text-base sm:text-lg lg:text-xl font-black uppercase tracking-wider sm:tracking-widest ${colorClass} mb-2 break-words`}>
               {title || (type === 'error' ? 'Chyba' : type === 'success' ? 'Hotovo' : 'Informace')}
             </h3>
-            <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">
+            <p className="text-gray-300 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">
               {message}
             </p>
           </div>
