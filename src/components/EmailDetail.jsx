@@ -982,37 +982,49 @@ ${ccLine}
                     }
                   });
 
-                  // Automatické zmenšení obřích tabulek tak, aby se na mobilu vešly
-                  let stalyZoom = 1.0;
-                  let vychoziZoom = 1.0;
+                  // Nejpokročilejší auto-scaling pro emailové iframy na WebKitu/Chromiu
+                  let stalyScale = 1.0;
+                  let vychoziScale = 1.0;
+                  let translateX = 0;
+                  let translateY = 0;
                   
+                  function applyTransform() {
+                     document.body.style.transformOrigin = '0 0';
+                     document.body.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + stalyScale + ')';
+                  }
+
                   function fitToWidth() {
-                    document.body.style.zoom = 1.0;
-                    document.documentElement.style.overflowX = 'hidden';
-                    document.body.style.overflowX = 'hidden';
+                    // Reset stavu před kalkulací
+                    document.body.style.transform = 'none';
+                    document.body.style.width = 'max-content';
+                    translateX = 0;
+                    translateY = 0;
                     
-                    const docWidth = document.documentElement.scrollWidth || document.body.scrollWidth;
+                    const docWidth = document.body.scrollWidth;
                     const winWidth = window.innerWidth;
                     
-                    // Zoom aplikujeme na přizpůsobení obrazovky
+                    // Změříme reálný přesah emailu
                     if (docWidth > winWidth + 5 && winWidth > 0) {
-                       stalyZoom = winWidth / docWidth;
+                       stalyScale = winWidth / docWidth;
                     } else {
-                       stalyZoom = 1.0;
+                       stalyScale = 1.0;
+                       document.body.style.width = '100%';
                     }
-                    vychoziZoom = stalyZoom;
-                    document.body.style.zoom = stalyZoom;
+                    vychoziScale = stalyScale;
+                    applyTransform();
                   }
 
                   window.addEventListener('load', fitToWidth);
                   setTimeout(fitToWidth, 100);
                   setTimeout(fitToWidth, 500);
 
-                  // Vylepšený Pinch-To-Zoom, ukotvený na střed mezi prsty
+                  // Javascript Pinch-To-Zoom, plně napojený na CSS Transformaci
                   let vzdalenostInit = 0;
-                  let zoomInit = 1.0;
-                  let pinchStartX = 0;
-                  let pinchStartY = 0;
+                  let scaleInit = 1.0;
+                  let txInit = 0;
+                  let tyInit = 0;
+                  let stredInitX = 0;
+                  let stredInitY = 0;
 
                   document.addEventListener('touchstart', function(e) {
                     if (e.touches.length === 2) {
@@ -1020,54 +1032,46 @@ ${ccLine}
                          e.touches[0].clientX - e.touches[1].clientX,
                          e.touches[0].clientY - e.touches[1].clientY
                        );
-                       zoomInit = stalyZoom;
-                       
-                       pinchStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                       pinchStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                       scaleInit = stalyScale;
+                       txInit = translateX;
+                       tyInit = translateY;
+                       stredInitX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                       stredInitY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                     }
                   });
 
                   document.addEventListener('touchmove', function(e) {
                     if (e.touches.length === 2 && vzdalenostInit > 0) {
-                      if (e.cancelable) e.preventDefault(); // Zákaz výchozího posunu
+                      e.preventDefault(); // Zákaz výchozích nativních pokusů prohlížeče
                       
                       const vzdalenostAktual = Math.hypot(
                         e.touches[0].clientX - e.touches[1].clientX,
                         e.touches[0].clientY - e.touches[1].clientY
                       );
                       
-                      const aktualX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                      const aktualY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                      const ptZStredX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                      const ptZStredY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                       
                       const pomer = vzdalenostAktual / vzdalenostInit;
-                      let novyZoom = zoomInit * pomer;
+                      stalyScale = scaleInit * pomer;
                       
-                      if (novyZoom < 0.15) novyZoom = 0.15;
-                      if (novyZoom > 5.0) novyZoom = 5.0;
+                      // Mantinely pro velikost textu (menší než vychozi o kousek a obří zvětšení)
+                      if (stalyScale < vychoziScale * 0.8) stalyScale = vychoziScale * 0.8;
+                      if (stalyScale > 5.0) stalyScale = 5.0;
                       
-                      // Souřadnice fokusu prstu vztažené na nezvětšený dokument
-                      const docFokusX = (aktualX + window.scrollX) / stalyZoom;
-                      const docFokusY = (aktualY + window.scrollY) / stalyZoom;
+                      // Držení těžiště
+                      translateX = ptZStredX - ((stredInitX - txInit) * (stalyScale / scaleInit));
+                      translateY = ptZStredY - ((stredInitY - tyInit) * (stalyScale / scaleInit));
                       
-                      stalyZoom = novyZoom;
-                      document.body.style.zoom = stalyZoom;
-                      
-                      // Povolíme nebo zakážeme scrollování do stran dle zoomu
-                      if (stalyZoom > vychoziZoom + 0.05) {
-                          document.documentElement.style.overflowX = 'auto';
-                          document.body.style.overflowX = 'auto';
-                      } else {
-                          document.documentElement.style.overflowX = 'hidden';
-                          document.body.style.overflowX = 'hidden';
-                      }
-                      
-                      // Posuneme osu tak, aby dokument zůstal ukotvený na místě prstů
-                      window.scrollTo(
-                         docFokusX * stalyZoom - aktualX,
-                         docFokusY * stalyZoom - aktualY
-                      );
+                      applyTransform();
+                    } else if (e.touches.length === 1 && stalyScale > vychoziScale) {
+                       // Mírný pan/posun jednoho prstu pokusme neblokovat? Tady jen zablokovat default na okrajích
                     }
                   }, { passive: false });
+
+                  document.addEventListener('touchend', function(e) {
+                     if (e.touches.length < 2) vzdalenostInit = 0;
+                  });
 
                   document.addEventListener('touchend', function(e) {
                     if (e.touches.length < 2) vzdalenostInit = 0;
