@@ -12,6 +12,7 @@ export default {
         neonPink: '#f800ff',
       }
     },
+  },
   plugins: [
     require("tailwindcss-animate")
   ],
