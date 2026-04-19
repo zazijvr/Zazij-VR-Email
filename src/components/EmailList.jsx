@@ -846,9 +846,11 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
                </div>
                <button 
                  onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('vr-mobile-search-toggle')); }}
-                 className="p-2.5 rounded-xl bg-[#00f3ff]/10 border border-[#00f3ff]/20 text-[#00f3ff] hover:bg-[#00f3ff]/20 active:scale-95 transition-all shadow-[0_0_10px_rgba(0,243,255,0.2)] ml-4"
+                 className="group relative p-3.5 rounded-full bg-[#0f172a]/80 backdrop-blur-md border border-[#00f3ff]/40 text-[#00f3ff] active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-[#00f3ff]/10 ml-4 overflow-hidden focus:outline-none"
                >
-                 <Search size={22} className="drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]" />
+                 <div className="absolute inset-0 bg-gradient-to-br from-[#00f3ff]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                 <div className="absolute inset-[3px] rounded-full border border-[#00f3ff]/20 group-hover:border-[#00f3ff]/50 pointer-events-none"></div>
+                 <Search size={20} className="relative z-10 drop-shadow-[0_0_8px_rgba(0,243,255,1)] group-hover:drop-shadow-[0_0_12px_rgba(0,243,255,1)] transition-all" strokeWidth={2.5} />
                </button>
              </div>
              {activeFolder === 'Odeslané' && mascotImg}
