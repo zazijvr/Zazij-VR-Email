@@ -612,14 +612,14 @@ ${ccLine}
             {emailData && (
               <button 
                 onClick={toggleReadStatus} 
-                className={`w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-[#00f3ff] border-[#00f3ff]/60 drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)]' : 'text-white/60 border-white/30 drop-shadow-[0_0_4px_rgba(255,255,255,0.3)] shadow-[inset_0_0_8px_rgba(255,255,255,0.1)] hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] hover:border-white/60 hover:text-white'}`}
+                className={`w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-[#00f3ff] border-[#00f3ff]/60 drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)]' : 'text-white/80 border-white/50 drop-shadow-[0_0_10px_rgba(255,255,255,0.6)] shadow-[inset_0_0_12px_rgba(255,255,255,0.2)] hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.9)] hover:border-white hover:text-white'}`}
                 title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
               >
                 {emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}
               </button>
             )}
             {onTrash && (
-              <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/60 text-[#ef4444] drop-shadow-[0_0_10px_rgba(239,68,68,0.6)] shadow-[inset_0_0_15px_rgba(239,68,68,0.2)] transition-all active:scale-95 hover:bg-[#ef4444]/20">
+              <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/80 text-[#ef4444] drop-shadow-[0_0_15px_rgba(239,68,68,1)] shadow-[inset_0_0_20px_rgba(239,68,68,0.4)] transition-all active:scale-95 hover:bg-[#ef4444]/20">
                 <Trash2 size={20} />
               </button>
             )}
