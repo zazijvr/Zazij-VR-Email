@@ -1157,7 +1157,18 @@ ${ccLine}
                   // Okamžitá spoušť po nalití docu
                   fitToWidth();
                   window.addEventListener('load', fitToWidth);
-                  window.addEventListener('resize', fitToWidth);
+                  
+                  let lastWidth = window.innerWidth;
+                  window.addEventListener('resize', function() {
+                     // Spustit škálování AŽ když se změní šířka okna (např otočení telefonu). 
+                     // Změna výšky okna nesmí re-triggerovat škálování, jinak vzniká nekonečná smyčka
+                     // u emailů, co mají "height: 100%" (vyplňují novou výšku iframu a posílají ještě větší scrollHeight!)
+                     if (Math.abs(window.innerWidth - lastWidth) > 5) {
+                         lastWidth = window.innerWidth;
+                         fitToWidth();
+                     }
+                  });
+                  
                   setTimeout(fitToWidth, 200);
                   setTimeout(fitToWidth, 800);
 
