@@ -882,7 +882,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       })()}
 
       {/* Sub-toolbar */}
-      <div className="hidden md:flex items-center pl-7 py-2 pr-[38px] bg-black/40 border-b border-[#00f3ff]/10 z-20 shrink-0">
+      <div className="hidden md:flex items-center pl-7 py-3 pr-[38px] md:m-6 md:mb-0 md:rounded-2xl bg-black/40 md:bg-[#0a0f1d] border-b md:border border-[#00f3ff]/10 md:border-[#00f3ff]/20 md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-20 shrink-0">
         
         {/* Placeholder šířky pro sloupec s Checkboxy */}
         <div className="w-[40px] pr-2" />
@@ -933,74 +933,76 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
         </div>
       </div>
 
-      <div className="flex-1 w-full overflow-y-auto custom-scrollbar flex flex-col relative">
-        {/* Sticky Header uvnitř kontejneru pro zachování scrollbar šířky a pixel-perfect zarovnání */}
-        <div className="hidden md:flex sticky top-0 flex items-center px-7 py-4 bg-[#0f172a]/95 backdrop-blur-md border-b border-[#00f3ff]/20 text-sm font-semibold tracking-wider uppercase shadow-[0_5px_15px_-5px_rgba(0,0,0,0.5)] shrink-0 z-30 w-full rounded-t-xl mt-3">
-          <div 
-            className="w-[40px] pr-2 flex justify-center cursor-pointer text-[#00f3ff] hover:text-white transition-colors"
-            onClick={toggleSelectAll}
-            title="Zvolit vše"
-          >
-             {selectedMailIds.size > 0 && selectedMailIds.size === visibleEmails.length && visibleEmails.length > 0 ? <CheckSquare size={18} /> : <Square size={18} />}
-          </div>
-          
-          {selectedMailIds.size > 0 ? (
-            <div className="flex-1 flex items-center gap-6 text-[#00f3ff] animate-in fade-in slide-in-from-left-4 duration-300">
-              <span className="font-bold tracking-widest bg-[#00f3ff]/20 px-3 py-1 rounded-md text-xs">
-                VYBRÁNO: {selectedMailIds.size}
-              </span>
-              
-              <div className="flex items-center gap-3 ml-4">
-                <button 
-                  onClick={handleBulkToggleRead}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#00f3ff]/20 border border-transparent hover:border-[#00f3ff]/50 transition-all font-bold uppercase tracking-wider text-xs"
-                  title="Změnit stav přečtení"
-                >
-                  {isFirstUnread ? <MailOpen size={16} /> : <Mail size={16} />} 
-                  {isFirstUnread ? 'Přečteno' : 'Nepřečteno'}
-                </button>
-
-                <button 
-                  onClick={handleBulkToggleStar}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#f800ff]/20 text-[#00f3ff] hover:text-[#f800ff] border border-transparent hover:border-[#f800ff]/50 transition-all font-bold uppercase tracking-wider text-xs"
-                  title="Označit jako důležité"
-                >
-                  <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-[#f800ff]/50' : 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse'}`}></div>
-                  {isFirstStarred ? 'Odebrat' : 'Důležité'}
-                </button>
-
-                {activeFolder === 'Koš' && (
-                  <button 
-                    onClick={handleBulkRestore}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-green-500/20 text-[#00f3ff] hover:text-green-400 border border-transparent hover:border-green-500/50 transition-all font-bold uppercase tracking-wider text-xs"
-                    title="Obnovit vybrané e-maily z koše"
-                  >
-                    <RotateCcw size={16} /> Obnovit
-                  </button>
-                )}
-
-                <button 
-                  onClick={handleBulkTrash}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-red-500/20 text-[#00f3ff] hover:text-red-400 border border-transparent hover:border-red-500/50 transition-all font-bold uppercase tracking-wider text-xs"
-                  title={activeFolder === 'Koš' ? "Trvale smazat vybrané e-maily" : "Smazat vybrané e-maily"}
-                >
-                  <Trash2 size={16} /> Smazat
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <HeaderItem label={activeFolder === 'Odeslané' ? "Příjemce" : "Odesílatel"} field="sender" className="w-[20%] pr-4" />
-              <HeaderItem label="Předmět" field="subject" className="flex-1 pr-4" />
-              <HeaderItem label="Datum" field="date" className="w-[150px] pr-4 justify-end text-right" />
-              <HeaderItem label="Velikost" field="size" className="w-[120px] pr-4 justify-end text-right" />
-              <div className="w-[60px] flex justify-center cursor-pointer hover:text-[#00f3ff] transition-colors select-none text-gray-400" onClick={() => handleSort('attachment')}>
-                <Paperclip size={16} className={sortField === 'attachment' ? 'text-[#00f3ff]' : ''} />
-              </div>
-              <div className="w-[110px]" /> {/* Spacer for Actions */}
-            </>
-          )}
+      {/* Pevný Header vytažený mimo scrollovací kontejner, aby scrollbar neprotínal jeho pravý okraj */}
+      <div className="hidden md:flex items-center pl-7 py-4 pr-[38px] bg-[#0f172a]/40 border-b border-[#00f3ff]/20 text-sm font-semibold tracking-wider uppercase shadow-[0_5px_15px_-5px_rgba(0,0,0,0.5)] shrink-0 z-30 w-full md:mt-4">
+        <div 
+          className="w-[40px] pr-2 flex justify-center cursor-pointer text-[#00f3ff] hover:text-white transition-colors"
+          onClick={toggleSelectAll}
+          title="Zvolit vše"
+        >
+           {selectedMailIds.size > 0 && selectedMailIds.size === visibleEmails.length && visibleEmails.length > 0 ? <CheckSquare size={18} /> : <Square size={18} />}
         </div>
+        
+        {selectedMailIds.size > 0 ? (
+          <div className="flex-1 flex items-center gap-6 text-[#00f3ff] animate-in fade-in slide-in-from-left-4 duration-300">
+            <span className="font-bold tracking-widest bg-[#00f3ff]/20 px-3 py-1 rounded-md text-xs">
+              VYBRÁNO: {selectedMailIds.size}
+            </span>
+            
+            <div className="flex items-center gap-3 ml-4">
+              <button 
+                onClick={handleBulkToggleRead}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#00f3ff]/20 border border-transparent hover:border-[#00f3ff]/50 transition-all font-bold uppercase tracking-wider text-xs"
+                title="Změnit stav přečtení"
+              >
+                {isFirstUnread ? <MailOpen size={16} /> : <Mail size={16} />} 
+                {isFirstUnread ? 'Přečteno' : 'Nepřečteno'}
+              </button>
+
+              <button 
+                onClick={handleBulkToggleStar}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#f800ff]/20 text-[#00f3ff] hover:text-[#f800ff] border border-transparent hover:border-[#f800ff]/50 transition-all font-bold uppercase tracking-wider text-xs"
+                title="Označit jako důležité"
+              >
+                <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-[#f800ff]/50' : 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse'}`}></div>
+                {isFirstStarred ? 'Odebrat' : 'Důležité'}
+              </button>
+
+              {activeFolder === 'Koš' && (
+                <button 
+                  onClick={handleBulkRestore}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-green-500/20 text-[#00f3ff] hover:text-green-400 border border-transparent hover:border-green-500/50 transition-all font-bold uppercase tracking-wider text-xs"
+                  title="Obnovit vybrané e-maily z koše"
+                >
+                  <RotateCcw size={16} /> Obnovit
+                </button>
+              )}
+
+              <button 
+                onClick={handleBulkTrash}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-red-500/20 text-[#00f3ff] hover:text-red-400 border border-transparent hover:border-red-500/50 transition-all font-bold uppercase tracking-wider text-xs"
+                title={activeFolder === 'Koš' ? "Trvale smazat vybrané e-maily" : "Smazat vybrané e-maily"}
+              >
+                <Trash2 size={16} /> Smazat
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <HeaderItem label="Odesílatel" field="from" className="w-[20%] pr-4" />
+            <HeaderItem label="Předmět" field="subject" className="flex-1 pr-4" />
+            <div className="w-[100px] shrink-0"></div> 
+            <HeaderItem label="Velikost" field="size" className="w-[90px] shrink-0 text-right pr-4" />
+            <div className="w-[50px] shrink-0 flex items-center justify-center">
+               <Paperclip size={14} className="text-[#00f3ff]/40" />
+            </div>
+            <HeaderItem label="Datum" field="date" className="w-[100px] shrink-0 text-right" />
+            <div className="w-[30px] shrink-0"></div> 
+          </>
+        )}
+      </div>
+
+      <div className="flex-1 w-full overflow-y-auto custom-scrollbar flex flex-col relative pt-2">
 
         {(loading || activeFolder !== fetchedFolderRef.current) ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-[#00f3ff]/60 min-h-64">
