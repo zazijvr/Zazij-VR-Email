@@ -180,6 +180,22 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
        saveNewContacts(userEmail, allContacts);
     }
   }, [userEmail, emails]);
+  useEffect(() => {
+    const handleStarToggle = (e) => {
+      const { id, isStarred } = e.detail;
+      setEmails(prev => prev.map(m => m.id === id ? { ...m, isStarred } : m));
+    };
+    const handleReadToggle = (e) => {
+      const { id, isUnread } = e.detail;
+      setEmails(prev => prev.map(m => m.id === id ? { ...m, isUnread } : m));
+    };
+    window.addEventListener('vr-email-star-toggle', handleStarToggle);
+    window.addEventListener('vr-email-read-toggle', handleReadToggle);
+    return () => {
+      window.removeEventListener('vr-email-star-toggle', handleStarToggle);
+      window.removeEventListener('vr-email-read-toggle', handleReadToggle);
+    };
+  }, []);
   
   const toggleSelectAll = () => {
     if (visibleEmails.length === 0) return;
