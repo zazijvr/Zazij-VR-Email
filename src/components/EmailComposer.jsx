@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, AlertTriangle, Paperclip, Save, File, Trash2, FileText, PenTool } from 'lucide-react';
+import { Send, X, AlertTriangle, Paperclip, Save, File, Trash2, FileText, PenTool, ReplyAll } from 'lucide-react';
 import { encodeBase64Url, encodeHeaderName } from '../utils/emailParser';
 import RichTextEditor from './RichTextEditor';
 import { useFocusTrap } from '../hooks/useFocusTrap';
@@ -400,17 +400,28 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                     value={to} 
                     onChange={e => setTo(e.target.value)}
                     userEmail={userEmail}
-                    className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 pr-14 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
+                    className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 pr-24 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
                   />
-                  {!showCc && (
-                    <button 
-                      onClick={(e) => { e.preventDefault(); setShowCc(true); }}
-                      className="absolute right-3 top-[30px] text-[10px] sm:text-xs font-bold text-[#00f3ff]/60 hover:text-[#00f3ff] px-2 py-1 bg-black/50 border border-[#00f3ff]/20 rounded transition-colors uppercase tracking-wider"
-                      title="Přidat Kopii (CC)"
-                    >
-                      + CC
-                    </button>
-                  )}
+                  <div className="absolute right-3 top-[30px] flex items-center gap-1.5">
+                    {config?.type === 'reply' && !hasUpgradedToReplyAll && (config?.originalCc || config?.originalTo) && (
+                      <button 
+                        onClick={(e) => { e.preventDefault(); handleUpgradeToReplyAll(); }}
+                        className="text-[#00f3ff]/60 hover:text-yellow-400 p-1.5 bg-black/50 border border-[#00f3ff]/20 hover:border-yellow-400/50 rounded transition-colors"
+                        title="Odpovědět všem"
+                      >
+                        <ReplyAll size={14} />
+                      </button>
+                    )}
+                    {!showCc && (
+                      <button 
+                        onClick={(e) => { e.preventDefault(); setShowCc(true); }}
+                        className="text-[10px] sm:text-xs font-bold text-[#00f3ff]/60 hover:text-[#00f3ff] px-2 py-1 bg-black/50 border border-[#00f3ff]/20 rounded transition-colors uppercase tracking-wider"
+                        title="Přidat Kopii (CC)"
+                      >
+                        + CC
+                      </button>
+                    )}
+                  </div>
                 </div>
       
                 {showCc && (
@@ -421,16 +432,6 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                     userEmail={userEmail}
                     className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
                   />
-                )}
-
-                {config?.type === 'reply' && !hasUpgradedToReplyAll && (config?.originalCc || config?.originalTo) && (
-                   <button 
-                     onClick={(e) => { e.preventDefault(); handleUpgradeToReplyAll(); }}
-                     className="self-start text-[10px] sm:text-xs font-bold text-yellow-400/80 hover:text-yellow-400 hover:bg-yellow-400/10 px-3 py-1.5 border border-yellow-400/30 rounded-lg transition-colors uppercase tracking-widest flex items-center gap-2 mt-1"
-                   >
-                     <span>Původní zpráva měla více adresátů</span>
-                     <span className="bg-yellow-400/20 px-2 py-0.5 rounded text-yellow-300">Přidat všechny do Kopie</span>
-                   </button>
                 )}
               </div>
             )}
