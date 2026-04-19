@@ -57,6 +57,17 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
     };
   }, []);
 
+  // Umožnit pinch-zoom v celé aplikaci, když je otevřený tento detail na mobilu
+  useEffect(() => {
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+    if (metaViewport) {
+      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover');
+      return () => {
+        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+      };
+    }
+  }, []);
+
   useEffect(() => {
     const handleMessage = async (e) => {
       if (e.data && e.data.type === 'open-link' && e.data.url) {
@@ -973,6 +984,21 @@ ${ccLine}
                       window.parent.postMessage({ type: 'open-link', url: a.href }, '*');
                     }
                   });
+
+                  // Automatické zmenšení obřích tabulek tak, aby se na mobilu vešly na šířku
+                  function fitToWidth() {
+                    const docWidth = document.documentElement.scrollWidth || document.body.scrollWidth;
+                    const winWidth = window.innerWidth;
+                    if (docWidth > winWidth && winWidth > 0 && docWidth > 0) {
+                       const ratio = winWidth / docWidth;
+                       document.body.style.zoom = ratio;
+                    }
+                  }
+                  window.addEventListener('load', fitToWidth);
+                  // Vyvolat poctivě i preventivně, protože dom může být ready před load
+                  setTimeout(fitToWidth, 100);
+                  setTimeout(fitToWidth, 300);
+                  setTimeout(fitToWidth, 1000);
                 </script>
              `}
             />
