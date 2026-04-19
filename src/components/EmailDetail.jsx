@@ -1012,8 +1012,6 @@ ${ccLine}
         </div>,
         document.body
       )}
-      {/* --- Konec flex-containeru --- */}
-      </div>
     </>
   );
 }
