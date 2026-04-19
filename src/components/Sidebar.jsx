@@ -15,7 +15,8 @@ export default function Sidebar({
   onCreateNewEvent,
   onMoveEmail,
   onMoveCustomFolder,
-  customLabels = []
+  customLabels = [],
+  onMobileClose
 }) {
   const [folders, setFolders] = useState([
     { id: 'inbox', label: 'Doručené' },
