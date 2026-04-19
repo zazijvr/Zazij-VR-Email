@@ -119,8 +119,8 @@ export default function EmailListItem({
         className={`relative flex flex-col md:flex-row md:items-center px-4 py-4 md:py-3 rounded-xl cursor-pointer select-none border overflow-hidden ${email._newArrival ? 'animate-new-email ' : ''}${isKeyboardFocus && !isActiveRow ? 'md:bg-white/[0.08] md:border-white/20 md:shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10 ' : ''}${isActiveRow
             ? 'bg-gradient-to-r from-[#00f3ff]/20 to-[#00f3ff]/5 border-[#00f3ff] md:shadow-[0_0_20px_rgba(0,243,255,0.2)]'
             : email.isUnread
-              ? 'bg-black/20 backdrop-blur-md md:bg-transparent md:bg-gradient-to-r md:from-[#00f3ff]/10 md:to-transparent border-[#00f3ff]/30 md:hover:border-[#00f3ff]/60 shadow-[inset_3px_0_0_#00f3ff]'
-              : 'bg-black/20 backdrop-blur-md md:bg-white/[0.02] border-white/5 md:hover:bg-white/[0.08] md:hover:border-white/20 shadow-[0_4px_15px_rgba(0,0,0,0.5)] md:shadow-none'
+              ? 'bg-black/30 md:bg-transparent md:bg-gradient-to-r md:from-[#00f3ff]/10 md:to-transparent border-[#00f3ff]/30 md:hover:border-[#00f3ff]/60 shadow-[inset_3px_0_0_#00f3ff]'
+              : 'bg-black/30 md:bg-white/[0.02] border-white/5 md:hover:bg-white/[0.08] md:hover:border-white/20 shadow-[0_4px_15px_rgba(0,0,0,0.5)] md:shadow-none'
           }`}
       >
         {/* Checkbox (Desktop only) */}

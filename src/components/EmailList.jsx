@@ -789,7 +789,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }
 
   return (
-    <div className="flex-1 relative bg-[#0f172a]/80 backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
+    <div className="flex-1 relative bg-[#0f172a]/20 md:bg-[#0f172a]/80 md:backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
 
       {/* Mobilní Nadpis Složky */}
       {(() => {
