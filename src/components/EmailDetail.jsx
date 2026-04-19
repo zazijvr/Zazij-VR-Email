@@ -994,29 +994,43 @@ ${ccLine}
                   }
 
                   function fitToWidth() {
-                    // Reset stavu před kalkulací
+                    // 1. Uvolnit mantinely pro přesné změření původního rozložení
+                    document.documentElement.style.overflowX = 'visible';
+                    document.body.style.overflowX = 'visible';
                     document.body.style.transform = 'none';
-                    document.body.style.width = 'max-content';
+                    document.body.style.width = 'auto';
                     translateX = 0;
                     translateY = 0;
                     
-                    const docWidth = document.body.scrollWidth;
+                    // 2. Musíme dát maličký rozestup browseru, aby stihl aplikovat "auto" před změřením, 
+                    // ale kvůli synchronnosti změn to můžeme zkusit rovnou z DOMu
+                    const docWidth = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth);
                     const winWidth = window.innerWidth;
                     
-                    // Změříme reálný přesah emailu
+                    // 3. Rozhodnutí
                     if (docWidth > winWidth + 5 && winWidth > 0) {
+                       // Email má fixní šířku (např 600px table), která se nevměstná do mobilu.
                        stalyScale = winWidth / docWidth;
+                       // Zásadní chyba z minula: Musíme uměle zvětšit i tělo, aby HTML neoseklo pravou stranu před zmenšením!
+                       document.body.style.width = docWidth + 'px';
                     } else {
+                       // Běžný responzivní email (vykreslen tak, že se hned vešel)
                        stalyScale = 1.0;
                        document.body.style.width = '100%';
                     }
                     vychoziScale = stalyScale;
+                    
+                    // 4. Aplikovat transform a znovu uzamknout scrollování s pojištěním, že neosekáváme vnitřek
                     applyTransform();
+                    document.documentElement.style.overflowX = 'hidden';
                   }
 
+                  // Okamžitá spoušť po nalití docu
+                  fitToWidth();
                   window.addEventListener('load', fitToWidth);
-                  setTimeout(fitToWidth, 100);
-                  setTimeout(fitToWidth, 500);
+                  window.addEventListener('resize', fitToWidth);
+                  setTimeout(fitToWidth, 200);
+                  setTimeout(fitToWidth, 800);
 
                   // Javascript Pinch-To-Zoom, plně napojený na CSS Transformaci
                   let vzdalenostInit = 0;
