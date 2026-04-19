@@ -644,17 +644,21 @@ ${ccLine}
         }}
       >
 
-        {/* Detail Hlaviček - HOLOGRAPHIC TERMINAL AESTHETIC */}
-        <div className="shrink-0 px-4 py-6 md:p-8 border-b border-[#00f3ff]/20 bg-gradient-to-br from-[#0a0f1d] to-[#040810] shadow-[0_15px_40px_rgba(0,0,0,0.6)] z-[70] flex flex-col gap-4 relative w-full overflow-hidden">
+        {/* Detail Hlaviček - IDEA 2: CYBERPUNK GRADIENT TEXT + WATERMARK */}
+        <div className="shrink-0 px-4 py-8 md:p-8 border-b border-[#00f3ff]/5 bg-black/40 backdrop-blur-2xl shadow-[0_15px_40px_rgba(0,0,0,0.4)] z-[70] flex flex-col gap-4 relative w-full overflow-hidden">
           
-          {/* Cyberpunk nasvícení zleva a subtle skleněný grid */}
-          <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none mix-blend-screen opacity-50"></div>
-          <div className="absolute top-0 left-0 w-[60%] h-full bg-gradient-to-r from-[#00f3ff]/10 via-[#00f3ff]/5 to-transparent pointer-events-none"></div>
-          
-          {/* Spodní laserová linka pro tech-feeling */}
-          <div className="absolute bottom-0 left-0 w-[40%] h-[2px] bg-gradient-to-r from-[#00f3ff] via-[#00f3ff] to-transparent drop-shadow-[0_0_8px_#00f3ff] pointer-events-none"></div>
+          {/* Obří vodoznak v pozadí */}
+          <div className="absolute -top-12 -right-6 md:-right-12 opacity-[0.04] pointer-events-none -rotate-12 select-none text-[#00f3ff]">
+            <Mail size={320} strokeWidth={0.5} />
+          </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full pl-3 md:pl-5 border-l-2 md:border-l-4 border-[#00f3ff] shadow-[inset_15px_0_20px_-15px_rgba(0,243,255,0.5)]">
+          {/* Crosshairs - Tech Uzly v rozích */}
+          <div className="absolute top-4 left-4 text-[#00f3ff]/40 text-[10px] font-mono leading-none">+</div>
+          <div className="absolute top-4 right-4 text-[#00f3ff]/40 text-[10px] font-mono leading-none">+</div>
+          <div className="absolute bottom-4 left-4 text-[#00f3ff]/40 text-[10px] font-mono leading-none">+</div>
+          <div className="absolute bottom-4 right-4 text-[#00f3ff]/40 text-[10px] font-mono leading-none">+</div>
+
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full px-2">
             <div className="flex-1 min-w-0 w-full">
               {emailData?.isDraft && (
                 <div className="mb-4">
@@ -670,16 +674,8 @@ ${ccLine}
                 </div>
               )}
               
-              {/* Terminálový mikro-štítek */}
-              <div className="flex items-center gap-2 mb-2 opacity-90">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#f800ff] animate-pulse drop-shadow-[0_0_8px_#f800ff]"></div>
-                <span className="text-[9px] md:text-[11px] font-mono tracking-[0.3em] text-[#f800ff] uppercase font-bold drop-shadow-[0_0_5px_rgba(248,0,255,0.4)]">
-                  [ SYSTEM.DATALINK // INSECURE_OVERRIDE ]
-                </span>
-              </div>
-
               <div className="flex items-center gap-3 group w-full">
-                <h1 className="text-xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#00f3ff]/70 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)] tracking-wide leading-tight break-words">
+                <h1 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#00f3ff]/90 drop-shadow-[0_0_15px_rgba(0,243,255,0.3)] tracking-wide leading-tight break-words">
                   {emailData?.subject}
                 </h1>
                 {emailData?.subject && (
