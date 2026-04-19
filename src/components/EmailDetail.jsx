@@ -870,7 +870,7 @@ ${ccLine}
               </div>
               <div className="md:hidden flex items-center gap-1 shrink-0">
                  {onActionReply && !emailData?.isDraft && (
-                    <button onClick={handleReply} className="p-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all shadow-[0_0_10px_rgba(0,243,255,0.2)]">
+                    <button onClick={handleReply} className="p-2 rounded-xl text-[#00f3ff]/70 hover:text-[#00f3ff] hover:bg-[#00f3ff]/10 hover:shadow-[0_0_10px_rgba(0,243,255,0.2)] transition-all">
                       <Reply size={22} />
                     </button>
                  )}
