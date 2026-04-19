@@ -197,6 +197,9 @@ export default function Sidebar({
         )}
       </div>
 
+      {/* Cyberpunk Neon Divider za akčním tlačítkem */}
+      <div className="w-full h-[1px] mb-4 mt-2 bg-gradient-to-r from-[#00f3ff]/0 via-[#00f3ff]/60 to-[#00f3ff]/0 shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none"></div>
+
       <nav ref={navScrollRef} onDragOver={handleNavDragOver} className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-6 pt-2">
         {appMode === 'email' && folders.map((folder, index) => {
           const isActive = activeFolder === folder.label;

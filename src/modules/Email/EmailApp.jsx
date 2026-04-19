@@ -302,6 +302,9 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               </div>
             </div>
           </div>
+          {/* Aplikace neonové lajny zespodu hlavní hlavičky složek */}
+          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#00f3ff]/80 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] pointer-events-none"></div>
+        </div>
         </div>
       )}
 
