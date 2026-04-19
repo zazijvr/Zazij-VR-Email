@@ -849,10 +849,10 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
            'Spam': '/vr_spam_trans.png',
            'Koš': '/vr_trash_trans.png'
          };
-         const mascotImg = iconMap[activeFolder] ? <img src={iconMap[activeFolder]} alt="Mascot" className={`h-14 w-auto object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] animate-pulse-slow ${activeFolder === 'Odeslané' ? 'ml-auto' : ''}`} /> : null;
+         const mascotImg = iconMap[activeFolder] ? <img src={iconMap[activeFolder]} alt="Mascot" className="h-14 w-auto object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] animate-pulse-slow" /> : null;
          
          return (
-           <div className={`md:hidden px-6 pt-5 pb-3 bg-gradient-to-b from-black/60 to-transparent shrink-0 flex items-center relative z-10 ${activeFolder === 'Odeslané' ? 'justify-between' : 'justify-start gap-4'}`}>
+           <div className="md:hidden px-6 pt-5 pb-3 bg-gradient-to-b from-black/60 to-transparent shrink-0 flex items-center justify-start gap-4 relative z-10">
              
              {/* Horní neonová linka (Synchronizovaná) */}
              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
@@ -860,7 +860,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
              {/* Spodní laserová linka do ztracena (Synchronizovaná) */}
              <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff] via-[#00f3ff]/50 to-[#00f3ff]/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
 
-             {activeFolder !== 'Odeslané' && mascotImg}
+             {mascotImg}
              <div className="flex-1 flex justify-between items-center">
                <div>
                  <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
@@ -877,7 +877,6 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
                  <Search size={20} className="relative z-10 drop-shadow-[0_0_8px_rgba(0,243,255,1)] group-hover:drop-shadow-[0_0_12px_rgba(0,243,255,1)] transition-all" strokeWidth={2.5} />
                </button>
              </div>
-             {activeFolder === 'Odeslané' && mascotImg}
            </div>
          );
       })()}
