@@ -189,11 +189,17 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       const { id, isUnread } = e.detail;
       setEmails(prev => prev.map(m => m.id === id ? { ...m, isUnread } : m));
     };
+    const handleMobileSearch = (e) => {
+      setSearchQuery(e.detail);
+      setSearchInputValue(e.detail);
+    };
     window.addEventListener('vr-email-star-toggle', handleStarToggle);
     window.addEventListener('vr-email-read-toggle', handleReadToggle);
+    window.addEventListener('vr-mobile-search-query-change', handleMobileSearch);
     return () => {
       window.removeEventListener('vr-email-star-toggle', handleStarToggle);
       window.removeEventListener('vr-email-read-toggle', handleReadToggle);
+      window.removeEventListener('vr-mobile-search-query-change', handleMobileSearch);
     };
   }, []);
   
@@ -831,11 +837,19 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
              <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff] via-[#00f3ff]/50 to-[#00f3ff]/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
 
              {activeFolder !== 'Odeslané' && mascotImg}
-             <div>
-               <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
-                  {activeFolder}
-               </h1>
-               <div className="text-[10px] uppercase tracking-widest text-[#00f3ff]/60 mt-1">Systém // Výpis {visibleEmails.length} konverzací</div>
+             <div className="flex-1 flex justify-between items-center">
+               <div>
+                 <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
+                    {activeFolder}
+                 </h1>
+                 <div className="text-[10px] uppercase tracking-widest text-[#00f3ff]/60 mt-1">Systém // Výpis {visibleEmails.length} konverzací</div>
+               </div>
+               <button 
+                 onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('vr-mobile-search-toggle')); }}
+                 className="p-2.5 rounded-xl bg-[#00f3ff]/10 border border-[#00f3ff]/20 text-[#00f3ff] hover:bg-[#00f3ff]/20 active:scale-95 transition-all shadow-[0_0_10px_rgba(0,243,255,0.2)] ml-4"
+               >
+                 <Search size={22} className="drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]" />
+               </button>
              </div>
              {activeFolder === 'Odeslané' && mascotImg}
            </div>

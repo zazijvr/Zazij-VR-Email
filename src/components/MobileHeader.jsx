@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, Search, X } from 'lucide-react';
 import { getAvatarInitial } from '../utils/emailParser';
 
 export default function MobileHeader({ 
@@ -8,7 +8,36 @@ export default function MobileHeader({
   logoutGoogleAccount 
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleSearchToggle = () => {
+      setIsSearchActive(prev => {
+        if (!prev) {
+          setTimeout(() => searchInputRef.current?.focus(), 100);
+          return true;
+        }
+        return false;
+      });
+    };
+    window.addEventListener('vr-mobile-search-toggle', handleSearchToggle);
+    return () => window.removeEventListener('vr-mobile-search-toggle', handleSearchToggle);
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const q = e.target.value;
+    setSearchQuery(q);
+    window.dispatchEvent(new CustomEvent('vr-mobile-search-query-change', { detail: q }));
+  };
+
+  const closeSearch = () => {
+    setIsSearchActive(false);
+    setSearchQuery('');
+    window.dispatchEvent(new CustomEvent('vr-mobile-search-query-change', { detail: '' }));
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -62,12 +91,31 @@ export default function MobileHeader({
         <Menu size={26} strokeWidth={2.5} />
       </button>
 
-      <div id="mobile-logo" className="relative z-10 flex-1 flex justify-center pointer-events-none transition-all duration-500">
-        <img
-          src="/cropped-logo-neon-pruhledna-150x50.png"
-          alt="ZažijVR"
-          className="h-7 object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)]"
-        />
+      <div id="mobile-logo" className="relative z-10 flex-1 flex justify-center transition-all duration-500">
+        {isSearchActive ? (
+          <div className="w-full max-w-[250px] relative flex items-center">
+            <Search size={16} className="absolute left-3 text-[#00f3ff]/50" />
+            <input 
+              ref={searchInputRef}
+              type="text" 
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Hledat e-mail..." 
+              className="w-full bg-[#00f3ff]/10 border border-[#00f3ff]/30 rounded-xl py-1.5 pl-9 pr-8 text-white text-sm outline-none focus:border-[#00f3ff] transition-all placeholder:text-[#00f3ff]/30"
+            />
+            {searchQuery && (
+              <button onClick={closeSearch} className="absolute right-2 text-[#00f3ff]/60 hover:text-[#00f3ff]">
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        ) : (
+          <img
+            src="/cropped-logo-neon-pruhledna-150x50.png"
+            alt="ZažijVR"
+            className="h-7 object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none"
+          />
+        )}
       </div>
 
       <div id="mobile-user" ref={dropdownRef} className={`relative z-50 transition-all duration-500 ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
