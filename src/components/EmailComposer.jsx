@@ -49,6 +49,9 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [showSignatureMenu, setShowSignatureMenu] = useState(false);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
+  
+  const [showTemplateNamePrompt, setShowTemplateNamePrompt] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState("");
 
   useEffect(() => {
     try {
@@ -60,8 +63,13 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   }, []);
 
   const handleSaveCurrentAsTemplate = () => {
-    const title = window.prompt("Zadejte název, pod kterým se má tento e-mail uložit jako šablona:");
-    if (!title || !title.trim()) return;
+    setShowTemplateNamePrompt(true);
+    setNewTemplateName("");
+  };
+
+  const confirmSaveCurrentAsTemplate = () => {
+    const title = newTemplateName.trim();
+    if (!title) return;
 
     try {
       const templates = JSON.parse(localStorage.getItem('zazijvr_templates')) || [];
@@ -75,8 +83,10 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       const newTemplates = [...templates, newTemplate];
       localStorage.setItem('zazijvr_templates', JSON.stringify(newTemplates));
       
+      
       setSavedTemplates(newTemplates);
       setShowTemplateMenu(false);
+      setShowTemplateNamePrompt(false);
     } catch (err) {
       console.error("Nepodařilo se uložit šablonu:", err);
     }
@@ -659,20 +669,63 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       
       </div>
         {showCloseWarning && (
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[1000] flex items-center justify-center p-6 rounded-3xl animate-in fade-in zoom-in duration-200">
-            <div className="bg-[#0f172a] border border-[#ef4444]/50 shadow-[0_0_30px_rgba(239,68,68,0.3)] rounded-2xl p-8 max-w-sm flex flex-col items-center gap-6 text-center relative overflow-hidden">
-               <div className="w-16 h-16 rounded-full bg-[#ef4444]/10 border border-[#ef4444]/30 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.2)]">
-                 <AlertTriangle size={32} className="text-[#ef4444]" />
-               </div>
-               <h3 className="text-xl font-bold text-white tracking-wide">Zahodit rozepsané?</h3>
-               <p className="text-sm text-gray-400 font-mono tracking-tight leading-relaxed">Máte rozepsanou zprávu. Opravdu ji chcete zavřít bez uložení? Všechna nezuložená data budou ztracena.</p>
-               <div className="flex w-full gap-3 mt-2">
-                 <button onClick={() => setShowCloseWarning(false)} className="flex-1 py-3 text-xs font-bold text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10 tracking-widest uppercase">Zpět k psaní</button>
-                 <button onClick={onClose} className="flex-1 py-3 text-xs font-bold text-[#ef4444] bg-[#ef4444]/10 hover:bg-[#ef4444]/20 rounded-xl transition-all border border-[#ef4444]/30 hover:border-[#ef4444] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] tracking-widest uppercase">Zahodit</button>
-               </div>
+        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#0f172a] border border-[#00f3ff]/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold text-white tracking-wide mb-2">Zahodit rozepsanou zprávu?</h3>
+            <p className="text-gray-400 text-sm mb-6">Máte neuložené změny. Opravdu chcete okno zavřít a změny zahodit?</p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowCloseWarning(false)}
+                className="px-4 py-2 bg-transparent text-gray-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-white/10"
+              >
+                Zpět k úpravám
+              </button>
+              <button 
+                onClick={() => onClose && onClose()}
+                className="px-4 py-2 bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] border border-red-500/50 font-bold rounded-xl transition-all"
+              >
+                Zahodit
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+      {showTemplateNamePrompt && (
+        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#0f172a] border border-[#00f3ff]/50 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold text-white tracking-wide mb-2">Nová Šablona</h3>
+            <p className="text-gray-400 text-sm mb-4">Zadejte název, pod kterým se má tento e-mail uložit do rychlých šablon.</p>
+            <input 
+              type="text" 
+              autoFocus
+              value={newTemplateName}
+              onChange={(e) => setNewTemplateName(e.target.value)}
+              onKeyDown={(e) => { 
+                if (e.key === 'Enter') confirmSaveCurrentAsTemplate(); 
+                if (e.key === 'Escape') setShowTemplateNamePrompt(false);
+              }}
+              placeholder="Např. Reakce na projekt..."
+              className="w-full bg-[#02040a] border border-[#00f3ff]/40 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#00f3ff] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all mb-6 font-bold"
+            />
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowTemplateNamePrompt(false)}
+                className="px-4 py-2 bg-transparent text-gray-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-white/10"
+              >
+                Zrušit
+              </button>
+              <button 
+                onClick={confirmSaveCurrentAsTemplate}
+                disabled={!newTemplateName.trim()}
+                className="flex items-center gap-2 px-4 py-2 bg-[#00f3ff]/20 text-[#00f3ff] hover:bg-[#00f3ff]/30 hover:shadow-[0_0_15px_rgba(0,243,255,0.3)] border border-[#00f3ff]/50 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save size={16} /> Uložit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
