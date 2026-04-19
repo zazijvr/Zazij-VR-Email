@@ -727,7 +727,7 @@ ${ccLine}
       >
 
         {/* Detail Hlaviček - zformováno do Floating Frame na Desktopu */}
-        <div className="shrink-0 px-4 py-5 md:py-4 md:px-6 md:m-6 md:mb-0 border-t-0 md:border md:rounded-2xl border-transparent md:border-[#00f3ff]/20 bg-[#050810] md:bg-[#0a0f1d] shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-[70] flex flex-col gap-4 relative w-full md:w-auto overflow-hidden">
+        <div className="shrink-0 px-4 py-5 md:py-4 md:px-6 md:m-6 md:mb-0 md:min-h-[100px] border-t-0 md:border md:rounded-2xl border-transparent md:border-[#00f3ff]/20 bg-[#050810] md:bg-[#0a0f1d] shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-[70] flex flex-col gap-4 relative w-full md:w-auto overflow-hidden">
           
           {/* Horní neonová linka ze Seznamu Emailů (Pouze mobil) */}
           <div className="md:hidden absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>

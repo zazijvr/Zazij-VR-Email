@@ -882,7 +882,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       })()}
 
       {/* Sub-toolbar */}
-      <div className="hidden md:flex items-center pl-7 py-3 pr-[38px] md:m-6 md:mb-0 md:rounded-2xl bg-black/40 md:bg-[#0a0f1d] border-b md:border border-[#00f3ff]/10 md:border-[#00f3ff]/20 md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-20 shrink-0">
+      <div className="hidden md:flex items-center pl-7 py-3 pr-[38px] md:m-6 md:mb-0 md:h-[100px] md:rounded-2xl bg-black/40 md:bg-[#0a0f1d] border-b md:border border-[#00f3ff]/10 md:border-[#00f3ff]/20 md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-20 shrink-0">
         
         {/* Placeholder šířky pro sloupec s Checkboxy */}
         <div className="w-[40px] pr-2" />
