@@ -406,11 +406,13 @@ ${ccLine}
   };
 
   const handleReply = () => {
-    onActionReply({ type: 'reply', initialTo: emailData?.from, initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, messageId: emailData?.messageId, threadId: emailData?.threadId, rfcMessageId: emailData?.rfcMessageId, htmlBody: getHistoryHeader('reply') + (emailData?.htmlBody || ''), initialBody: '' });
+    const quotedBody = `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid #00f3ff;padding-left:1ex">${emailData?.htmlBody || ''}</blockquote>`;
+    onActionReply({ type: 'reply', initialTo: emailData?.from, initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, messageId: emailData?.messageId, threadId: emailData?.threadId, rfcMessageId: emailData?.rfcMessageId, htmlBody: getHistoryHeader('reply') + quotedBody, initialBody: '' });
   };
 
   const handleReplyAll = () => {
-    onActionReply({ type: 'replyAll', initialTo: `${emailData?.from}${emailData?.cc ? `, ${emailData.cc}` : ''}`, initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, messageId: emailData?.messageId, threadId: emailData?.threadId, rfcMessageId: emailData?.rfcMessageId, htmlBody: getHistoryHeader('reply') + (emailData?.htmlBody || ''), initialBody: '' });
+    const quotedBody = `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid #00f3ff;padding-left:1ex">${emailData?.htmlBody || ''}</blockquote>`;
+    onActionReply({ type: 'replyAll', initialTo: `${emailData?.from}${emailData?.cc ? `, ${emailData.cc}` : ''}`, initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, messageId: emailData?.messageId, threadId: emailData?.threadId, rfcMessageId: emailData?.rfcMessageId, htmlBody: getHistoryHeader('reply') + quotedBody, initialBody: '' });
   };
 
   const handleForward = async () => {
@@ -442,7 +444,7 @@ ${ccLine}
       type: 'forward',
       initialTo: '',
       initialSubject: emailData?.subject?.match(/^Fwd:/i) ? emailData.subject : `Fwd: ${emailData?.subject}`,
-      htmlBody: getHistoryHeader('forward') + (emailData?.htmlBody || ''),
+      htmlBody: getHistoryHeader('forward') + `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid #00f3ff;padding-left:1ex">${emailData?.htmlBody || ''}</blockquote>`,
       initialBody: '',
       initialAttachments: fetchedAttachments
     });
@@ -1083,7 +1085,7 @@ ${ccLine}
 
                   @media (max-width: 600px) {
                     body {
-                      padding: 0px !important; /* Absolutní nula okrajů, ať se to dotýká fyzických bezela displeje */
+                      padding: 0 12px 12px 12px !important; /* Dýchání ze stran zachováno pro rozumnou čitelnost! */
                     }
                   }
                   

@@ -799,6 +799,19 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
         [contenteditable] img {
           max-width: 100%;
           height: auto;
+        }
+        /* Ztlumení barev pro Původní email (Quoted text) v editoru */
+        [contenteditable] blockquote.gmail_quote {
+          color: #94a3b8 !important;
+        }
+        [contenteditable] blockquote.gmail_quote *,
+        [contenteditable] div.gmail_attr * {
+          color: #94a3b8 !important;
+          background-color: transparent !important;
+        }
+        [contenteditable] img {
+          max-width: 100%;
+          height: auto;
           border-radius: 8px;
           margin: 10px 0;
           box-shadow: 0 4px 15px rgba(0,0,0,0.3);

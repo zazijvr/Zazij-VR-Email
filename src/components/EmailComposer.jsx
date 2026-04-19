@@ -407,25 +407,28 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
               </div>
             </div>
             
-            {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-[#00f3ff]/20">
-                {attachments.map((att, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-[#00f3ff]/10 border border-[#00f3ff]/40 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgba(0,243,255,0.1)]">
-                     <File size={14} className="text-[#00f3ff]" />
-                     <span className="text-white text-xs font-mono max-w-[150px] truncate">{att.name}</span>
-                     <button onClick={() => removeAttachment(idx)} className="ml-1 text-[#ef4444] hover:text-white transition-colors">
-                        <Trash2 size={14} />
-                     </button>
-                  </div>
-                ))}
-              </div>
-            )}
             
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 bg-black/30 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 border-t border-[#00f3ff]/10">
-          <div className="flex items-center gap-4 w-full sm:w-auto relative">
+        <div className="p-4 sm:p-6 bg-black/30 flex flex-col gap-4 shrink-0 border-t border-[#00f3ff]/10 z-10 relative">
+          
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 w-full">
+              {attachments.map((att, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-[#00f3ff]/10 border border-[#00f3ff]/40 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgba(0,243,255,0.1)] transition-all">
+                   <File size={14} className="text-[#00f3ff]" />
+                   <span className="text-white text-xs font-mono max-w-[200px] truncate">{att.name}</span>
+                   <button onClick={() => removeAttachment(idx)} className="ml-1 text-[#ef4444] hover:text-white transition-colors" title="Odebrat přílohu">
+                      <Trash2 size={14} />
+                   </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto relative">
             <button
                onClick={() => fileInputRef.current?.click()}
                className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-gray-600 hover:border-[#00f3ff] rounded-xl text-gray-400 hover:text-[#00f3ff] transition-all w-full sm:w-auto"
@@ -560,7 +563,8 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             )}
           </div>
         </div>
-
+      </div>
+      
       </div>
         {showCloseWarning && (
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[1000] flex items-center justify-center p-6 rounded-3xl animate-in fade-in zoom-in duration-200">
