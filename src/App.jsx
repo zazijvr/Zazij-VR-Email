@@ -456,7 +456,7 @@ function App() {
           height: bgHeight,
           backgroundImage: "url('/bg_trace.svg?v=3')", 
           backgroundSize: 'cover', 
-          backgroundPosition: 'top center' 
+          backgroundPosition: 'center' 
         }} 
       />
 
