@@ -603,24 +603,24 @@ ${ccLine}
           {onMobileBack && (
             <button 
               onClick={onMobileBack} 
-              className="p-2 -ml-2 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded-xl transition-all anim-spin-in-arrow"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow"
             >
-              <ArrowLeft size={26} strokeWidth={2.5} />
+              <ArrowLeft size={22} strokeWidth={2.5} />
             </button>
           )}
-          <div className="flex items-center gap-2 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' }}>
+          <div className="flex items-center gap-3 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' }}>
             {emailData && (
               <button 
                 onClick={toggleReadStatus} 
-                className={`p-2 rounded-xl transition-all ${emailData.isUnread ? 'text-[#00f3ff] bg-[#00f3ff]/10' : 'text-white/50 hover:text-white/80 hover:bg-white/10'}`}
+                className={`w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-[#00f3ff] border-[#00f3ff]/60 drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)]' : 'text-white/60 border-white/30 hover:border-white/60 hover:text-white'}`}
                 title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
               >
-                {emailData.isUnread ? <Mail size={22} /> : <MailOpen size={22} />}
+                {emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}
               </button>
             )}
             {onTrash && (
-              <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="p-2 rounded-xl text-[#ef4444]/80 hover:text-[#ef4444] hover:bg-[#ef4444]/20 transition-all">
-                <Trash2 size={22} />
+              <button onClick={() => { if(onMobileBack) onMobileBack(); onTrash(); }} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/60 text-[#ef4444] drop-shadow-[0_0_10px_rgba(239,68,68,0.6)] shadow-[inset_0_0_15px_rgba(239,68,68,0.2)] transition-all active:scale-95 hover:bg-[#ef4444]/20">
+                <Trash2 size={20} />
               </button>
             )}
           </div>
