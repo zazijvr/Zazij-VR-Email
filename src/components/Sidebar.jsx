@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Calendar, Settings, ChevronRight, ChevronDown } from 'lucide-react';
+import { getVersion } from '@tauri-apps/api/app';
 
 export default function Sidebar({
   activeFolder,
@@ -25,6 +26,11 @@ export default function Sidebar({
     { id: 'trash', label: 'Koš' }
   ]);
   const [dragOverIdx, setDragOverIdx] = useState(null);
+  const [appVersion, setAppVersion] = useState('');
+
+  useEffect(() => {
+    getVersion().then(setAppVersion).catch(() => {});
+  }, []);
 
   const [collapsedFolders, setCollapsedFolders] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('zazijvr_collapsed_folders') || '[]')); }
@@ -430,6 +436,12 @@ export default function Sidebar({
            </>
         )}
       </nav>
+      
+      {appVersion && (
+        <div className="px-4 pb-0 pt-3 text-center text-[#00f3ff]/30 text-[10px] tracking-widest uppercase truncate border-t border-[#00f3ff]/20">
+          Verze {appVersion}
+        </div>
+      )}
     </div>
   );
 }
