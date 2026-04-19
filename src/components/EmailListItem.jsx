@@ -195,7 +195,7 @@ export default function EmailListItem({
                 <span className="w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]" title="Nepřečteno"></span>
               )}
               {email.isStarred && (
-                <span className="w-2 h-2 rounded-full bg-[#f800ff] shadow-[0_0_8px_#f800ff]" title="Důležité"></span>
+                <span className="md:hidden w-2 h-2 rounded-full bg-[#f800ff] shadow-[0_0_8px_#f800ff]" title="Důležité"></span>
               )}
             </div>
             <span className="truncate">{activeFolder === 'Odeslané' ? email.to : email.from}</span>
