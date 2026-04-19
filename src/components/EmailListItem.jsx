@@ -252,10 +252,10 @@ export default function EmailListItem({
           ) : (
             <button
               onClick={(e) => handleToggleStar(email.id, email.isStarred, e)}
-              className={`p-1.5 rounded-md transition-all ${email.isStarred ? 'opacity-100 text-[#f800ff] hover:text-[#f800ff] hover:bg-[#f800ff]/20 drop-shadow-[0_0_8px_rgba(248,0,255,0.8)]' : 'opacity-0 group-hover:opacity-100 hover:bg-[#f800ff]/10 text-gray-500 hover:text-[#f800ff]'}`}
+              className={`flex items-center justify-center p-1.5 rounded-md transition-all ${email.isStarred ? 'opacity-100 hover:bg-[#f800ff]/20' : 'opacity-0 group-hover:opacity-100 hover:bg-[#f800ff]/10'}`}
               title={email.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
             >
-              <Star size={16} fill={email.isStarred ? "currentColor" : "none"} />
+              <div className={`w-3.5 h-3.5 rounded-full transition-all ${email.isStarred ? 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse' : 'border-2 border-gray-500 group-hover:border-[#f800ff]/50'}`}></div>
             </button>
           )}
 
