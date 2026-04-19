@@ -178,6 +178,12 @@ pub async fn check_existing_login(
         return Err("Session expired or revoked".into());
     }
 
+    // Pro vývoj na mobilu bez F12 console:
+    println!("\n-----------------------------------------------------------");
+    println!("DEV MOBILE LOGIN LINK (Zkopírujte tohle na svém telefonu):");
+    println!("http://[Vase-WIFI-IP]:5173/?devToken={}", access_token);
+    println!("-----------------------------------------------------------\n");
+
     Ok(access_token)
 }
 
