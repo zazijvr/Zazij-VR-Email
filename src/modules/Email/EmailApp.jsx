@@ -402,8 +402,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
       </div>
 
       {modalEmailId && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-8">
-          <div className="bg-[#02040a] border-[2px] border-[#00f3ff]/30 shadow-[0_0_50px_-10px_rgba(0,243,255,0.3)] rounded-3xl w-full max-w-[1200px] h-full flex flex-col relative overflow-hidden">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-0 sm:p-6 lg:p-10">
+          <div className="bg-[#02040a] sm:border-[2px] border-[#00f3ff]/30 shadow-[0_0_50px_-10px_rgba(0,243,255,0.3)] sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
             <EmailDetail
               googleToken={googleToken}
               selectedEmailId={modalEmailId}
