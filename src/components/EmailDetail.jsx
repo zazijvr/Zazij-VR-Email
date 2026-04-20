@@ -893,8 +893,13 @@ ${ccLine}
 
         </div>
 
-        {/* Samotné Iframe Tělo zprávy (Flush to edges na mobilu, rámeček jen jako horní dělící linka pro plynulost) */}
-        <div className="flex-1 flex flex-col min-w-0 p-0 m-0 md:m-6 md:mb-8 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative">
+        {/* Virtuální prodloužení dělící čáry z levého panelu. H-[69px] přesně odpovídá mt-[16px] + výšce hlavičky sloupců vlevo. */}
+        <div className="hidden md:flex flex-col justify-end h-[69px] w-full shrink-0 relative">
+             <div className="w-full h-[1px] bg-gradient-to-r from-[#00f3ff]/20 to-transparent opacity-80 shadow-[0_1px_5px_rgba(0,243,255,0.2)]"></div>
+        </div>
+
+        {/* Samotné Iframe Tělo zprávy (Zarovnáno s hranou prvního e-mailu na levé straně pře mt-2) */}
+        <div className="flex-1 flex flex-col min-w-0 p-0 m-0 md:mx-6 md:mb-8 md:mt-2 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative">
           {/* Sender Info Block */}
           <div className="shrink-0 w-full px-4 py-3 md:px-6 md:py-4 border-b border-white/5 bg-[#0a0f1d] z-20">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm gap-3 w-full">
