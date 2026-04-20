@@ -1137,7 +1137,7 @@ export default function CalendarApp({
         <div className="absolute inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)}></div>
           
-          <div className="relative bg-[#0f172a] border border-[#00f3ff]/40 shadow-[0_0_50px_rgba(0,243,255,0.2)] rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col p-8 animate-in fade-in zoom-in duration-200">
+          <div className="relative bg-[#0f172a] border border-[#00f3ff]/40 shadow-[0_0_50px_rgba(0,243,255,0.2)] rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col p-5 md:p-8 animate-in fade-in zoom-in duration-200">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff]/10 blur-[50px] pointer-events-none rounded-full" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#f800ff]/10 blur-[50px] pointer-events-none rounded-full" />
             
@@ -1172,7 +1172,7 @@ export default function CalendarApp({
               Detail události
             </span>
             
-            <h2 className="text-2xl font-black text-white mb-8 uppercase tracking-wider pr-6 drop-shadow-md leading-tight">
+            <h2 className="text-xl md:text-2xl font-black text-white mt-1 mb-4 md:mb-8 uppercase tracking-wider pr-[120px] md:pr-6 drop-shadow-md leading-tight">
               {selectedEvent.title}
             </h2>
             

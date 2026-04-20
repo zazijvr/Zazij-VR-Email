@@ -20,7 +20,7 @@ export default function EventModal({
       
         <div className="absolute inset-0 z-[500] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
           <div 
-             className="relative bg-[#0f172a] border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
+             className="relative bg-[#0f172a] border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-4 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
              onMouseDown={(e) => e.stopPropagation()}
           >
             {/* Ornamenty */}
@@ -39,7 +39,7 @@ export default function EventModal({
               Nová synchronizace
             </span>
             
-            <h2 className="text-3xl font-black text-white mb-6 uppercase tracking-widest drop-shadow-md shrink-0">
+            <h2 className="text-2xl md:text-3xl font-black text-white mb-4 md:mb-6 uppercase tracking-widest drop-shadow-md shrink-0">
               {editEventId ? "Úprava události" : "Nová událost"}
             </h2>
 
@@ -56,7 +56,7 @@ export default function EventModal({
                  />
                </div>
 
-               <div className="flex gap-4 relative z-50">
+               <div className="flex flex-col md:flex-row gap-4 relative z-50">
                  <div className="flex-1">
                    <DatePicker 
                      label="ZAČÁTEK"
@@ -101,7 +101,7 @@ export default function EventModal({
                </div>
 
                {!newEventForm.allDay && (
-                 <div className="flex gap-4 z-40 relative">
+                 <div className="flex flex-col md:flex-row gap-4 z-40 relative">
                    <div className="flex-1">
                      <TimePicker 
                        label="OD"
@@ -172,7 +172,7 @@ export default function EventModal({
                     const customVal = newEventForm.alertMinutes < 0 ? '' : (absMinutes / customUnit);
 
                     return (
-                       <div className="flex gap-4 items-center mt-3 bg-gradient-to-r from-[#00f3ff]/10 to-black/40 border border-[#00f3ff]/20 border-l-[3px] border-l-[#00f3ff] py-3 px-5 rounded-r-xl rounded-l-sm shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] w-max animate-in fade-in slide-in-from-top-2">
+                       <div className="flex flex-col md:flex-row gap-4 md:items-center mt-3 bg-gradient-to-r from-[#00f3ff]/10 to-black/40 border border-[#00f3ff]/20 border-l-[3px] border-l-[#00f3ff] py-3 px-5 rounded-r-xl rounded-l-sm shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] w-fit animate-in fade-in slide-in-from-top-2">
                          <Bell className="text-[#00f3ff]/70" size={18} />
                          
                          <div className="relative">
@@ -355,7 +355,7 @@ export default function EventModal({
             <div className="mt-4 shrink-0 flex justify-end gap-3 relative z-10 pt-4 border-t border-white/10">
               <button 
                 onClick={handleCreateEvent}
-                className="px-6 py-3 rounded-xl bg-[#00f3ff]/20 text-[#00f3ff] font-bold uppercase tracking-widest text-xs border border-[#00f3ff]/50 transition-all shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-[#00f3ff]/40 hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] flex items-center gap-2"
+                className="w-full md:w-auto justify-center px-6 py-3 rounded-xl bg-[#00f3ff]/20 text-[#00f3ff] font-bold uppercase tracking-widest text-xs border border-[#00f3ff]/50 transition-all shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-[#00f3ff]/40 hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] flex items-center gap-2"
                 disabled={isCreatingEvent}
               >
                 {isCreatingEvent ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={16} />}
