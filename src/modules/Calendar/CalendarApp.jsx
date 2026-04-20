@@ -1134,10 +1134,10 @@ export default function CalendarApp({
       {currentMainView}
 
       {selectedEvent && (
-        <div className="absolute inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)}></div>
           
-          <div className="relative bg-[#0f172a] border border-[#00f3ff]/40 shadow-[0_0_50px_rgba(0,243,255,0.2)] rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col p-5 md:p-8 animate-in fade-in zoom-in duration-200">
+          <div className="relative bg-[#0f172a] md:border border-[#00f3ff]/40 shadow-[0_0_50px_rgba(0,243,255,0.2)] md:rounded-3xl rounded-none w-full h-[100dvh] md:h-auto max-w-3xl md:max-h-[90vh] overflow-hidden flex flex-col p-5 pt-8 md:p-8 animate-in fade-in zoom-in duration-200">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff]/10 blur-[50px] pointer-events-none rounded-full" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#f800ff]/10 blur-[50px] pointer-events-none rounded-full" />
             

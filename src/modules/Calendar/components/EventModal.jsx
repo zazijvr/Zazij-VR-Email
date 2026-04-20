@@ -18,9 +18,9 @@ export default function EventModal({
   if (!isCreateModalOpen) return null;
   return (
       
-        <div className="absolute inset-0 z-[500] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+        <div className="fixed inset-0 z-[500] flex items-start md:items-center justify-center p-0 md:p-4 bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
           <div 
-             className="relative bg-[#0f172a] border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-4 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
+             className="relative bg-[#0f172a] md:border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] md:rounded-3xl w-full h-[100dvh] md:h-auto max-w-5xl md:max-h-[90vh] overflow-hidden flex flex-col p-4 pt-6 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
              onMouseDown={(e) => e.stopPropagation()}
           >
             {/* Ornamenty */}
@@ -39,7 +39,7 @@ export default function EventModal({
               Nová synchronizace
             </span>
             
-            <h2 className="text-2xl md:text-3xl font-black text-white mb-4 md:mb-6 uppercase tracking-widest drop-shadow-md shrink-0">
+            <h2 className="text-2xl md:text-3xl font-black text-white mb-4 md:mb-6 mt-1 md:mt-0 uppercase tracking-widest drop-shadow-md shrink-0 pr-8 md:pr-0">
               {editEventId ? "Úprava události" : "Nová událost"}
             </h2>
 
