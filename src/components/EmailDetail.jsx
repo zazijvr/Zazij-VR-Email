@@ -1085,7 +1085,6 @@ ${ccLine}
               })}
             </div>
           )}
-          </div>
           
           <div className="flex-1 relative w-full min-h-0 bg-transparent flex flex-col pt-4">
             {emailData?.htmlBody ? (
@@ -1301,6 +1300,7 @@ ${ccLine}
           </div>
         </div>
         {/* Velká akční tlačítka pod mailem jen pro mobily byla dočasně skryta na žádost */}
+      </div>
       </div>
 
       {/* Zobrazovač příloh In-App (pomocí Portal vytrženo z CSS kontextu) */}
