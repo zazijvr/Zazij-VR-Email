@@ -63,7 +63,7 @@ export default function CalendarMonthView({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
-      <div className="flex flex-shrink-0 items-center justify-between gap-4 p-8 border-b border-[#f800ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
+      <div className="flex flex-shrink-0 items-center justify-between gap-2 md:gap-4 p-4 md:p-8 border-b border-[#f800ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
         
         {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
         <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
@@ -92,9 +92,9 @@ export default function CalendarMonthView({
         </div>
 
         <div className="flex items-center gap-6 relative z-10 w-full">
-          <div className="flex items-center gap-6">
-            <div className="p-2 md:p-3 rounded-2xl bg-[#f800ff]/10 border-2 border-[#f800ff]/40 shadow-[0_0_25px_rgba(248,0,255,0.4)] transition-all flex items-center justify-center min-w-[72px] min-h-[72px]">
-              <img src="/vr_calendar_trans.png" className="w-14 h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(248,0,255,0.8)]" alt="Kalendář" draggable="false" />
+          <div className="flex items-center gap-2 md:gap-6">
+            <div className="p-1 md:p-3 rounded-2xl bg-[#f800ff]/10 border-2 border-[#f800ff]/40 shadow-[0_0_25px_rgba(248,0,255,0.4)] transition-all flex items-center justify-center min-w-[48px] md:min-w-[72px] min-h-[48px] md:min-h-[72px]">
+              <img src="/vr_calendar_trans.png" className="w-8 h-8 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(248,0,255,0.8)]" alt="Kalendář" draggable="false" />
             </div>
             
             <div className="flex flex-col justify-center relative mt-1 select-none">
@@ -106,9 +106,9 @@ export default function CalendarMonthView({
               </div>
               <div className="flex flex-row items-baseline">
                 <span className="text-[#00f3ff] text-4xl md:text-5xl font-light mr-4 opacity-70">[</span>
-                <h1 className="text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal flex items-center gap-4">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal flex items-center gap-2 md:gap-4">
                   {currentMonthName} {currentYear}
-                  {isLoading && <Loader2 size={32} className="text-[#00f3ff] animate-spin" />}
+                  {isLoading && <Loader2 size={24} className="md:w-8 md:h-8 text-[#00f3ff] animate-spin" />}
                 </h1>
                 <span className="text-[#00f3ff] text-4xl md:text-5xl font-light ml-4 opacity-70">]</span>
               </div>
@@ -120,14 +120,14 @@ export default function CalendarMonthView({
       {/* Zde přidáváme backdrop wrapper ala EmailList */}
       <div className="flex-1 relative bg-[#0f172a]/80 backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)] overflow-hidden">
         {/* Kontrolní panel: Výpis, Hledání, Navigace DNES - vytaženo VEN z grid wrapperu aby lícoval z EmailListem */}
-        <div className="flex items-center pl-7 py-2 pr-[38px] bg-black/40 border-b border-[#00f3ff]/10 z-20 shrink-0 w-full">
+        <div className="flex items-center pl-2 md:pl-7 py-2 pr-2 md:pr-[38px] bg-black/40 border-b border-[#00f3ff]/10 z-20 shrink-0 w-full">
           
           {/* Placeholder šířky pro sloupec s Checkboxy (odpovídá EmailListu) */}
-          <div className="w-[40px] pr-2" />
+          <div className="hidden md:block w-[40px] pr-2" />
 
 
         {/* Šířka pro sloupec Odesílatel */}
-        <div className="w-[20%] pr-4 flex items-center">
+        <div className="hidden md:flex w-[20%] pr-4 items-center">
           <span className="text-gray-400 text-[10px] sm:text-xs tracking-widest uppercase truncate" title={`Zobrazeno ${events.length} událostí v API poolu`}>
             Výpis {events.length} záznamů
           </span>
@@ -170,7 +170,7 @@ export default function CalendarMonthView({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col pt-4 px-8 pb-4 relative z-10 w-full overflow-hidden">
+      <div className="flex-1 flex flex-col pt-2 md:pt-4 px-1 md:px-8 pb-4 relative z-10 w-full overflow-hidden">
        <div className="absolute top-[-20%] left-[20%] w-[50%] h-[50%] bg-[#f800ff]/5 rounded-[100%] blur-[120px] pointer-events-none z-[-1]" />
 
        <div className="grid grid-cols-7 mb-2">
@@ -179,7 +179,7 @@ export default function CalendarMonthView({
          ))}
        </div>
 
-       <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-2">
+       <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-1 md:gap-2">
          {Array.from({ length: totalCells }).map((_, i) => {
            const isCurrentMonth = i >= startingDay && i < startingDay + daysInMonth;
            const dayNum = isCurrentMonth ? i - startingDay + 1 : (i < startingDay ? new Date(currentYear, currentDate.getMonth(), 0).getDate() - startingDay + i + 1 : i - startingDay - daysInMonth + 1);
@@ -205,13 +205,13 @@ export default function CalendarMonthView({
                  'bg-black/40 border border-white/10 z-0 hover:border-[#00f3ff]/20 hover:bg-[#00f3ff]/5 cursor-pointer'
                }`}
              >
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full">
                    {isSelected ? (
-                     <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse shadow-[0_0_8px_#00f3ff] mt-2 ml-1" />
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse shadow-[0_0_8px_#00f3ff] mt-0.5 md:mt-2 ml-0.5 md:ml-1" />
                    ) : isToday ? (
-                     <div className="w-1.5 h-1.5 rounded-full bg-[#f800ff] animate-pulse shadow-[0_0_5px_#f800ff] mt-2 ml-1" />
-                   ) : <div/>}
-                   <span className={`text-xl font-black ${
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#f800ff] animate-pulse shadow-[0_0_5px_#f800ff] mt-0.5 md:mt-2 ml-0.5 md:ml-1" />
+                   ) : <div className="hidden md:block"/>}
+                   <span className={`text-sm md:text-xl font-black ${
                      isSelected ? 'text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.9)]' :
                      isToday ? 'text-[#f800ff] drop-shadow-[0_0_5px_rgba(248,0,255,0.8)]' : 'text-gray-500'
                    }`}>

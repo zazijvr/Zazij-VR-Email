@@ -674,7 +674,7 @@ export default function CalendarApp({
     currentMainView = (
       <div className="flex-1 flex flex-col h-full relative overflow-hidden animate-in fade-in duration-300">
          
-         <div className="flex flex-shrink-0 items-center justify-between gap-4 p-8 border-b border-[#f800ff]/20 bg-[#050B14]/75 relative overflow-visible shadow-[0_4px_20px_rgba(5,11,20,0.6)]">
+         <div className="flex flex-shrink-0 items-center justify-between gap-2 md:gap-4 p-4 md:p-8 border-b border-[#f800ff]/20 bg-[#050B14]/75 relative overflow-visible shadow-[0_4px_20px_rgba(5,11,20,0.6)]">
            {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
            <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
                 <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -702,9 +702,9 @@ export default function CalendarApp({
            </div>
            
            <div className="flex items-center gap-6 relative w-full justify-between">
-             <div className="flex items-center gap-6">
-               <div className="p-2 md:p-3 rounded-2xl bg-[#f800ff]/10 border-2 border-[#f800ff]/40 shadow-[0_0_25px_rgba(248,0,255,0.4)] transition-all flex items-center justify-center min-w-[72px] min-h-[72px]">
-                 <img src="/vr_calendar_trans.png" className="w-14 h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(248,0,255,0.8)]" alt="Kalendář" draggable="false" />
+             <div className="flex items-center gap-2 md:gap-6">
+               <div className="p-1 md:p-3 rounded-2xl bg-[#f800ff]/10 border-2 border-[#f800ff]/40 shadow-[0_0_25px_rgba(248,0,255,0.4)] transition-all flex items-center justify-center min-w-[48px] md:min-w-[72px] min-h-[48px] md:min-h-[72px]">
+                 <img src="/vr_calendar_trans.png" className="w-8 h-8 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(248,0,255,0.8)]" alt="Kalendář" draggable="false" />
                </div>
                
                <div className="flex flex-col justify-center relative mt-1 select-none">
@@ -716,7 +716,7 @@ export default function CalendarApp({
                  </div>
                  <div className="flex flex-row items-baseline">
                    <span className="text-[#00f3ff] text-4xl md:text-5xl font-light mr-4 opacity-70">[</span>
-                   <h1 className="text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal flex items-center gap-4">
+                   <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal flex items-center gap-2 md:gap-4">
                      CO MĚ ČEKÁ
                    </h1>
                    <span className="text-[#00f3ff] text-4xl md:text-5xl font-light ml-4 opacity-70">]</span>
@@ -727,8 +727,8 @@ export default function CalendarApp({
          </div>
 
          {/* Toolbar - stejný styl jako měsíční přehled */}
-         <div className="flex items-center pl-7 py-2 pr-6 bg-black/30 border-b border-[#00f3ff]/10 shrink-0 gap-4">
-           <span className="text-gray-500 text-[10px] tracking-widest uppercase shrink-0">
+         <div className="flex items-center pl-2 md:pl-7 py-2 pr-2 md:pr-6 bg-black/30 border-b border-[#00f3ff]/10 shrink-0 gap-2 md:gap-4">
+           <span className="hidden sm:block text-gray-500 text-[10px] tracking-widest uppercase shrink-0">
              {agendaSearch ? `${agendaEvents.length} výsledků` : `${agendaEvents.length} nadcházejících`}
            </span>
            <div className="flex-1 relative group">
@@ -749,7 +749,7 @@ export default function CalendarApp({
            </div>
          </div>
 
-         <div className="flex-1 overflow-y-auto custom-scrollbar px-6 sm:px-10 mt-4 pb-6">
+         <div className="flex-1 overflow-y-auto custom-scrollbar px-3 md:px-6 sm:px-10 mt-4 pb-6">
             {agendaEvents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full opacity-50 relative top-[-40px]">
                     <Clock size={64} className="text-[#00f3ff] mb-6 drop-shadow-[0_0_15px_#00f3ff] opacity-80" />
@@ -786,16 +786,16 @@ export default function CalendarApp({
                                 {/* Color strip */}
                                 <div className={`w-1.5 h-12 rounded-full shrink-0 transition-transform group-hover:scale-y-110 ${getEventSolidColor(ev.colorId)}`} />
 
-                                <div className="flex flex-col min-w-[70px] shrink-0 items-start justify-center pl-1">
+                                <div className="flex flex-col min-w-[50px] md:min-w-[70px] shrink-0 items-start justify-center pl-1">
                                     {ev.isAllDay ? (
-                                        <div className="text-[10px] font-black tracking-[0.2em] uppercase text-[#00f3ff] bg-[#00f3ff]/10 py-1.5 px-2 rounded-md border border-[#00f3ff]/20">CELÝ DEN</div>
+                                        <div className="text-[9px] md:text-[10px] font-black tracking-[0.2em] uppercase text-[#00f3ff] bg-[#00f3ff]/10 py-1.5 px-1 md:px-2 rounded-md border border-[#00f3ff]/20">CELÝ DEN</div>
                                     ) : (
-                                        <div className="text-xl font-bold text-gray-300 font-mono tracking-tight group-hover:text-[#00f3ff] transition-colors">{ev.fullDate.toTimeString().substring(0, 5)}</div>
+                                        <div className="text-sm md:text-xl font-bold text-gray-300 font-mono tracking-tight group-hover:text-[#00f3ff] transition-colors">{ev.fullDate.toTimeString().substring(0, 5)}</div>
                                     )}
                                 </div>
 
-                                <div className="flex flex-col flex-1 min-w-0 pl-2">
-                                   <div className="text-lg font-bold text-white truncate group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all">{ev.title}</div>
+                                <div className="flex flex-col flex-1 min-w-0 pl-1 md:pl-2">
+                                   <div className="text-base md:text-lg font-bold text-white truncate group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all">{ev.title}</div>
                                    {ev.description && (
                                      <div className="text-xs text-gray-500 font-mono tracking-tight truncate group-hover:text-gray-400 mt-1">
                                        {ev.description.replace(/<[^>]*>?/gm, '')}

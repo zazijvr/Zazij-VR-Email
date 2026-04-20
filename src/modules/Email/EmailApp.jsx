@@ -25,7 +25,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   const [autoResumeDraftId, setAutoResumeDraftId] = useState(null);
   const [composerConfig, setComposerConfig] = useState(null);
   const { showAlert } = useAlert();
-  
+
   const [trashedEmails, setTrashedEmails] = useState([]);
   const [spamEmails, setSpamEmails] = useState([]);
   const [hiddenEmailIds, setHiddenEmailIds] = useState([]);
@@ -70,7 +70,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
       if (prev.includes(emailId)) return prev;
       return [...prev, emailId];
     });
-    
+
     if (fullEmailObj) {
       setOptimisticMoves(prev => {
         const filtered = prev.filter(m => m.id !== emailId);
@@ -110,13 +110,13 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
       } else if (targetId === 'TRASH') {
         setTrashedEmails(prev => {
           const filtered = prev.filter(t => t.id !== emailId);
-          return [...filtered, { ...(fullEmailObj || {id: emailId}), trashedFrom: sourceLabel }];
+          return [...filtered, { ...(fullEmailObj || { id: emailId }), trashedFrom: sourceLabel }];
         });
         await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/trash`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${googleToken}` }
         });
-        return; 
+        return;
       }
 
       // Add/Remove labels as needed
@@ -137,7 +137,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
   const handleGlobalTrash = async (emailObj) => {
     let emailData = typeof emailObj === 'string' ? { id: emailObj, subject: '(Bez specifikace)', from: '', sizeText: '', dateText: '' } : emailObj;
-    
+
     if (!emailData.threadId && typeof emailObj === 'string') {
       try {
         const fetchRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.id}?fields=threadId`, {
@@ -205,9 +205,9 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
       // Go the extra mile and force it back into INBOX so it is never lost in pure Archive
       await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/modify`, {
-         method: 'POST',
-         headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
-         body: JSON.stringify({ addLabelIds: ['INBOX'] })
+        method: 'POST',
+        headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addLabelIds: ['INBOX'] })
       });
     } catch (err) {
       console.error("Chyba z API: ", err);
@@ -218,7 +218,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
   const handleGlobalSpam = async (emailObj) => {
     let emailData = typeof emailObj === 'string' ? { id: emailObj, subject: '(Bez specifikace)', from: '', sizeText: '', dateText: '' } : emailObj;
-    
+
     if (!emailData.threadId && typeof emailObj === 'string') {
       try {
         const fetchRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.id}?fields=threadId`, {
@@ -254,35 +254,35 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {googleToken && (
-        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-[#0a0f1d] relative z-[100] overflow-visible">
-          
+        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
+
           {/* Synchronizovaná horní neonová linka (Úplně stejná jako u EmailDetail) */}
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
 
           {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
           <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
-               <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
-                 <defs>
-                   <filter id="headerRightGlowSVG" x="-20%" y="-20%" width="140%" height="140%">
-                     <feGaussianBlur stdDeviation="3" result="blur1" />
-                     <feGaussianBlur stdDeviation="6" result="blur2" />
-                     <feMerge>
-                         <feMergeNode in="blur2" />
-                         <feMergeNode in="blur1" />
-                         <feMergeNode in="SourceGraphic" />
-                     </feMerge>
-                   </filter>
-                 </defs>
-                 <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#headerRightGlowSVG)" />
-                 <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
-                 <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#headerRightGlowSVG)" />
-                 <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
-                 <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
-                 <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
-                 <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#headerRightGlowSVG)" />
-                 <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
-                 <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
-               </svg>
+            <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="headerRightGlowSVG" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur1" />
+                  <feGaussianBlur stdDeviation="6" result="blur2" />
+                  <feMerge>
+                    <feMergeNode in="blur2" />
+                    <feMergeNode in="blur1" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#headerRightGlowSVG)" />
+              <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
+              <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#headerRightGlowSVG)" />
+              <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
+              <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
+              <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
+              <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#headerRightGlowSVG)" />
+              <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
+              <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
+            </svg>
           </div>
 
           <div className="flex items-center gap-6 relative z-10">
@@ -312,78 +312,78 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
       <div className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
         {!googleToken ? (
-           <div className="flex-1 flex w-full h-full flex-col">
-             <EmailList googleToken={googleToken} loginWithGoogle={loginWithGoogle} />
-           </div>
+          <div className="flex-1 flex w-full h-full flex-col">
+            <EmailList googleToken={googleToken} loginWithGoogle={loginWithGoogle} />
+          </div>
         ) : (
-           <>
-              <div className={`flex-1 overflow-hidden relative z-0 ${selectedEmailId ? 'hidden md:flex' : 'flex'} flex-col ${isVerticalLayout ? 'md:max-h-[50%] md:min-h-[50%] border-b border-[#00f3ff]/10' : 'md:max-w-[50%] md:min-w-[50%] border-r border-[#00f3ff]/10'}`}>
-                <div className="hidden md:block absolute left-0 bottom-0 h-[114px] w-[144px] overflow-hidden z-[0] pointer-events-none opacity-40 blur-[3px]">
-                   <div className="absolute left-[-256px] bottom-0 h-[114px] w-[400px] rotate-180">
-                     <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
-                       <defs>
-                         <filter id="bottomLeftMiniGlowBlurred" x="-20%" y="-20%" width="140%" height="140%">
-                           <feGaussianBlur stdDeviation="3" result="blur1" />
-                           <feGaussianBlur stdDeviation="8" result="blur2" />
-                           <feMerge>
-                               <feMergeNode in="blur2" />
-                               <feMergeNode in="blur1" />
-                               <feMergeNode in="SourceGraphic" />
-                           </feMerge>
-                         </filter>
-                       </defs>
-                       <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#bottomLeftMiniGlowBlurred)" />
-                       <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                       <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#bottomLeftMiniGlowBlurred)" />
-                       <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                       <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                       <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
-                       <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#bottomLeftMiniGlowBlurred)" />
-                       <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                       <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
-                     </svg>
-                   </div>
+          <>
+            <div className={`flex-1 overflow-hidden relative z-0 ${selectedEmailId ? 'hidden md:flex' : 'flex'} flex-col ${isVerticalLayout ? 'md:max-h-[50%] md:min-h-[50%] border-b border-[#00f3ff]/10' : 'md:max-w-[50%] md:min-w-[50%] border-r border-[#00f3ff]/10'}`}>
+              <div className="hidden md:block absolute left-0 bottom-0 h-[114px] w-[144px] overflow-hidden z-[0] pointer-events-none opacity-40 blur-[3px]">
+                <div className="absolute left-[-256px] bottom-0 h-[114px] w-[400px] rotate-180">
+                  <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <filter id="bottomLeftMiniGlowBlurred" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="3" result="blur1" />
+                        <feGaussianBlur stdDeviation="8" result="blur2" />
+                        <feMerge>
+                          <feMergeNode in="blur2" />
+                          <feMergeNode in="blur1" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#bottomLeftMiniGlowBlurred)" />
+                    <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
+                    <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#bottomLeftMiniGlowBlurred)" />
+                    <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
+                    <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
+                    <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
+                    <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#bottomLeftMiniGlowBlurred)" />
+                    <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
+                    <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
+                  </svg>
                 </div>
-
-                <EmailList
-                  googleToken={googleToken}
-                  activeFolder={activeFolder}
-                  selectedEmailId={selectedEmailId}
-                  setSelectedEmailId={setSelectedEmailId}
-                  onExpand={(id) => setModalEmailId(id)}
-                  onDraftClick={(id) => setAutoResumeDraftId(id)}
-                  trashedEmails={trashedEmails}
-                  spamEmails={spamEmails}
-                  hiddenEmailIds={hiddenEmailIds}
-                  optimisticMoves={optimisticMoves}
-                  onTrash={handleGlobalTrash}
-                  onRestore={handleGlobalRestore}
-                  onSpam={handleGlobalSpam}
-                  setUnreadCounts={setUnreadCounts}
-                  unreadCounts={unreadCounts}
-                  loginWithGoogle={loginWithGoogle}
-                  customLabels={customLabels}
-                  userEmail={userEmail}
-                  refreshTriggerList={refreshTriggerList}
-                />
               </div>
 
-              <div className={`flex-1 overflow-hidden relative bg-[#0f172a] z-10 ${selectedEmailId ? 'flex' : 'hidden md:flex'} flex-col ${isVerticalLayout ? 'md:min-h-[50%]' : 'md:min-w-[50%]'}`}>
-                <EmailDetail
-                  googleToken={googleToken}
-                  isVerticalLayout={isVerticalLayout}
-                  selectedEmailId={selectedEmailId}
-                  onExpand={selectedEmailId ? () => setModalEmailId(selectedEmailId) : undefined}
-                  onTrash={selectedEmailId ? () => handleGlobalTrash(selectedEmailId) : undefined}
-                  onRestore={selectedEmailId ? () => handleGlobalRestore(selectedEmailId) : undefined}
-                  onSpam={selectedEmailId ? () => handleGlobalSpam(selectedEmailId) : undefined}
-                  onMobileBack={() => setSelectedEmailId(null)}
-                  onActionReply={(config) => setComposerConfig(config)}
-                  autoResumeDraftId={autoResumeDraftId}
-                  onDraftResumed={() => setAutoResumeDraftId(null)}
-                />
-              </div>
-           </>
+              <EmailList
+                googleToken={googleToken}
+                activeFolder={activeFolder}
+                selectedEmailId={selectedEmailId}
+                setSelectedEmailId={setSelectedEmailId}
+                onExpand={(id) => setModalEmailId(id)}
+                onDraftClick={(id) => setAutoResumeDraftId(id)}
+                trashedEmails={trashedEmails}
+                spamEmails={spamEmails}
+                hiddenEmailIds={hiddenEmailIds}
+                optimisticMoves={optimisticMoves}
+                onTrash={handleGlobalTrash}
+                onRestore={handleGlobalRestore}
+                onSpam={handleGlobalSpam}
+                setUnreadCounts={setUnreadCounts}
+                unreadCounts={unreadCounts}
+                loginWithGoogle={loginWithGoogle}
+                customLabels={customLabels}
+                userEmail={userEmail}
+                refreshTriggerList={refreshTriggerList}
+              />
+            </div>
+
+            <div className={`flex-1 overflow-hidden relative bg-[#0f172a] z-10 ${selectedEmailId ? 'flex' : 'hidden md:flex'} flex-col ${isVerticalLayout ? 'md:min-h-[50%]' : 'md:min-w-[50%]'}`}>
+              <EmailDetail
+                googleToken={googleToken}
+                isVerticalLayout={isVerticalLayout}
+                selectedEmailId={selectedEmailId}
+                onExpand={selectedEmailId ? () => setModalEmailId(selectedEmailId) : undefined}
+                onTrash={selectedEmailId ? () => handleGlobalTrash(selectedEmailId) : undefined}
+                onRestore={selectedEmailId ? () => handleGlobalRestore(selectedEmailId) : undefined}
+                onSpam={selectedEmailId ? () => handleGlobalSpam(selectedEmailId) : undefined}
+                onMobileBack={() => setSelectedEmailId(null)}
+                onActionReply={(config) => setComposerConfig(config)}
+                autoResumeDraftId={autoResumeDraftId}
+                onDraftResumed={() => setAutoResumeDraftId(null)}
+              />
+            </div>
+          </>
         )}
       </div>
 
