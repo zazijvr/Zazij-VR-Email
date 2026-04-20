@@ -726,8 +726,8 @@ ${ccLine}
         }}
       >
 
-        {/* Detail Hlaviček - zformováno do Floating Frame na Desktopu. Pevná výška 100px zaručuje matematické lícování podvozků. */}
-        <div className="shrink-0 px-4 py-5 md:py-4 md:px-6 md:m-6 md:mb-0 md:h-[100px] border-t-0 md:border md:rounded-2xl border-transparent md:border-[#00f3ff]/20 bg-[#050810] md:bg-[#0a0f1d] shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-[70] flex flex-col gap-4 relative w-full md:w-auto overflow-hidden">
+        {/* Detail Hlaviček - Floating Frame na Desktopu s dynamickou výškou pro dlouhé texty */}
+        <div className="shrink-0 px-4 py-5 md:py-4 md:px-6 md:m-6 md:mb-0 md:min-h-[100px] border-t-0 md:border md:rounded-2xl border-transparent md:border-[#00f3ff]/20 bg-[#050810] md:bg-[#0a0f1d] shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-[70] flex flex-col gap-4 relative w-full md:w-auto overflow-hidden">
           
           {/* Horní neonová linka ze Seznamu Emailů (Pouze mobil) */}
           <div className="md:hidden absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
@@ -796,7 +796,7 @@ ${ccLine}
 
               <div className="flex items-center gap-3 group w-full min-w-0 pr-4">
                 <h1 
-                  className="text-2xl md:text-3xl font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-tight truncate"
+                  className="text-2xl md:text-3xl font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-tight break-words"
                   title={emailData?.subject}
                 >
                   {emailData?.subject}
@@ -896,13 +896,11 @@ ${ccLine}
 
         </div>
 
-        {/* Virtuální prodloužení dělící čáry z levého panelu. H-[69px] přesně odpovídá mt-[16px] + výšce hlavičky sloupců vlevo. */}
-        <div className="hidden md:flex flex-col justify-end h-[69px] w-full shrink-0 relative">
-             <div className="w-full h-[1px] bg-gradient-to-r from-[#00f3ff]/20 to-transparent opacity-80 shadow-[0_1px_5px_rgba(0,243,255,0.2)]"></div>
-        </div>
+        {/* Dělící čára napevno ustavená na Y=193px (přesně navazující na horizont levé tabulky nezávisle na výšce hlavičky výše) */}
+        <div className="hidden md:block absolute left-0 w-full h-[1px] top-[193px] bg-gradient-to-r from-[#00f3ff]/20 to-transparent opacity-80 shadow-[0_1px_5px_rgba(0,243,255,0.2)] pointer-events-none z-10"></div>
 
-        {/* Samotné Iframe Tělo zprávy (Zarovnáno s hranou prvního e-mailu na levé straně pře mt-2) */}
-        <div className="flex-1 flex flex-col min-w-0 p-0 m-0 md:mx-6 md:mb-8 md:mt-2 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative">
+        {/* Samotné Iframe Tělo zprávy (Napevno absolutně umístěno tak, aby dokonale lícovalo na Y=201px s prvním e-mailem, bez ohledu na výšku bubliny předmětu) */}
+        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[201px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative z-20">
           {/* Sender Info Block */}
           <div className="shrink-0 w-full px-4 py-3 md:px-6 md:py-4 border-b border-white/5 bg-[#0a0f1d] z-20">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm gap-3 w-full">
