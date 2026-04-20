@@ -381,6 +381,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                 onActionReply={(config) => setComposerConfig(config)}
                 autoResumeDraftId={autoResumeDraftId}
                 onDraftResumed={() => setAutoResumeDraftId(null)}
+                userEmail={userEmail}
               />
             </div>
           </>
@@ -397,6 +398,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               onSpam={modalEmailId ? () => handleGlobalSpam(modalEmailId) : undefined}
               onActionReply={(config) => setComposerConfig(config)}
               onClose={() => setModalEmailId(null)}
+              userEmail={userEmail}
             />
           </div>
         </div>,

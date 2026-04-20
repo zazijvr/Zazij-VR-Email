@@ -149,7 +149,11 @@ export default function Sidebar({
 
       <div className="flex justify-center gap-4 mb-4 md:mb-10 px-4">
         <div
-          onClick={() => setAppMode('email')}
+          onClick={() => {
+            setAppMode('email');
+            setActiveFolder('Doručené');
+            if (onMobileClose) onMobileClose();
+          }}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'email'
               ? 'bg-[#00f3ff]/10 border border-[#00f3ff]/30 text-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
               : 'text-gray-500 hover:text-white hover:bg-white/5 border border-transparent'
@@ -158,7 +162,11 @@ export default function Sidebar({
           <Mail size={22} strokeWidth={2.5} />
         </div>
         <div
-          onClick={() => setAppMode('calendar')}
+          onClick={() => {
+            setAppMode('calendar');
+            setActiveCalendarView('Co mě čeká?');
+            if (onMobileClose) onMobileClose();
+          }}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'calendar'
               ? 'bg-[#00f3ff]/10 border border-[#00f3ff]/30 text-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
               : 'text-gray-500 hover:text-white hover:bg-white/5 border border-transparent'
@@ -187,7 +195,10 @@ export default function Sidebar({
           </button>
         ) : (
             <button 
-              onClick={onCreateNewEvent}
+              onClick={() => {
+                 onCreateNewEvent();
+                 if (onMobileClose) onMobileClose();
+              }}
               className="w-full relative group overflow-hidden rounded-xl border-2 border-[#00f3ff]/50 bg-[#00f3ff]/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-[#00f3ff]/20 hover:border-[#00f3ff] hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
             >
             <span className="font-bold text-base tracking-widest text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
@@ -385,7 +396,10 @@ export default function Sidebar({
           return (
             <div
               key={view.id}
-              onClick={() => setActiveCalendarView(view.label)}
+              onClick={() => {
+                 setActiveCalendarView(view.label);
+                 if (onMobileClose) onMobileClose();
+              }}
               className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
                 isActive
                   ? 'bg-gradient-to-r from-[#00f3ff]/20 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
@@ -424,6 +438,7 @@ export default function Sidebar({
                         setSpecialCals(nextSettings);
                         localStorage.setItem('zazijvr_special_calendars', JSON.stringify(nextSettings));
                         window.dispatchEvent(new Event('zazijvr_special_cals_changed'));
+                        if (onMobileClose) onMobileClose();
                       }}
                       className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
                         isActive

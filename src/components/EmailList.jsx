@@ -53,7 +53,7 @@ const formatMessage = (m) => {
   const fromFull = getHeader(headers, 'From');
   const toFull = getHeader(headers, 'To');
   const ccFull = getHeader(headers, 'Cc');
-  const snippet = m.snippet || '';
+  let snippet = m.snippet || '';
   const isUnread = m.labelIds?.includes('UNREAD') || false;
   const isStarred = m.labelIds?.includes('STARRED') || false;
   const dateData = parseDate(getHeader(headers, 'Date'));
@@ -61,9 +61,21 @@ const formatMessage = (m) => {
   const fromParsed = fromFull.split('<')[0].trim() || fromFull;
   const toParsed = toFull.split('<')[0].trim() || toFull;
 
+  const threadId = m.threadId || m.id;
+
+  try {
+    const replied = JSON.parse(localStorage.getItem('vr-replied-threads') || '[]');
+    const repliedLabelId = localStorage.getItem('vr-replied-label-id');
+    const hasCloudRepliedFlag = repliedLabelId && (m.labelIds || []).includes(repliedLabelId);
+
+    if ((replied.includes(threadId) || hasCloudRepliedFlag) && !snippet.startsWith('↩️ ')) {
+      snippet = '↩️ ' + snippet;
+    }
+  } catch (err) {}
+
   return {
     id: m.id,
-    threadId: m.threadId || m.id,
+    threadId: threadId,
     labelIds: m.labelIds || [],
     from: fromParsed,
     to: toParsed,
@@ -179,7 +191,37 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       });
       saveNewContacts(userEmail, allContacts);
     }
-  }, [userEmail, emails]);
+  }, [emails, userEmail]);
+
+  useEffect(() => {
+    const handleReplySent = (e) => {
+      const { threadId, snippet } = e.detail;
+
+      // Uložení stavu do localStorage pro dlouhodobou paměť i po reloadu okna / změně složky
+      try {
+        const stored = JSON.parse(localStorage.getItem('vr-replied-threads') || '[]');
+        if (!stored.includes(threadId)) {
+          stored.push(threadId);
+          localStorage.setItem('vr-replied-threads', JSON.stringify(stored));
+        }
+      } catch (err) {}
+
+      setEmails(prev => prev.map(msg => {
+        if ((msg.threadId || msg.id) === threadId) {
+          return {
+            ...msg,
+            snippet: "↩️ " + snippet,
+            dateText: "Nyní",
+            // Keep the same from/to, so it doesn't break the UI
+          };
+        }
+        return msg;
+      }));
+    };
+    window.addEventListener('vr-email-sent-reply', handleReplySent);
+    return () => window.removeEventListener('vr-email-sent-reply', handleReplySent);
+  }, []);
+
   useEffect(() => {
     const handleStarToggle = (e) => {
       const { id, isStarred } = e.detail;

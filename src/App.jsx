@@ -374,7 +374,44 @@ function App() {
           if (res.ok) {
             const data = await res.json();
             if (data.labels) {
-              const userLabels = data.labels.filter(l => l.type === 'user');
+              // Filtrace všech custom lableů vytvořených uživatelem
+              let userLabels = data.labels.filter(l => l.type === 'user');
+              
+              // 1. Zjištění/Založení Master synchronizačního štítku VR-Replied
+              const syncLabelName = 'VR-Replied';
+              let repliedLabel = userLabels.find(l => l.name === syncLabelName);
+              
+              if (!repliedLabel) {
+                 try {
+                   console.log("Zakládám tajný master štítek VR-Replied pro cloud sync odpovědí...");
+                   const createRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
+                     method: 'POST',
+                     headers: { 
+                       Authorization: `Bearer ${googleToken}`,
+                       'Content-Type': 'application/json'
+                     },
+                     body: JSON.stringify({
+                       name: syncLabelName,
+                       labelListVisibility: 'labelHide',
+                       messageListVisibility: 'hide'
+                     })
+                   });
+                   if (createRes.ok) {
+                     repliedLabel = await createRes.json();
+                     console.log("Tajný štítek založen:", repliedLabel.id);
+                     userLabels.push(repliedLabel); // dočasně ho přidáme aby ho poznala apka
+                   }
+                 } catch(e) { console.error("Nelze založit VR-Replied štítek", e); }
+              }
+
+              // Pokud ho máme, uložíme si jeho ID do globálního localStorage, aby na něj ostatní komponenty (EmailList/Composer) snáz dosáhly okamžitě, když API ještě probíhá
+              if (repliedLabel) {
+                localStorage.setItem('vr-replied-label-id', repliedLabel.id);
+              }
+
+              // Odstranění tajných štítků z vyobrazení postranního navigačního panelu složek
+              userLabels = userLabels.filter(l => l.name !== syncLabelName);
+              
               setCustomLabels(userLabels);
               loadedUserLabels = userLabels;
             }

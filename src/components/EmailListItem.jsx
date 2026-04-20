@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { CheckSquare, Square, Mail, MailOpen, FileEdit, Star, Trash2, Paperclip, Check } from 'lucide-react';
+import { CheckSquare, Square, Mail, MailOpen, FileEdit, Star, Trash2, Paperclip, Check, Reply } from 'lucide-react';
 import { getAvatarInitial } from '../utils/emailParser';
 
 export default function EmailListItem({
@@ -206,15 +206,24 @@ export default function EmailListItem({
         </div>
 
         {/* Subject and Snippet */}
-        <div className="flex-1 md:pr-4 flex flex-col overflow-hidden w-full pl-[52px] md:pl-0">
+        <div className="flex-1 md:pr-4 flex flex-col overflow-hidden w-full pl-[52px] md:pl-0 mt-0.5 md:mt-0">
           <div className="flex items-center gap-2">
             <span className={`truncate text-sm ${email.isUnread || isActiveRow ? 'text-white font-bold' : 'text-gray-300 font-semibold'}`}>
               {email.subject}
             </span>
           </div>
-          <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors">
-            {email.snippet}
-          </span>
+          {email.snippet?.startsWith('↩️ ') ? (
+            <div className="flex items-center gap-1.5 min-w-0 truncate mt-[1px]">
+               <Reply size={14} className="text-[#00f3ff] shrink-0 drop-shadow-[0_0_5px_rgba(0,243,255,0.6)]" />
+               <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors">
+                 {email.snippet.replace('↩️ ', '')}
+               </span>
+            </div>
+          ) : (
+            <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors mt-[1px]">
+              {email.snippet}
+            </span>
+          )}
         </div>
 
         {/* Desktop Specific */}

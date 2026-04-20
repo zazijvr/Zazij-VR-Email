@@ -12,12 +12,13 @@ import { getHeader, getMessageBody, decodeMojibake, extractAttachments, extractI
 
 import { useAlert } from './AlertProvider';
 
-export default function EmailDetail({ googleToken, isVerticalLayout, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed }) {
+export default function EmailDetail({ googleToken, isVerticalLayout, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed, userEmail }) {
   const [emailData, setEmailData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [downloadingAttachId, setDownloadingAttachId] = useState(null);
   const [previewBlob, setPreviewBlob] = useState(null);
   const [isPreparingForward, setIsPreparingForward] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [icsDetails, setIcsDetails] = useState({});
   const { showAlert, showConfirm } = useAlert();
   const handleTrashClick = (e) => {
@@ -103,6 +104,32 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
   useEffect(() => {
     const handleMessage = async (e) => {
       if (e.data && e.data.type === 'open-link' && e.data.url) {
+        if (e.data.url.toLowerCase().startsWith('mailto:')) {
+          let toAddr = e.data.url.replace(/^mailto:/i, '');
+          let subject = '';
+          let body = '';
+          if (toAddr.includes('?')) {
+            const parts = toAddr.split('?');
+            toAddr = parts[0];
+            try {
+              const params = new URLSearchParams(parts[1]);
+              subject = params.get('subject') || '';
+              body = params.get('body') || '';
+            } catch (err) {
+              console.warn("Invalid mailto URI query");
+            }
+          }
+          if (onActionReply) {
+            onActionReply({
+              type: 'new',
+              initialTo: decodeURIComponent(toAddr),
+              initialSubject: decodeURIComponent(subject),
+              initialBody: decodeURIComponent(body)
+            });
+          }
+          return;
+        }
+
         try {
           if (window.__TAURI_INTERNALS__) {
             await open(e.data.url);
@@ -355,7 +382,8 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
       const fetchedAttachments = [];
       if (data.attachments && data.attachments.length > 0) {
         for (const att of data.attachments) {
-          const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${data.messageId}/attachments/${att.attachmentId}`, {
+          const sourceMsgId = att.messageId || data.messageId;
+          const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${sourceMsgId}/attachments/${att.attachmentId}`, {
             headers: { Authorization: `Bearer ${googleToken}` }
           });
           const attData = await res.json();
@@ -424,9 +452,15 @@ ${ccLine}
 
   const handleReply = () => {
     const quotedBody = `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid #00f3ff;padding-left:1ex">${emailData?.htmlBody || ''}</blockquote>`;
+    
+    // Check if the latest message was sent by the user themselves
+    let replyTo = emailData?.from;
+    const isFromMe = userEmail && emailData?.rawFrom && emailData.rawFrom.toLowerCase().includes(userEmail.toLowerCase());
+    if (isFromMe && emailData?.to) replyTo = emailData.to;
+
     onActionReply({
       type: 'reply',
-      initialTo: emailData?.from,
+      initialTo: replyTo,
       initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`,
       messageId: emailData?.messageId,
       threadId: emailData?.threadId,
@@ -441,7 +475,12 @@ ${ccLine}
 
   const handleReplyAll = () => {
     const quotedBody = `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid #00f3ff;padding-left:1ex">${emailData?.htmlBody || ''}</blockquote>`;
-    onActionReply({ type: 'replyAll', initialTo: `${emailData?.from}${emailData?.cc ? `, ${emailData.cc}` : ''}`, initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, messageId: emailData?.messageId, threadId: emailData?.threadId, rfcMessageId: emailData?.rfcMessageId, htmlBody: getHistoryHeader('reply') + quotedBody, initialBody: '' });
+    
+    const isFromMe = userEmail && emailData?.rawFrom && emailData.rawFrom.toLowerCase().includes(userEmail.toLowerCase());
+    const baseTo = (isFromMe && emailData?.to) ? emailData.to : emailData?.from;
+    const allTo = `${baseTo}${emailData?.cc ? `, ${emailData.cc}` : ''}`;
+    
+    onActionReply({ type: 'replyAll', initialTo: allTo, initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, messageId: emailData?.messageId, threadId: emailData?.threadId, rfcMessageId: emailData?.rfcMessageId, htmlBody: getHistoryHeader('reply') + quotedBody, initialBody: '' });
   };
 
   const handleForward = async () => {
@@ -450,7 +489,8 @@ ${ccLine}
     if (emailData?.attachments && emailData.attachments.length > 0) {
       for (const att of emailData.attachments) {
         try {
-          const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/attachments/${att.attachmentId}`, {
+          const sourceMsgId = att.messageId || emailData.messageId;
+          const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${sourceMsgId}/attachments/${att.attachmentId}`, {
             headers: { Authorization: `Bearer ${googleToken}` }
           });
           const attData = await res.json();
@@ -486,7 +526,7 @@ ${ccLine}
     setEmailData(prev => ({ ...prev, isUnread: !isUnread }));
     window.dispatchEvent(new CustomEvent('vr-email-read-toggle', { detail: { id: emailData?.id || selectedEmailId, isUnread: !isUnread } }));
     try {
-      await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+      await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${emailData.threadId || emailData.messageId}/modify`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(isUnread ? { removeLabelIds: ['UNREAD'] } : { addLabelIds: ['UNREAD'] })
@@ -527,6 +567,18 @@ ${ccLine}
   }, [selectedEmailId]);
 
   useEffect(() => {
+    const handleSentReply = (e) => {
+      // Pokud odpovíme a jsme zrovna na stejném vlákně, vynutíme refetch
+      if (emailData && (emailData.threadId === e.detail.threadId || emailData.messageId === e.detail.threadId)) {
+        // Počkáme půl vteřiny, než se Gmail API spamatuje na síti
+        setTimeout(() => setRefreshTrigger(prev => prev + 1), 600);
+      }
+    };
+    window.addEventListener('vr-email-sent-reply', handleSentReply);
+    return () => window.removeEventListener('vr-email-sent-reply', handleSentReply);
+  }, [emailData]);
+
+  useEffect(() => {
     if (!selectedEmailId || !googleToken) {
       setEmailData(null);
       return;
@@ -538,8 +590,45 @@ ${ccLine}
         const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${selectedEmailId}?format=full`, {
           headers: { Authorization: `Bearer ${googleToken}` }
         });
-        const data = await res.json();
+        let data = await res.json();
 
+        // ------------------ ZPRACOVÁNÍ THREADŮ ------------------
+        // Pokud najdeme theardid, dotáhneme si celé vlákno pro zobrazení mých odeslaných odpovědí!
+        let allAttachments = [];
+        let allInlineTokens = [];
+
+        if (data.threadId) {
+          try {
+            const threadRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${data.threadId}?format=full`, {
+              headers: { Authorization: `Bearer ${googleToken}` }
+            });
+            if (threadRes.ok) {
+              const threadData = await threadRes.json();
+              if (threadData.messages && threadData.messages.length > 0) {
+                // Přepíšeme vybranou zprávu na úplně tu nejdřívější v řetězci
+                data = threadData.messages[threadData.messages.length - 1];
+
+                // A posbíráme všechny existující přílohy/obrázky skrze starší zprávy (historie)
+                for (const msg of threadData.messages) {
+                  const msgAtts = extractAttachments(msg.payload);
+                  msgAtts.forEach(a => Object.assign(a, { messageId: msg.id }));
+                  allAttachments = allAttachments.concat(msgAtts);
+                  
+                  const msgInlines = extractInlineImages(msg.payload);
+                  msgInlines.forEach(a => Object.assign(a, { messageId: msg.id }));
+                  allInlineTokens = allInlineTokens.concat(msgInlines);
+                }
+              }
+            }
+          } catch (te) {
+            console.error("Vlákno se nepodařilo nalistovat, padám na base zprávu", te);
+          }
+        }
+        
+        // Pokud jsmee neměli thready, zkusíme najít normálně přílohy
+        if (allAttachments.length === 0) allAttachments = extractAttachments(data.payload);
+        if (allInlineTokens.length === 0) allInlineTokens = extractInlineImages(data.payload);
+        
         const headers = data.payload?.headers || [];
         const subject = getHeader(headers, 'Subject') || '(Bez předmětu)';
         const from = getHeader(headers, 'From');
@@ -595,15 +684,16 @@ ${ccLine}
 
         const isStarred = data.labelIds?.includes('STARRED') || false;
         const cc = getHeader(headers, 'Cc') || '';
-        const attachments = extractAttachments(data.payload);
-        const inlineImagesTokens = extractInlineImages(data.payload);
+        const attachments = allAttachments;
+        const inlineImagesTokens = allInlineTokens;
 
         let processedHtmlBody = htmlBody;
 
         for (const inline of inlineImagesTokens) {
           if (inline.attachmentId) {
             try {
-              const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${selectedEmailId}/attachments/${inline.attachmentId}`, {
+              const sourceMsgId = inline.messageId || data.id;
+              const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${sourceMsgId}/attachments/${inline.attachmentId}`, {
                 headers: { Authorization: `Bearer ${googleToken}` }
               });
               const attData = await res.json();
@@ -621,6 +711,17 @@ ${ccLine}
             processedHtmlBody = processedHtmlBody.replace(new RegExp(`cid:${inline.cid.replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&')}`, 'gi'), dataUrl);
           }
         }
+
+        // Auto-linkifikace emailů v surovém textu nebo v historii (aby se dalo kliknout i na plain-text emaily)
+        processedHtmlBody = processedHtmlBody.replace(
+          /(<a\b[^>]*>[\s\S]*?<\/a>)|([a-zA-Z0-9-]+=["'][^"'>]*@[^"'>]+["'])|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi,
+          (match, aTag, attrMatch, email) => {
+            if (aTag) return aTag;
+            if (attrMatch) return attrMatch;
+            if (email) return `<a href="mailto:${email}">${email}</a>`;
+            return match;
+          }
+        );
 
         setEmailData({
           subject,
@@ -646,7 +747,7 @@ ${ccLine}
     };
 
     fetchEmail();
-  }, [selectedEmailId, googleToken]);
+  }, [selectedEmailId, googleToken, refreshTrigger]);
 
   // Žádný email není navolen v listu
   if (!selectedEmailId) {
@@ -768,7 +869,7 @@ ${ccLine}
                     setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
                     window.dispatchEvent(new CustomEvent('vr-email-star-toggle', { detail: { id: emailData?.id || selectedEmailId, isStarred: !currentIsStarred } }));
                     try {
-                      await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+                      await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${emailData.threadId || emailData.messageId}/modify`, {
                         method: 'POST',
                         headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
@@ -997,7 +1098,7 @@ ${ccLine}
                             setEmailData(prev => ({ ...prev, isStarred: !currentIsStarred }));
                             window.dispatchEvent(new CustomEvent('vr-email-star-toggle', { detail: { id: emailData?.id || selectedEmailId, isStarred: !currentIsStarred } }));
                             try {
-                              await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.messageId}/modify`, {
+                              await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${emailData.threadId || emailData.messageId}/modify`, {
                                 method: 'POST',
                                 headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
                                 body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })

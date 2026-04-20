@@ -182,17 +182,42 @@ export const encodeBase64Url = (str) => {
 
 export const encodeHeaderName = (headerStr) => {
   if (!headerStr) return '';
-  const match = headerStr.match(/^(.*)\s*(<[^>]+>)$/);
-  if (match) {
-    const name = match[1].replace(/^"|"$/g, '').trim();
-    if (!name) return match[2];
-    const encodedName = `=?utf-8?B?${btoa(unescape(encodeURIComponent(name)))}?=`;
-    return `${encodedName} ${match[2]}`;
+  
+  const parts = [];
+  let currentGroup = '';
+  let inQuotes = false;
+  let inBrackets = false;
+
+  for (let i = 0; i < headerStr.length; i++) {
+    const char = headerStr[i];
+    if (char === '"') inQuotes = !inQuotes;
+    if (char === '<') inBrackets = true;
+    if (char === '>') inBrackets = false;
+    
+    // Rozdělíme podle čárky pouze mimo uvozovky a špičaté závorky
+    if (char === ',' && !inQuotes && !inBrackets) {
+      if (currentGroup.trim()) parts.push(currentGroup.trim());
+      currentGroup = '';
+    } else {
+      currentGroup += char;
+    }
   }
-  if (/[^\x00-\x7F]/.test(headerStr)) {
-    return `=?utf-8?B?${btoa(unescape(encodeURIComponent(headerStr)))}?=`;
-  }
-  return headerStr;
+  if (currentGroup.trim()) parts.push(currentGroup.trim());
+
+  return parts.map(part => {
+    const match = part.match(/^(.*)\s*(<[^>]+>)$/);
+    if (match) {
+      const name = match[1].replace(/^"|"$/g, '').trim();
+      if (!name) return match[2];
+      const encodedName = `=?utf-8?B?${btoa(unescape(encodeURIComponent(name)))}?=`;
+      return `${encodedName} ${match[2]}`;
+    }
+    // Fallback pokud adresa nesedí na strict regex
+    if (/[^\x00-\x7F]/.test(part)) {
+      return `=?utf-8?B?${btoa(unescape(encodeURIComponent(part)))}?=`;
+    }
+    return part;
+  }).join(', ');
 };
 
 export const getAvatarInitial = (name) => {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, MapPin, Loader2, Bell } from 'lucide-react';
 import DatePicker from '../../../components/DatePicker';
 import TimePicker from '../../../components/TimePicker';
@@ -16,11 +17,11 @@ export default function EventModal({
   userEmail
 }) {
   if (!isCreateModalOpen) return null;
-  return (
+  return createPortal(
       
-        <div className="fixed inset-0 z-[500] flex items-start md:items-center justify-center p-0 md:p-4 bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+        <div className="fixed inset-0 z-[1000] flex items-start md:items-center justify-center p-0 md:p-4 bg-black/100 md:bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
           <div 
-             className="relative bg-[#0f172a] md:border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] md:rounded-3xl w-full h-[100dvh] md:h-auto max-w-5xl md:max-h-[90vh] overflow-hidden flex flex-col p-4 pt-6 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
+             className="relative bg-[#0f172a] md:border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] md:rounded-3xl w-full h-full md:h-auto max-w-5xl md:max-h-[90vh] overflow-hidden flex flex-col p-3 pt-6 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
              onMouseDown={(e) => e.stopPropagation()}
           >
             {/* Ornamenty */}
@@ -341,7 +342,7 @@ export default function EventModal({
                  />
                </div>
 
-               <div className="flex flex-col mt-2 flex-1 min-h-[300px] relative z-10">
+               <div className="flex flex-col mt-2 flex-1 shrink-0 min-h-[150px] md:min-h-[300px] relative z-10 pb-4">
                  <label className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest mb-1.5 block">Popis</label>
                  <RichTextEditor 
                    value={newEventForm.description} 
@@ -352,10 +353,10 @@ export default function EventModal({
                </div>
             </div>
 
-            <div className="mt-4 shrink-0 flex justify-end gap-3 relative z-10 pt-4 border-t border-white/10">
+            <div className="mt-2 md:mt-4 shrink-0 flex justify-end gap-3 relative z-10 pt-3 md:pt-4 border-t border-white/10 mb-2 md:mb-0">
               <button 
                 onClick={handleCreateEvent}
-                className="w-full md:w-auto justify-center px-6 py-3 rounded-xl bg-[#00f3ff]/20 text-[#00f3ff] font-bold uppercase tracking-widest text-xs border border-[#00f3ff]/50 transition-all shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-[#00f3ff]/40 hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] flex items-center gap-2"
+                className="w-full md:w-auto justify-center px-6 py-3.5 md:py-3 rounded-xl bg-[#00f3ff]/20 text-[#00f3ff] font-bold uppercase tracking-widest text-[13px] md:text-xs border border-[#00f3ff]/50 transition-all shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-[#00f3ff]/40 hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] flex items-center gap-2"
                 disabled={isCreatingEvent}
               >
                 {isCreatingEvent ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={16} />}
@@ -363,7 +364,7 @@ export default function EventModal({
               </button>
             </div>
           </div>
-        </div>
-      
+        </div>,
+        document.body
   );
 }

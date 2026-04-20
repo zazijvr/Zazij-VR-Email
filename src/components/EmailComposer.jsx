@@ -125,15 +125,15 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     if (config?.type === 'template') {
        isDirty = !!(templateTitle || subject || body);
     } else {
-       isDirty = !!(to || cc || subject || bodyRef.current || attachments.length > 0);
+       const initTo = config?.initialTo || '';
+       const initBody = config?.initialBody || '';
+       const initSubject = config?.initialSubject || '';
+       const initAtt = config?.initialAttachments?.length || 0;
        
-       if (
-         config?.initialTo && to === config.initialTo &&
-         body === (config.initialBody || '') &&
-         subject === (config.initialSubject || '') &&
-         attachments.length === (config.initialAttachments?.length || 0)
-       ) {
+       if (to === initTo && body === initBody && subject === initSubject && attachments.length === initAtt && !cc) {
            isDirty = false;
+       } else {
+           isDirty = true;
        }
     }
     
@@ -383,6 +383,45 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
         });
       }
 
+      const sentData = await res.json();
+      
+      const threadIdOut = sentData.threadId || config?.threadId;
+
+      // ---- CLOUD SYNC: Označit originální THREAD tajným štítkem VR-Replied -----
+      // Abysme neaplikovali štítek na úplně první odeslanou zprávu, která není odpovědí
+      if (config?.type === 'reply' || config?.type === 'replyAll') {
+        const repliedLabelId = localStorage.getItem('vr-replied-label-id');
+        if (repliedLabelId && threadIdOut) {
+           try {
+              await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadIdOut}/modify`, {
+                 method: 'POST',
+                 headers: {
+                    'Authorization': `Bearer ${googleToken}`,
+                    'Content-Type': 'application/json'
+                 },
+                 body: JSON.stringify({
+                    addLabelIds: [repliedLabelId]
+                 })
+              });
+              console.log("Thread označen cloud sync štítkem VR-Replied.");
+           } catch(e) {
+              console.error("Cloud Sync Reply Label Failed", e);
+           }
+        }
+      }
+      // -------------------------------------------------------------------------
+
+      // Vypreparování jednoduchého snippetu (čistého textu) bez HTML
+      const snippet = bodyRef.current ? bodyRef.current.replace(/<[^>]*>?/gm, ' ').substring(0, 150).trim() : '';
+
+      window.dispatchEvent(new CustomEvent('vr-email-sent-reply', {
+        detail: {
+          threadId: threadIdOut,
+          messageId: sentData.id,
+          snippet: snippet
+        }
+      }));
+
       if (onSuccessAction && config?.draftMessageId) {
         onSuccessAction('send', { draftMessageId: config.draftMessageId });
       }
@@ -422,7 +461,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
 
         <div className="flex justify-between items-center p-6 border-b border-[#00f3ff]/10 bg-black/30">
           <h2 className="text-2xl font-black tracking-[0.2em] text-white flex items-center gap-3">
-            <Send className="w-6 h-6 text-[#00f3ff]" />
+            <img src="/vr_drafts_trans.png" className="w-8 h-8 object-contain drop-shadow-[0_0_10px_#00f3ff]" alt="VR Mascot" draggable="false" />
             {config?.type === 'template' ? 'EDITOR ŠABLONY' : config?.type === 'reply' || config?.type === 'replyAll' ? 'ODPOVĚĎ' : config?.type === 'forward' ? 'PŘEPOSLÁNÍ' : 'NOVÁ ZPRÁVA'}
           </h2>
           <button

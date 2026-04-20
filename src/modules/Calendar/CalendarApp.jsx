@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import EventModal from './components/EventModal';
-import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Loader2, Search, X, Edit2, Trash2, Bell, AlertTriangle, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Loader2, Search, X, Edit2, Trash2, Bell, AlertTriangle, Repeat, ArrowLeft } from 'lucide-react';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import RichTextEditor from '../../components/RichTextEditor';
 import DatePicker from '../../components/DatePicker';
@@ -26,6 +27,15 @@ export default function CalendarApp({
   const [selectedCalDay, setSelectedCalDay] = useState(null); // Date object
 
   useEffect(() => {
+    const handleMobileSearch = (e) => {
+       setSearchQuery(e.detail);
+       setAgendaSearch(e.detail);
+    };
+    window.addEventListener('vr-mobile-search-query-change', handleMobileSearch);
+    return () => window.removeEventListener('vr-mobile-search-query-change', handleMobileSearch);
+  }, []);
+
+  useEffect(() => {
     const handler = () => setSpecialCalsTrigger(prev => prev + 1);
     window.addEventListener('zazijvr_special_cals_changed', handler);
     return () => window.removeEventListener('zazijvr_special_cals_changed', handler);
@@ -36,6 +46,7 @@ export default function CalendarApp({
   const [isDeleting, setIsDeleting] = useState(false);
   const [editEventId, setEditEventId] = useState(null);
   const [showEventCloseWarning, setShowEventCloseWarning] = useState(false);
+  const [initialEventFormStr, setInitialEventFormStr] = useState(null);
   const [newEventForm, setNewEventForm] = useState({
     title: '',
     startDate: new Date().toISOString().split('T')[0],
@@ -57,7 +68,8 @@ export default function CalendarApp({
   const currentYear = currentDate.getFullYear();
 
   const handleAttemptCloseCreateModal = () => {
-    if (newEventForm.title || newEventForm.description || editEventId) {
+    const isDirty = initialEventFormStr && JSON.stringify(newEventForm) !== initialEventFormStr;
+    if (isDirty) {
        setShowEventCloseWarning(true);
     } else {
        setIsCreateModalOpen(false);
@@ -67,7 +79,7 @@ export default function CalendarApp({
   const openCreateForDay = (dateObj) => {
     const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
     setEditEventId(null);
-    setNewEventForm({
+    const baseForm = {
       title: '',
       startDate: dateStr,
       endDate: dateStr,
@@ -81,7 +93,9 @@ export default function CalendarApp({
       customFreq: 'WEEKLY',
       recurrenceUntil: '',
       attendees: ''
-    });
+    };
+    setNewEventForm(baseForm);
+    setInitialEventFormStr(JSON.stringify(baseForm));
     setSelectedCalDay(null);
     setIsCreateModalOpen(true);
   };
@@ -256,7 +270,7 @@ export default function CalendarApp({
     if (triggerCreateEvent > lastTriggerRef.current) {
       setEditEventId(null);
       const todayStr = new Date().toISOString().split('T')[0];
-      setNewEventForm({
+      const baseForm = {
          title: '',
          startDate: todayStr,
          endDate: todayStr,
@@ -270,7 +284,9 @@ export default function CalendarApp({
          customFreq: 'WEEKLY',
          recurrenceUntil: '',
          attendees: ''
-      });
+      };
+      setNewEventForm(baseForm);
+      setInitialEventFormStr(JSON.stringify(baseForm));
       setIsCreateModalOpen(true);
       lastTriggerRef.current = triggerCreateEvent;
     }
@@ -560,7 +576,7 @@ export default function CalendarApp({
      const ed = selectedEvent.endDate.getDate().toString().padStart(2, '0');
      const et = selectedEvent.endDate.toTimeString().substring(0, 5);
 
-     setNewEventForm({
+     const baseForm = {
         title: selectedEvent.title,
         startDate: `${sy}-${sm}-${sd}`,
         endDate: `${ey}-${em}-${ed}`,
@@ -574,7 +590,9 @@ export default function CalendarApp({
         recurrenceInterval: inv,
         recurrenceUntil: untilVal,
         attendees: selectedEvent.attendees ? selectedEvent.attendees.map(a => a.email).join(', ') : ''
-     });
+     };
+     setNewEventForm(baseForm);
+     setInitialEventFormStr(JSON.stringify(baseForm));
      
      setSelectedEvent(null);
      setIsCreateModalOpen(true);
@@ -674,7 +692,7 @@ export default function CalendarApp({
     currentMainView = (
       <div className="flex-1 flex flex-col h-full relative overflow-hidden animate-in fade-in duration-300">
          
-         <div className="flex flex-shrink-0 items-center justify-between gap-2 md:gap-4 p-4 md:p-8 border-b border-[#f800ff]/20 bg-[#050B14]/75 relative overflow-visible shadow-[0_4px_20px_rgba(5,11,20,0.6)]">
+         <div className="flex flex-shrink-0 items-center justify-between gap-2 md:gap-4 p-3 md:p-6 border-b border-[#00f3ff]/20 bg-[#050B14]/75 relative overflow-visible shadow-[0_4px_20px_rgba(5,11,20,0.6)]">
            {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
            <div className="hidden md:block absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
                 <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -702,32 +720,55 @@ export default function CalendarApp({
            </div>
            
            <div className="flex items-center gap-6 relative w-full justify-between">
-             <div className="flex items-center gap-2 md:gap-6">
-               <div className="p-1 md:p-3 rounded-2xl bg-[#f800ff]/10 border-2 border-[#f800ff]/40 shadow-[0_0_25px_rgba(248,0,255,0.4)] transition-all flex items-center justify-center min-w-[48px] md:min-w-[72px] min-h-[48px] md:min-h-[72px]">
-                 <img src="/vr_calendar_trans.png" className="w-8 h-8 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(248,0,255,0.8)]" alt="Kalendář" draggable="false" />
+             <div className="flex items-center gap-3 md:gap-6">
+               <div className="p-2 md:p-3 rounded-2xl bg-[#00f3ff]/10 border-2 border-[#00f3ff]/40 shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all flex items-center justify-center min-w-[48px] md:min-w-[72px] min-h-[48px] md:min-h-[72px]">
+                 <img src="/vr_calendar_trans.png" className="w-8 h-8 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]" alt="Kalendář" draggable="false" />
                </div>
                
                <div className="flex flex-col justify-center relative mt-1 select-none">
-                 <div className="flex items-center gap-3 ml-2 mb-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_rgba(0,243,255,0.8)]"></div>
-                   <span className="text-[#f800ff] text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
-                     System // Timeline // {activeCalendarView}
-                   </span>
-                 </div>
-                 <div className="flex flex-row items-baseline">
-                   <span className="text-[#00f3ff] text-4xl md:text-5xl font-light mr-4 opacity-70">[</span>
-                   <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal flex items-center gap-2 md:gap-4">
+                 {/* MOBILE VIEW */}
+                 <div className="md:hidden flex flex-col">
+                   <h1 className="text-2xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] leading-tight flex items-center gap-2">
                      CO MĚ ČEKÁ
                    </h1>
-                   <span className="text-[#00f3ff] text-4xl md:text-5xl font-light ml-4 opacity-70">]</span>
+                   <div className="text-[9px] uppercase tracking-widest text-[#00f3ff]/60 mt-0.5">
+                     System // Timeline // {activeCalendarView}
+                   </div>
+                 </div>
+
+                 {/* DESKTOP VIEW - Sjednoceno s Emailem */}
+                 <div className="hidden md:flex flex-col justify-center w-full">
+                   <div className="flex items-center gap-3 ml-2 mb-3">
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#f800ff] shadow-[0_0_8px_rgba(248,0,255,0.8)]"></div>
+                     <span className="text-[#00f3ff] text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
+                       System // Timeline // 0xE9
+                     </span>
+                   </div>
+                   <div className="flex flex-row items-baseline">
+                     <span className="text-[#00f3ff] text-5xl font-light mr-4 opacity-70">[</span>
+                     <h1 className="text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal">
+                       CO MĚ ČEKÁ
+                     </h1>
+                     <span className="text-[#00f3ff] text-5xl font-light ml-4 opacity-70">]</span>
+                   </div>
                  </div>
                </div>
              </div>
+               
+               {/* Lupa (Mobile Only) */}
+               <button
+                 onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('vr-mobile-search-toggle')); }}
+                 className="md:hidden group relative p-3.5 rounded-full bg-[#0f172a]/80 backdrop-blur-md border border-[#00f3ff]/40 text-[#00f3ff] active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-[#00f3ff]/10 ml-4 overflow-hidden focus:outline-none"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-br from-[#00f3ff]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                 <div className="absolute inset-[3px] rounded-full border border-[#00f3ff]/20 group-hover:border-[#00f3ff]/50 pointer-events-none"></div>
+                 <Search size={20} className="relative z-10 drop-shadow-[0_0_8px_rgba(0,243,255,1)] group-hover:drop-shadow-[0_0_12px_rgba(0,243,255,1)] transition-all" strokeWidth={2.5} />
+               </button>
+             </div>
            </div>
-         </div>
 
          {/* Toolbar - stejný styl jako měsíční přehled */}
-         <div className="flex items-center pl-2 md:pl-7 py-2 pr-2 md:pr-6 bg-black/30 border-b border-[#00f3ff]/10 shrink-0 gap-2 md:gap-4">
+         <div className="hidden md:flex items-center pl-2 md:pl-7 py-2 pr-2 md:pr-6 bg-black/30 border-b border-[#00f3ff]/10 shrink-0 gap-2 md:gap-4">
            <span className="hidden sm:block text-gray-500 text-[10px] tracking-widest uppercase shrink-0">
              {agendaSearch ? `${agendaEvents.length} výsledků` : `${agendaEvents.length} nadcházejících`}
            </span>
@@ -749,7 +790,7 @@ export default function CalendarApp({
            </div>
          </div>
 
-         <div className="flex-1 overflow-y-auto custom-scrollbar px-3 md:px-6 sm:px-10 mt-4 pb-6">
+         <div className="flex-1 overflow-y-auto custom-scrollbar px-2 md:px-6 sm:px-10 mt-2 md:mt-4 pb-6">
             {agendaEvents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full opacity-50 relative top-[-40px]">
                     <Clock size={64} className="text-[#00f3ff] mb-6 drop-shadow-[0_0_15px_#00f3ff] opacity-80" />
@@ -769,8 +810,8 @@ export default function CalendarApp({
                      return (
                         <React.Fragment key={ev.id}>
                           {isFirstOfDay && (
-                             <div className="mt-8 mb-3 first:mt-0 pt-3 pb-2 border-b border-white/5">
-                               <h3 className={`text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 ${isToday ? 'text-[#f800ff]' : 'text-[#00f3ff]'}`}>
+                             <div className="mt-4 md:mt-6 mb-2 md:mb-3 first:mt-0 pt-2 border-b border-white/5">
+                               <h3 className={`text-[13px] md:text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 md:gap-3 ${isToday ? 'text-[#f800ff]' : 'text-[#00f3ff]'}`}>
                                  {isToday && <span className="w-2 h-2 rounded-full bg-[#f800ff] shadow-[0_0_10px_#f800ff] animate-pulse" />}
                                  {isToday ? "Dnes" : dateKey}
                                </h3>
@@ -780,11 +821,11 @@ export default function CalendarApp({
 
                           <div 
                              onClick={() => setSelectedEvent(ev)}
-                             className="cursor-pointer bg-[#0d1520] border border-[#1a2535] hover:border-[#00f3ff]/30 rounded-2xl p-4 flex gap-5 items-center justify-between group hover:bg-[#0f1f35] hover:shadow-[inset_4px_0_0_#00f3ff]"
+                             className="cursor-pointer bg-[#0d1520] border border-[#1a2535] hover:border-[#00f3ff]/30 rounded-xl md:rounded-2xl p-3 md:p-4 flex gap-3 md:gap-5 items-center justify-between group hover:bg-[#0f1f35] hover:shadow-[inset_4px_0_0_#00f3ff]"
                           >
-                             <div className="flex gap-5 items-center w-full min-w-0">
+                             <div className="flex gap-3 md:gap-5 items-center w-full min-w-0">
                                 {/* Color strip */}
-                                <div className={`w-1.5 h-12 rounded-full shrink-0 transition-transform group-hover:scale-y-110 ${getEventSolidColor(ev.colorId)}`} />
+                                <div className={`w-1.5 h-10 md:h-12 rounded-full shrink-0 transition-transform group-hover:scale-y-110 ${getEventSolidColor(ev.colorId)}`} />
 
                                 <div className="flex flex-col min-w-[50px] md:min-w-[70px] shrink-0 items-start justify-center pl-1">
                                     {ev.isAllDay ? (
@@ -795,17 +836,17 @@ export default function CalendarApp({
                                 </div>
 
                                 <div className="flex flex-col flex-1 min-w-0 pl-1 md:pl-2">
-                                   <div className="text-base md:text-lg font-bold text-white truncate group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all">{ev.title}</div>
+                                   <div className="text-[15px] md:text-lg font-bold text-white truncate group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all">{ev.title}</div>
                                    {ev.description && (
-                                     <div className="text-xs text-gray-500 font-mono tracking-tight truncate group-hover:text-gray-400 mt-1">
+                                     <div className="text-xs text-gray-500 font-mono tracking-tight truncate group-hover:text-gray-400 mt-0.5 md:mt-1">
                                        {ev.description.replace(/<[^>]*>?/gm, '')}
                                      </div>
                                    )}
                                 </div>
                              </div>
                              
-                             <div className="shrink-0 text-white/10 group-hover:text-[#00f3ff] transition-colors pr-2">
-                                <ChevronRight size={20} />
+                             <div className="shrink-0 text-white/10 group-hover:text-[#00f3ff] transition-colors pr-1 md:pr-2">
+                                <ChevronRight size={18} className="md:w-5 md:h-5" />
                              </div>
                           </div>
                         </React.Fragment>
@@ -841,7 +882,7 @@ export default function CalendarApp({
 
   currentMainView = (
     <div className="w-full h-full flex flex-col overflow-hidden">
-      <div className="flex flex-shrink-0 items-center justify-between gap-4 p-8 border-b border-[#f800ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
+      <div className="flex flex-shrink-0 items-center justify-between gap-4 p-5 md:p-8 border-b border-[#00f3ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
         
         {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
         <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
@@ -869,36 +910,39 @@ export default function CalendarApp({
              </svg>
         </div>
 
-        <div className="flex items-center gap-6 relative z-10 w-full">
-          <div className="flex items-center gap-6">
-            <div className="p-2 md:p-3 rounded-2xl bg-[#f800ff]/10 border-2 border-[#f800ff]/40 shadow-[0_0_25px_rgba(248,0,255,0.4)] transition-all flex items-center justify-center min-w-[72px] min-h-[72px]">
-              <img src="/vr_calendar_trans.png" className="w-14 h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(248,0,255,0.8)]" alt="Kalendář" draggable="false" />
+        <div className="flex items-center gap-2 relative z-10 w-full justify-between">
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className="p-2 md:p-3 rounded-2xl bg-[#00f3ff]/10 border-2 border-[#00f3ff]/40 shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all flex items-center justify-center min-w-[56px] md:min-w-[72px] min-h-[56px] md:min-h-[72px]">
+              <img src="/vr_calendar_trans.png" className="w-10 h-10 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]" alt="Kalendář" draggable="false" />
             </div>
             
             <div className="flex flex-col justify-center relative mt-1 select-none">
-              <div className="flex items-center gap-3 ml-2 mb-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_rgba(0,243,255,0.8)]"></div>
-                <span className="text-[#f800ff] text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
-                  System // Timeline // {activeCalendarView}
-                </span>
-              </div>
-              <div className="flex flex-row items-baseline">
-                <span className="text-[#00f3ff] text-4xl md:text-5xl font-light mr-4 opacity-70">[</span>
-                <h1 className="text-4xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal flex items-center gap-4">
-                  {currentMonthName} {currentYear}
-                  {isLoading && <Loader2 size={32} className="text-[#00f3ff] animate-spin" />}
-                </h1>
-                <span className="text-[#00f3ff] text-4xl md:text-5xl font-light ml-4 opacity-70">]</span>
+              <h1 className="text-3xl md:text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] leading-tight flex items-center gap-4">
+                {currentMonthName} {currentYear}
+                {isLoading && <Loader2 size={32} className="text-[#00f3ff] animate-spin" />}
+              </h1>
+              <div className="text-[10px] md:text-xs uppercase tracking-widest text-[#00f3ff]/60 mt-1 md:mt-2">
+                System // Timeline // {activeCalendarView}
               </div>
             </div>
           </div>
+          
+          {/* Lupa (Mobile Only) */}
+          <button
+            onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('vr-mobile-search-toggle')); }}
+            className="md:hidden group relative p-3.5 rounded-full bg-[#0f172a]/80 backdrop-blur-md border border-[#00f3ff]/40 text-[#00f3ff] active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-[#00f3ff]/10 shrink-0 ml-2 overflow-hidden focus:outline-none"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-[#00f3ff]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            <div className="absolute inset-[3px] rounded-full border border-[#00f3ff]/20 group-hover:border-[#00f3ff]/50 pointer-events-none"></div>
+            <Search size={20} className="relative z-10 drop-shadow-[0_0_8px_rgba(0,243,255,1)] group-hover:drop-shadow-[0_0_12px_rgba(0,243,255,1)] transition-all" strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
       {/* Zde přidáváme backdrop wrapper ala EmailList */}
       <div className="flex-1 relative bg-[#0f172a]/80 backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)] overflow-hidden">
         {/* Kontrolní panel: Výpis, Hledání, Navigace DNES - vytaženo VEN z grid wrapperu aby lícoval z EmailListem */}
-        <div className="flex items-center pl-7 py-2 pr-[38px] bg-black/40 border-b border-[#00f3ff]/10 z-20 shrink-0 w-full">
+        <div className="hidden md:flex items-center pl-7 py-2 pr-[38px] bg-black/40 border-b border-[#00f3ff]/10 z-20 shrink-0 w-full">
           
           {/* Placeholder šířky pro sloupec s Checkboxy (odpovídá EmailListu) */}
           <div className="w-[40px] pr-2" />
@@ -1131,50 +1175,59 @@ export default function CalendarApp({
 
   return (
     <div className="w-full h-full flex flex-col relative overflow-hidden">
-      {currentMainView}
+      <div className={`w-full h-full ${selectedEvent ? 'hidden md:flex flex-col' : 'flex flex-col'} relative`}>
+        {currentMainView}
+      </div>
 
       {selectedEvent && (
-        <div className="fixed inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)}></div>
-          
-          <div className="relative bg-[#0f172a] md:border border-[#00f3ff]/40 shadow-[0_0_50px_rgba(0,243,255,0.2)] md:rounded-3xl rounded-none w-full h-[100dvh] md:h-auto max-w-3xl md:max-h-[90vh] overflow-hidden flex flex-col p-5 pt-8 md:p-8 animate-in fade-in zoom-in duration-200">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff]/10 blur-[50px] pointer-events-none rounded-full" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#f800ff]/10 blur-[50px] pointer-events-none rounded-full" />
-            
-            <div className="absolute top-4 right-4 flex items-center gap-1 z-20">
-               <button 
-                 onClick={handleEditSelectedEvent}
-                 className="p-2 text-[#00f3ff] hover:bg-[#00f3ff]/20 hover:shadow-[0_0_10px_rgba(0,243,255,0.3)] rounded-full transition-all"
-                 title="Upravit"
-               >
-                 <Edit2 size={18} />
-               </button>
-               <button 
-                 onClick={handleDeleteSelectedEvent}
-                 disabled={isDeleting}
-                 className="p-2 text-red-500 hover:bg-red-500/20 hover:shadow-[0_0_10px_rgba(239,68,68,0.3)] rounded-full transition-all"
-                 title="Smazat"
-               >
-                 {isDeleting ? <Loader2 size={18} className="animate-spin text-red-500" /> : <Trash2 size={18} />}
-               </button>
-               <div className="w-px h-5 bg-white/10 mx-1"></div>
-               <button 
+        <>
+          {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER (PORTALLED) --- */}
+          {createPortal(
+            <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 h-16 bg-transparent border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto">
+               <button
                  onClick={() => setSelectedEvent(null)}
-                 className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-full transition-all"
-                 title="Zavřít"
+                 className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow -ml-2"
                >
-                 <X size={20} />
+                 <ArrowLeft size={22} strokeWidth={2.5} />
                </button>
-            </div>
+               <div className="flex items-center gap-3 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' }}>
+                 <button onClick={handleEditSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/40 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] shadow-[inset_0_0_15px_rgba(0,243,255,0.2)] transition-all active:scale-95 hover:bg-[#00f3ff]/20"><Edit2 size={18} /></button>
+                 <button onClick={handleDeleteSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/60 text-[#ef4444] drop-shadow-[0_0_10px_rgba(239,68,68,0.8)] shadow-[inset_0_0_15px_rgba(239,68,68,0.3)] transition-all active:scale-95 hover:bg-red-500/20">{isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}</button>
+               </div>
+            </div>,
+            document.body
+          )}
 
-            <span className="text-[#00f3ff] text-[10px] uppercase font-bold tracking-[0.2em] mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]"></span>
-              Detail události
-            </span>
+          <div className="fixed pt-16 md:pt-0 inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4 animate-in slide-in-from-right duration-300 md:animate-in md:fade-in md:zoom-in md:slide-in-from-left-0 bg-[#0f172a] md:bg-transparent shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none pointer-events-auto">
+            <div className="hidden md:block absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)}></div>
             
-            <h2 className="text-xl md:text-2xl font-black text-white mt-1 mb-4 md:mb-8 uppercase tracking-wider pr-[120px] md:pr-6 drop-shadow-md leading-tight">
-              {selectedEvent.title}
-            </h2>
+            <div className="relative bg-[#0f172a] md:border border-[#00f3ff]/40 md:shadow-[0_0_50px_rgba(0,243,255,0.2)] md:rounded-3xl rounded-none w-full h-full md:h-auto max-w-3xl md:max-h-[90vh] flex flex-col p-0 md:p-8 shrink-0 overflow-hidden md:z-10 box-border pointer-events-auto">
+               
+               <div className="flex-1 overflow-y-auto custom-scrollbar p-5 md:p-0 relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff]/10 blur-[50px] pointer-events-none rounded-full" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#f800ff]/10 blur-[50px] pointer-events-none rounded-full" />
+                
+                <div className="hidden md:flex absolute top-0 right-0 items-center gap-1 z-20">
+                   <button onClick={handleEditSelectedEvent} className="p-2 text-[#00f3ff] hover:bg-[#00f3ff]/20 hover:shadow-[0_0_10px_rgba(0,243,255,0.3)] rounded-full transition-all" title="Upravit">
+                     <Edit2 size={18} />
+                   </button>
+                   <button onClick={handleDeleteSelectedEvent} disabled={isDeleting} className="p-2 text-red-500 hover:bg-red-500/20 hover:shadow-[0_0_10px_rgba(239,68,68,0.3)] rounded-full transition-all" title="Smazat">
+                     {isDeleting ? <Loader2 size={18} className="animate-spin text-red-500" /> : <Trash2 size={18} />}
+                   </button>
+                   <div className="w-px h-5 bg-white/10 mx-1"></div>
+                   <button onClick={() => setSelectedEvent(null)} className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-full transition-all" title="Zavřít">
+                     <X size={20} />
+                   </button>
+                </div>
+
+                <span className="hidden md:flex text-[#00f3ff] text-[10px] uppercase font-bold tracking-[0.2em] mb-3 items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]"></span>
+                  Detail události
+                </span>
+                
+                <h2 className="text-xl md:text-2xl font-black text-white mt-1 mb-4 md:mb-8 uppercase tracking-wider pr-4 md:pr-[120px] drop-shadow-md leading-tight">
+                  {selectedEvent.title}
+                </h2>
             
             <div className="flex flex-col gap-4 text-gray-300 mt-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
                <div className="flex flex-col gap-1.5 shrink-0 mt-2">
@@ -1257,8 +1310,10 @@ export default function CalendarApp({
                  </div>
                )}
              </div>
+            </div>
           </div>
         </div>
+        </>
       )}
 
       {/* Modal pro tvorbu události */}
@@ -1274,8 +1329,8 @@ export default function CalendarApp({
       />
 
       {/* Warning Overlay */}
-      {showEventCloseWarning && (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[1000] flex items-center justify-center p-6 rounded-3xl animate-in fade-in zoom-in duration-200">
+      {showEventCloseWarning && createPortal(
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[2000] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
           <div className="bg-[#0f172a] border border-[#ef4444]/50 shadow-[0_0_30px_rgba(239,68,68,0.3)] rounded-2xl p-8 max-w-sm flex flex-col items-center gap-6 text-center relative overflow-hidden pointer-events-auto">
              <div className="w-16 h-16 rounded-full bg-[#ef4444]/10 border border-[#ef4444]/30 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.2)]">
                <AlertTriangle size={32} className="text-[#ef4444]" />
@@ -1287,12 +1342,13 @@ export default function CalendarApp({
                <button onClick={() => { setShowEventCloseWarning(false); setIsCreateModalOpen(false); }} className="flex-1 py-3 text-xs font-bold text-[#ef4444] bg-[#ef4444]/10 hover:bg-[#ef4444]/20 rounded-xl transition-all border border-[#ef4444]/30 hover:border-[#ef4444] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] tracking-widest uppercase">Zahodit</button>
              </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* App Error Overlay */}
-      {appError && (
-        <div className="absolute inset-0 bg-black/90 z-[1100] flex items-center justify-center p-6 rounded-3xl animate-in fade-in zoom-in duration-200">
+      {appError && createPortal(
+        <div className="fixed inset-0 bg-black/90 z-[2000] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
           <div className="bg-[#0f172a] border border-[#00f3ff]/50 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-3xl p-10 max-w-[420px] flex flex-col items-center gap-7 text-center relative overflow-hidden pointer-events-auto">
              
              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#00f3ff]/20 to-[#f800ff]/20 border-2 border-[#00f3ff]/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,243,255,0.4)] z-10 shrink-0">
@@ -1314,7 +1370,8 @@ export default function CalendarApp({
                </button>
              </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
