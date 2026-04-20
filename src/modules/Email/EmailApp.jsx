@@ -254,7 +254,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {googleToken && (
-        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
+        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-[#0a0f1d] relative z-[100] overflow-visible">
           
           {/* Synchronizovaná horní neonová linka (Úplně stejná jako u EmailDetail) */}
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>

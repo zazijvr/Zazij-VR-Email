@@ -934,7 +934,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       </div>
 
       {/* Pevný Header vytažený mimo scrollovací kontejner, aby scrollbar neprotínal jeho pravý okraj */}
-      <div className="hidden md:flex items-center pl-7 py-4 pr-[38px] bg-[#0f172a]/40 border-b border-[#00f3ff]/20 text-sm font-semibold tracking-wider uppercase shadow-[0_5px_15px_-5px_rgba(0,0,0,0.5)] shrink-0 z-30 w-full md:mt-4">
+      <div className="hidden md:flex items-center pl-7 py-4 pr-[38px] bg-[#0a0f1d] border-b border-[#00f3ff]/20 text-sm font-semibold tracking-wider uppercase shadow-[0_5px_15px_-5px_rgba(0,0,0,0.5)] shrink-0 z-30 w-full md:mt-4">
         <div 
           className="w-[40px] pr-2 flex justify-center cursor-pointer text-[#00f3ff] hover:text-white transition-colors"
           onClick={toggleSelectAll}
