@@ -900,7 +900,7 @@ ${ccLine}
         <div className="hidden md:block absolute left-0 w-full h-[1px] top-[192px] bg-gradient-to-r from-[#00f3ff]/20 to-transparent opacity-80 shadow-[0_1px_5px_rgba(0,243,255,0.2)] pointer-events-none z-10"></div>
 
         {/* Samotné Iframe Tělo zprávy s neonovým okrajem */}
-        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[213px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-[#00f3ff]/40 shadow-[0_5px_20px_rgba(0,0,0,0.5)] md:shadow-[0_0_20px_rgba(0,243,255,0.2)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative z-20">
+        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[213px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-[#00f3ff]/40 shadow-[0_5px_20px_rgba(0,0,0,0.5)] md:shadow-[0_0_20px_rgba(0,243,255,0.2)] overflow-hidden bg-[#0a0f1d] relative z-20">
           {/* Sender Info Block */}
           <div className="shrink-0 w-full px-4 py-3 md:px-6 md:py-4 border-b border-white/5 bg-[#0a0f1d] z-20">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm gap-3 w-full">
@@ -1023,6 +1023,7 @@ ${ccLine}
             <span className="hidden md:block shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10 md:self-auto">{emailData?.date}</span>
           </div>
 
+          <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar relative">
           {/* Přílohy */}
           {emailData?.attachments?.length > 0 && (
             <div className="flex flex-wrap gap-3 mt-4 pt-5 border-t border-white/10 overflow-y-auto custom-scrollbar pb-2 max-h-48">
@@ -1296,6 +1297,7 @@ ${ccLine}
               Zpráva neobsahuje žádný textový, ani HTML obsah ke čtení.
             </div>
           )}
+          </div>
           </div>
         </div>
         {/* Velká akční tlačítka pod mailem jen pro mobily byla dočasně skryta na žádost */}
