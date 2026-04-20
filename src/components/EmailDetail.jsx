@@ -896,11 +896,11 @@ ${ccLine}
 
         </div>
 
-        {/* Dělící čára napevno ustavená na Y=193px (přesně navazující na horizont levé tabulky nezávisle na výšce hlavičky výše) */}
-        <div className="hidden md:block absolute left-0 w-full h-[1px] top-[193px] bg-gradient-to-r from-[#00f3ff]/20 to-transparent opacity-80 shadow-[0_1px_5px_rgba(0,243,255,0.2)] pointer-events-none z-10"></div>
+        {/* Dělící čára napevno ustavená na Y=192px (přesně navazující na horizont levé tabulky nezávisle na výšce hlavičky výše) */}
+        <div className="hidden md:block absolute left-0 w-full h-[1px] top-[192px] bg-gradient-to-r from-[#00f3ff]/20 to-transparent opacity-80 shadow-[0_1px_5px_rgba(0,243,255,0.2)] pointer-events-none z-10"></div>
 
-        {/* Samotné Iframe Tělo zprávy (Napevno absolutně umístěno tak, aby dokonale lícovalo na Y=201px s prvním e-mailem, bez ohledu na výšku bubliny předmětu) */}
-        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[201px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative z-20">
+        {/* Samotné Iframe Tělo zprávy (Napevno absolutně umístěno na Y=213px (193px + pt-2 + p-3) tak, aby dokonale lícovalo s prvním e-mailem) */}
+        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[213px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-white/10 shadow-[0_5px_20px_rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative z-20">
           {/* Sender Info Block */}
           <div className="shrink-0 w-full px-4 py-3 md:px-6 md:py-4 border-b border-white/5 bg-[#0a0f1d] z-20">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm gap-3 w-full">
