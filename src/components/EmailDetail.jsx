@@ -1023,7 +1023,7 @@ ${ccLine}
             <span className="hidden md:block shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10 md:self-auto">{emailData?.date}</span>
           </div>
 
-          <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar relative">
+          <div className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar relative">
           {/* Přílohy */}
           {emailData?.attachments?.length > 0 && (
             <div className="flex flex-wrap gap-3 mt-4 pt-5 border-t border-white/10 overflow-y-auto custom-scrollbar pb-2 max-h-48">
