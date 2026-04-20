@@ -66,7 +66,7 @@ export default function CalendarMonthView({
       <div className="flex flex-shrink-0 items-center justify-between gap-2 md:gap-4 p-4 md:p-8 border-b border-[#f800ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
         
         {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
-        <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
+        <div className="hidden md:block absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
              <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
                <defs>
                  <filter id="headerRightGlowSVGC" x="-20%" y="-20%" width="140%" height="140%">

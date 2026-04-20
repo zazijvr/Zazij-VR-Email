@@ -676,7 +676,7 @@ export default function CalendarApp({
          
          <div className="flex flex-shrink-0 items-center justify-between gap-2 md:gap-4 p-4 md:p-8 border-b border-[#f800ff]/20 bg-[#050B14]/75 relative overflow-visible shadow-[0_4px_20px_rgba(5,11,20,0.6)]">
            {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
-           <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
+           <div className="hidden md:block absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
                 <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <filter id="agendaRightGlowSVGC" x="-20%" y="-20%" width="140%" height="140%">
