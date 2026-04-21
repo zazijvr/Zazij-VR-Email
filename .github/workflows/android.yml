@@ -38,7 +38,7 @@ jobs:
           echo "VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}" > .env
           echo "VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}" >> .env
           npx tauri android init || true
-          npx tauri icon "public/app logo squared_android.png"
+          npx tauri icon "public/applogo_android .png"
           npx tauri android build --apk
       - name: Sign Release APK
         run: |
