@@ -77,13 +77,24 @@ function App() {
 
   const switchGoogleAccount = async (email) => {
     try {
-      const accessToken = await invoke('switch_google_account', {
-        email,
-        clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-      });
-      setGoogleToken(accessToken);
-      setIsSettingsOpen(false); // zavre po prepnuti modal
+      const refreshToken = await invoke('switch_google_account', { email });
+      if (refreshToken) {
+        const res = await fetch("https://oauth2.googleapis.com/token", {
+           method: "POST",
+           headers: { "Content-Type": "application/x-www-form-urlencoded" },
+           body: new URLSearchParams({
+             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+             client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+             refresh_token: refreshToken,
+             grant_type: "refresh_token"
+           })
+        });
+        const data = await res.json();
+        if (data.access_token) {
+           setGoogleToken(data.access_token);
+           setIsSettingsOpen(false); // zavre po prepnuti modal
+        }
+      }
     } catch (err) {
       console.error('Chyba prepnuti uctu:', err);
     }
@@ -182,14 +193,24 @@ function App() {
     try {
       if (!window.__TAURI_INTERNALS__) return; // Vynechá kontrolu tauri, pokud běží v prohlížeči
       console.log("Hledám uložené Google pověření a případně potají žádám o čerstvy Token...");
-      const token = await invoke('check_existing_login', {
-        clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-      });
-      if (token) {
-        console.log("Automatické přihlášení na pozadí proběhlo úspěšně!");
-        console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${token}`);
-        setGoogleToken(token);
+      const refreshToken = await invoke('get_active_refresh_token');
+      if (refreshToken) {
+        const res = await fetch("https://oauth2.googleapis.com/token", {
+           method: "POST",
+           headers: { "Content-Type": "application/x-www-form-urlencoded" },
+           body: new URLSearchParams({
+             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+             client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+             refresh_token: refreshToken,
+             grant_type: "refresh_token"
+           })
+        });
+        const data = await res.json();
+        if (data.access_token) {
+          console.log("Automatické přihlášení na pozadí proběhlo úspěšně!");
+          console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${data.access_token}`);
+          setGoogleToken(data.access_token);
+        }
       }
     } catch (err) {
       console.log("Uživatel zatím není bezpečně přihlášen k trezoru (nebo token propadl). Chcete-li pokračovat, musíte se přihlásit ručně.", err);
@@ -289,15 +310,40 @@ function App() {
         return;
       }
       console.log('Navazuji zabezpečené oAuth spojení přes Rust backend...');
-      const accessToken = await invoke('start_google_login', {
+      const authCode = await invoke('start_google_login', {
         clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
       });
-      console.log('Spojení navázáno, token úspěšně přijat.');
+      console.log('Kód přijat. Měním kód za token přístupů v prohlížeči...');
+      
+      const res = await fetch("https://oauth2.googleapis.com/token", {
+         method: "POST",
+         headers: { "Content-Type": "application/x-www-form-urlencoded" },
+         body: new URLSearchParams({
+           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+           client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+           code: authCode,
+           grant_type: "authorization_code",
+           redirect_uri: "http://localhost:3456/callback"
+         })
+      });
+      const data = await res.json();
+      const accessToken = data.access_token;
+      const refreshToken = data.refresh_token;
+
+      if (!accessToken) throw new Error("Chyba při parsování Google tokenu.");
+
+      const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const profileData = await profileRes.json();
+      const userEmail = profileData.emailAddress;
+
+      await invoke('save_google_account', { email: userEmail, refreshToken: refreshToken || "" });
+
       console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${accessToken}`);
       setGoogleToken(accessToken);
     } catch (error) {
-      console.error('Kriticky selhalo spojení s backendem:', error);
+      console.error('Kriticky selhalo spojení s backendem/Google API:', error);
       showAlert('Systémová chyba při startu přihlášení:\n\n' + String(error) + '\n\nZkuste zmáčknout F12 a podívat se do konzole.', 'Chyba přihlášení', 'error');
     }
   };

@@ -30,12 +30,13 @@ pub fn run() {
 
     builder.invoke_handler(tauri::generate_handler![
         oauth::start_google_login,
-        oauth::check_existing_login,
-            oauth::get_saved_accounts,
-            oauth::get_active_account,
-            oauth::switch_google_account,
-            oauth::logout_google_account
-        ])
+        oauth::save_google_account,
+        oauth::get_active_refresh_token,
+        oauth::get_saved_accounts,
+        oauth::get_active_account,
+        oauth::switch_google_account,
+        oauth::logout_google_account
+    ])
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
