@@ -504,7 +504,7 @@ function App() {
   }, []);
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-[#0f172a] relative md:border border-[#00f3ff]/20 shadow-2xl select-none">
+    <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-[#0f172a] relative md:border border-[#00f3ff]/20 shadow-2xl select-none pt-[env(safe-area-inset-top)]">
 
 
       <MobileHeader
