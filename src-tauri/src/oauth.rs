@@ -20,9 +20,11 @@ pub async fn start_google_login(
         client_id
     );
 
-    // Bypassing Tauri shell_plugin and using the ultra-robust 'open' crate 
-    // which flawlessly handles all Linux Wayland/AppImage environment pollution 
+    #[cfg(desktop)]
     open::that(&url).map_err(|e| e.to_string())?;
+
+    #[cfg(mobile)]
+    app.shell().open(url.clone(), None).map_err(|e| e.to_string())?;
 
     // 3. Počkáme až nás Google přesměruje zpět
     let (mut stream, _) = listener.accept().await.map_err(|e| e.to_string())?;
