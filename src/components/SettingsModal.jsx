@@ -1,9 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { X, Settings as SettingsIcon, FileText, PenTool, Folder } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Settings as SettingsIcon, FileText, PenTool, Folder, Download, Loader2, Sparkles } from 'lucide-react';
 import TemplateSettings from './TemplateSettings';
 import SignatureSettings from './SignatureSettings';
 import FolderSettings from './FolderSettings';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { getVersion } from '@tauri-apps/api/app';
+import { open } from '@tauri-apps/plugin-shell';
 
 export default function SettingsModal({
   isSettingsOpen,
@@ -21,8 +23,64 @@ export default function SettingsModal({
 }) {
   const [activeTab, setActiveTab] = useState('general');
   const modalRef = useRef(null);
+  const [localVersion, setLocalVersion] = useState('');
+  const [cloudVersion, setCloudVersion] = useState('');
+  const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   useFocusTrap(modalRef, isSettingsOpen);
+
+  useEffect(() => {
+    if (isSettingsOpen) {
+      checkUpdates();
+    }
+  }, [isSettingsOpen]);
+
+  const checkUpdates = async () => {
+    setIsCheckingUpdate(true);
+    try {
+      const vLocal = await getVersion();
+      setLocalVersion(vLocal);
+
+      const response = await fetch('https://raw.githubusercontent.com/zazijvr/Zazij-VR-Email/main/package.json', {
+        headers: {
+          'Authorization': 'token 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',
+          'Accept': 'application/vnd.github.v3.raw'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const vCloud = data.version;
+        setCloudVersion(vCloud);
+
+        const vLocalParts = vLocal.split('.').map(Number);
+        const vCloudParts = vCloud.split('.').map(Number);
+        let updateFound = false;
+        
+        for (let i = 0; i < 3; i++) {
+          if ((vCloudParts[i] || 0) > (vLocalParts[i] || 0)) {
+            updateFound = true;
+            break;
+          } else if ((vCloudParts[i] || 0) < (vLocalParts[i] || 0)) {
+            break;
+          }
+        }
+        setIsUpdateAvailable(updateFound);
+      }
+    } catch (error) {
+      console.error('Failed to check updates', error);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const handleDownloadUpdate = async () => {
+    try {
+      await open('https://github.com/zazijvr/Zazij-VR-Email/releases/latest');
+    } catch (e) {
+      console.error("Failed to open URL", e);
+    }
+  };
 
   if (!isSettingsOpen) return null;
 
@@ -62,6 +120,46 @@ export default function SettingsModal({
         
         {activeTab === 'general' && (
         <div className="flex flex-col gap-8 mt-2 overflow-y-auto custom-scrollbar pr-2 max-h-[60vh]">
+          
+          <div className="flex flex-col sm:block">
+            <h3 className="text-xl font-bold text-gray-200 mb-4 border-b border-white/10 pb-2">Verze aplikace</h3>
+            <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 rounded-2xl border transition-all ${isUpdateAvailable ? 'bg-[#f800ff]/5 border-[#f800ff]/30 shadow-[0_0_20px_rgba(248,0,255,0.1)]' : 'bg-black/40 border-white/10'}`}>
+              <div className="flex flex-col gap-1 mb-4 sm:mb-0">
+                <span className="text-white font-bold tracking-wide flex items-center gap-2">
+                  ZazijVR Email Klient 
+                  <span className="px-2 py-0.5 bg-white/10 text-gray-300 rounded text-xs font-mono border border-white/5">{localVersion || '...'}</span>
+                </span>
+                
+                {isCheckingUpdate ? (
+                  <span className="text-sm text-gray-400 flex items-center gap-1.5 mt-1">
+                    <Loader2 size={14} className="animate-spin text-[#00f3ff]" />
+                    Ověřuji dostupnost aktualizací v cloudu...
+                  </span>
+                ) : isUpdateAvailable ? (
+                  <span className="text-sm text-[#f800ff] font-semibold flex items-center gap-1.5 mt-1 drop-shadow-[0_0_5px_rgba(248,0,255,0.4)]">
+                    <Sparkles size={14} className="animate-pulse" />
+                    K dispozici je nová verze ({cloudVersion})!
+                  </span>
+                ) : (
+                  <span className="text-sm text-[#00f3ff] flex items-center gap-1.5 mt-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse shadow-[0_0_5px_rgba(0,243,255,1)]"></span>
+                    Používáte nejnovější verzi.
+                  </span>
+                )}
+              </div>
+              
+              {isUpdateAvailable && (
+                <button 
+                  onClick={handleDownloadUpdate}
+                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-2 bg-[#f800ff]/20 hover:bg-[#f800ff]/30 text-[#f800ff] border border-[#f800ff]/50 hover:border-[#f800ff] px-5 py-2.5 rounded-xl font-black tracking-wider transition-all shadow-[0_0_15px_rgba(248,0,255,0.3)] hover:shadow-[0_0_25px_rgba(248,0,255,0.6)] hover:scale-105 group whitespace-nowrap"
+                >
+                  <Download size={18} className="group-hover:-translate-y-0.5 transition-transform" />
+                  STÁHNOUT AKTUALIZACI
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="hidden sm:block">
             <h3 className="text-xl font-bold text-gray-200 mb-4 border-b border-white/10 pb-2">Vzhled a Zobrazení</h3>
             <div className="flex items-center gap-4 bg-black/40 border border-[#00f3ff]/10 p-5 rounded-2xl w-full">
