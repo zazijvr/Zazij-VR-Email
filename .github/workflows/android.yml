@@ -38,11 +38,11 @@ jobs:
           echo "VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}" > .env
           echo "VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}" >> .env
           npx tauri android init || true
-          npx tauri android build --apk
+          npx tauri android build --debug --apk
       - name: Publikace zkompilované verze do Release složky
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/')
         with:
           tag_name: latest-build
-          files: src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+          files: src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk
           prerelease: false
