@@ -3,6 +3,9 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onAction, registerActionTypes } from '@tauri-apps/plugin-notification';
 import { message } from '@tauri-apps/plugin-dialog';
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
+
+const apiFetch = (...args) => (window.__TAURI_INTERNALS__ ? tauriFetch(...args) : fetch(...args));
 
 
 import { useAlert } from './components/AlertProvider';
@@ -79,7 +82,7 @@ function App() {
     try {
       const refreshToken = await invoke('switch_google_account', { email });
       if (refreshToken) {
-        const res = await fetch("https://oauth2.googleapis.com/token", {
+        const res = await apiFetch("https://oauth2.googleapis.com/token", {
            method: "POST",
            headers: { "Content-Type": "application/x-www-form-urlencoded" },
            body: new URLSearchParams({
@@ -127,7 +130,7 @@ function App() {
          const timeMax = max.toISOString();
 
          const primaryUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime`;
-         const res = await fetch(primaryUrl, { headers: { Authorization: `Bearer ${googleToken}` } });
+         const res = await apiFetch(primaryUrl, { headers: { Authorization: `Bearer ${googleToken}` } });
          if (!res.ok) return;
          
          const data = await res.json();
@@ -195,7 +198,7 @@ function App() {
       console.log("Hledám uložené Google pověření a případně potají žádám o čerstvy Token...");
       const refreshToken = await invoke('get_active_refresh_token');
       if (refreshToken) {
-        const res = await fetch("https://oauth2.googleapis.com/token", {
+        const res = await apiFetch("https://oauth2.googleapis.com/token", {
            method: "POST",
            headers: { "Content-Type": "application/x-www-form-urlencoded" },
            body: new URLSearchParams({
@@ -239,7 +242,7 @@ function App() {
       }
 
       // Načteme skutečná data z Google, testér chce vidět svou vlastní mailovou schránku a obličej
-      fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      apiFetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${devToken}` }
       })
         .then(res => res.json())
@@ -273,7 +276,7 @@ function App() {
         setGoogleToken(accessToken);
 
         // U webového přihlášení musíme ručně načíst osobní info přes Google Profile API, protože Rust backend to teď neudělá.
-        fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        apiFetch('https://www.googleapis.com/oauth2/v2/userinfo', {
           headers: { Authorization: `Bearer ${accessToken}` }
         })
           .then(res => res.json())
@@ -315,7 +318,7 @@ function App() {
       });
       console.log('Kód přijat. Měním kód za token přístupů v prohlížeči...');
       
-      const res = await fetch("https://oauth2.googleapis.com/token", {
+      const res = await apiFetch("https://oauth2.googleapis.com/token", {
          method: "POST",
          headers: { "Content-Type": "application/x-www-form-urlencoded" },
          body: new URLSearchParams({
@@ -332,7 +335,7 @@ function App() {
 
       if (!accessToken) throw new Error("Chyba při parsování Google tokenu.");
 
-      const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+      const profileRes = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
           headers: { Authorization: `Bearer ${accessToken}` }
       });
       const profileData = await profileRes.json();
@@ -383,7 +386,7 @@ function App() {
     }
 
     try {
-      const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
+      const res = await apiFetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${googleToken}`,
@@ -399,7 +402,7 @@ function App() {
 
       const refreshLabelsFromServer = async () => {
         try {
-          const dataRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
+          const dataRes = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
             headers: { Authorization: `Bearer ${googleToken}` }
           });
           if (dataRes.ok) {
@@ -423,7 +426,7 @@ function App() {
       console.error(err);
       // Revert pravdou ze serveru
       try {
-        const dataRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', { headers: { Authorization: `Bearer ${googleToken}` } });
+        const dataRes = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', { headers: { Authorization: `Bearer ${googleToken}` } });
         if (dataRes.ok) {
           const data = await dataRes.json();
           if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
@@ -435,7 +438,7 @@ function App() {
 
   useEffect(() => {
     if (googleToken) {
-      fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+      apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
         headers: { Authorization: `Bearer ${googleToken}` }
       })
         .then(res => res.json())
@@ -448,7 +451,7 @@ function App() {
 
       const fetchLabels = async () => {
         try {
-          const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
+          const res = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
             headers: { Authorization: `Bearer ${googleToken}` }
           });
           if (res.ok) {
@@ -464,7 +467,7 @@ function App() {
               if (!repliedLabel) {
                  try {
                    console.log("Zakládám tajný master štítek VR-Replied pro cloud sync odpovědí...");
-                   const createRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
+                   const createRes = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
                      method: 'POST',
                      headers: { 
                        Authorization: `Bearer ${googleToken}`,
@@ -516,7 +519,7 @@ function App() {
           loadedUserLabels.forEach(l => targets.push({ name: l.name, id: l.id }));
 
           for (const { name, id } of targets) {
-            const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
+            const res = await apiFetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
               headers: { Authorization: `Bearer ${googleToken}` }
             });
             if (res.ok) {
