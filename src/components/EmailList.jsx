@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { db } from '../db/db';
+import DOMPurify from 'dompurify';
 import EmailListItem from './EmailListItem';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import { Paperclip, ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, Flag, Star, CheckSquare, Square, RotateCcw, FileEdit, X } from 'lucide-react';
-import { getHeader } from '../utils/emailParser';
+import { getHeader, getMessageBody, extractAttachments } from '../utils/emailParser';
 import { saveNewContacts } from '../utils/contactManager';
 import { useAlert } from './AlertProvider';
 
 // Globální set pro sledování všech ID zpráv, které už aplikace někdy viděla v tomto spuštění,
 // abychom absolutně spolehlivě zabránili dvojitým notifikacím (např. při ručním označení "Přečíst")
 const globalNotifiedSet = new Set();
+let globalHighestEmailDate = 0;
 const hasAttachment = (payload) => {
   if (!payload) return false;
   if (payload.filename && payload.filename.length > 0) return true;
@@ -93,7 +96,10 @@ const formatMessage = (m) => {
     rawDate: dateData.time,
     sizeText: formatSize(m.sizeEstimate),
     rawSize: m.sizeEstimate || 0,
-    hasAttachment: hasAttachment(m.payload)
+    hasAttachment: hasAttachment(m.payload),
+    html: getMessageBody(m.payload).html || '',
+    text: getMessageBody(m.payload).text || '',
+    attachments: extractAttachments(m.payload)
   };
 };
 
@@ -167,6 +173,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [displayedEmailLimit, setDisplayedEmailLimit] = useState(10);
   const [sortField, setSortField] = useState('date');
   const [sortAscending, setSortAscending] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(false);
@@ -361,10 +368,42 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     }
 
     const fetchEmails = async () => {
-      setLoading(true);
+      // 1) Pokus o nahrání z Offline Keše (Zajišťuje instantní zobrazení pro uživatele nebo plný chod při offline)
+      try {
+        const cached = await db.emails.where('folderLabel').equals(activeFolder).toArray();
+        if (cached && cached.length > 0) {
+          // Aplikovat filtry vyhledávání na cache
+          let filteredCache = cached;
+          if (showOnlyUnread) filteredCache = filteredCache.filter(e => e.isUnread);
+          if (searchQuery.trim()) {
+            const lowQ = searchQuery.toLowerCase();
+            filteredCache = filteredCache.filter(e => 
+              (e.subject && e.subject.toLowerCase().includes(lowQ)) || 
+              (e.from && e.from.toLowerCase().includes(lowQ)) || 
+              (e.snippet && e.snippet.toLowerCase().includes(lowQ))
+            );
+          }
+          if (filteredCache.length > 0) {
+            setEmails(mergeAndGroupEmails([], filteredCache));
+            setLoading(false); // Okamžité skrytí spinneru
+          }
+        }
+      } catch (cacheErr) {
+        console.warn("Nepodařilo se natáhnout offline data:", cacheErr);
+      }
+
+      if (!navigator.onLine) {
+         setLoading(false);
+         fetchedFolderRef.current = activeFolder;
+         return; // Zastavit network request, pokud jsme offline
+      }
+
+      // 2) Běžný Network Fetch
+      if (emails.length === 0) setLoading(true); // Ukázat spinner, jen pokud nemáme aspoň ta cache data
+      setDisplayedEmailLimit(10);
       try {
         const labelId = getLabelId(activeFolder);
-        let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=15`;
+        let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=40`;
         let queryParts = [];
         if (showOnlyUnread) queryParts.push('is:unread');
         if (searchQuery.trim()) queryParts.push(searchQuery.trim());
@@ -385,7 +424,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
         setNextPageToken(listData.nextPageToken || null);
 
         const messagesPromises = listData.messages.map(async (msg) => {
-          const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full&fields=id,threadId,labelIds,snippet,sizeEstimate,internalDate,payload(headers,mimeType,filename,parts(mimeType,filename,parts(mimeType,filename,parts(mimeType,filename))))`, {
+          const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full&fields=id,threadId,labelIds,snippet,sizeEstimate,internalDate,payload(headers,mimeType,filename,body,parts(mimeType,filename,body,parts(mimeType,filename,body,parts(mimeType,filename,body))))`, {
             headers: { Authorization: `Bearer ${googleToken}` }
           });
           return await msgRes.json();
@@ -394,7 +433,15 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
         const fullMessages = await Promise.all(messagesPromises);
 
         const formattedEmails = fullMessages.map(formatMessage);
-        formattedEmails.forEach(e => globalNotifiedSet.add(e.id));
+        formattedEmails.forEach(e => {
+          e.folderLabel = activeFolder; // Nutné pro DB Index
+          globalNotifiedSet.add(e.id);
+          globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
+        });
+        
+        // Asynchronní zápis/update do lokální databáze
+        db.emails.bulkPut(formattedEmails).catch(e => console.warn('Chyba při cachování:', e));
+
         setEmails(mergeAndGroupEmails([], formattedEmails));
       } catch (err) {
         console.error("Chyba načítání pošty:", err);
@@ -437,7 +484,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       const silentFetch = async () => {
         try {
           const labelId = getLabelId(activeFolder);
-          let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=15`;
+          let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=40`;
           let queryParts = [];
           if (showOnlyUnread) queryParts.push('is:unread');
           if (searchQuery.trim()) queryParts.push(searchQuery.trim());
@@ -464,7 +511,11 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
             permissionGranted = permission === 'granted';
           }
 
-          const trulyNewEmails = formattedEmails.filter(newEm => !globalNotifiedSet.has(newEm.id));
+          const trulyNewEmails = formattedEmails.filter(newEm => {
+            if (globalNotifiedSet.has(newEm.id)) return false;
+            // The email must actually be newer than the newest email we've seen so far in this session!
+            return (newEm.rawDate || 0) > globalHighestEmailDate;
+          });
 
           if (permissionGranted && trulyNewEmails.length > 0) {
             const latest = trulyNewEmails[0];
@@ -476,7 +527,10 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
             });
           }
 
-          formattedEmails.forEach(e => globalNotifiedSet.add(e.id));
+          formattedEmails.forEach(e => {
+            globalNotifiedSet.add(e.id);
+            globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
+          });
 
           setEmails(prev => mergeAndGroupEmails(prev, formattedEmails, true));
         } catch (err) {
@@ -667,7 +721,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     setLoadingMore(true);
     try {
       const labelId = getLabelId(activeFolder);
-      let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=15&pageToken=${nextPageToken}`;
+      let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=40&pageToken=${nextPageToken}`;
       let queryParts = [];
       if (showOnlyUnread) queryParts.push('is:unread');
       if (searchQuery.trim()) queryParts.push(searchQuery.trim());
@@ -695,7 +749,10 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       const fullMessages = await Promise.all(messagesPromises);
 
       const formattedEmails = fullMessages.map(formatMessage);
-      formattedEmails.forEach(e => globalNotifiedSet.add(e.id));
+      formattedEmails.forEach(e => {
+        globalNotifiedSet.add(e.id);
+        globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
+      });
       setEmails(prev => mergeAndGroupEmails(prev, formattedEmails));
     } catch (err) {
       console.error("Chyba načítání starší pošty:", err);
@@ -773,6 +830,9 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       visibleEmails.sort((a, b) => sortAscending ? a.rawDate - b.rawDate : b.rawDate - a.rawDate);
     }
   }
+
+  const fullVisibleEmailsLength = visibleEmails.length;
+  visibleEmails = visibleEmails.slice(0, displayedEmailLimit);
 
   visibleEmailsRef.current = visibleEmails;
 
@@ -1083,10 +1143,17 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
               />
             ))}
             {/* Load More Button */}
-            {nextPageToken && (
+            {(nextPageToken || fullVisibleEmailsLength > displayedEmailLimit) && (
               <div className="flex justify-center mt-6 mb-4">
                 <button
-                  onClick={loadMoreEmails}
+                  onClick={() => {
+                    if (fullVisibleEmailsLength > displayedEmailLimit) {
+                      setDisplayedEmailLimit(prev => prev + 10);
+                    } else {
+                      setDisplayedEmailLimit(prev => prev + 10);
+                      loadMoreEmails();
+                    }
+                  }}
                   disabled={loadingMore}
                   className="px-6 py-3 rounded-full bg-[#00f3ff]/10 text-[#00f3ff] font-bold tracking-widest border border-[#00f3ff]/30 hover:bg-[#00f3ff]/20 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all flex items-center justify-center min-w-[200px]"
                 >

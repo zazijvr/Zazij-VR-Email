@@ -122,15 +122,25 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
 
   const handleAttemptClose = () => {
     let isDirty = false;
+    
+    // Pomocná funkce pro vyhodnocení jestli je HTML text editoru reálně prázdný
+    const isEditorEmpty = (html) => {
+        if (!html) return true;
+        const stripped = html.replace(/<[^>]*>?/gm, '').trim();
+        return stripped === '';
+    };
+
     if (config?.type === 'template') {
-       isDirty = !!(templateTitle || subject || body);
+       isDirty = !!(templateTitle || subject || !isEditorEmpty(body));
     } else {
        const initTo = config?.initialTo || '';
        const initBody = config?.initialBody || '';
        const initSubject = config?.initialSubject || '';
        const initAtt = config?.initialAttachments?.length || 0;
        
-       if (to === initTo && body === initBody && subject === initSubject && attachments.length === initAtt && !cc) {
+       const isBodyDirty = initBody ? (body !== initBody) : !isEditorEmpty(body);
+
+       if (to === initTo && !isBodyDirty && subject === initSubject && attachments.length === initAtt && !cc) {
            isDirty = false;
        } else {
            isDirty = true;

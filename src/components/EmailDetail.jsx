@@ -4,9 +4,10 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { open } from '@tauri-apps/plugin-shell';
 import { downloadDir, join } from '@tauri-apps/api/path';
-import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, Star, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen } from 'lucide-react';
+import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, Star, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen, FileText } from 'lucide-react';
 import ICAL from 'ical.js';
 import DOMPurify from 'dompurify';
+import { db } from '../db/db';
 
 import { getHeader, getMessageBody, decodeMojibake, extractAttachments, extractInlineImages, decodeBase64Url } from '../utils/emailParser';
 
@@ -587,10 +588,51 @@ ${ccLine}
     const fetchEmail = async () => {
       setLoading(true);
       try {
+        let data = null;
+
+        if (!navigator.onLine) {
+          // OFFLINE FALLBACK
+          const cached = await db.emails.where('id').equals(selectedEmailId).first();
+          if (cached) {
+             // Mockup struktury aby app nespadla a vyrenderovala tělo
+             data = {
+               payload: { headers: [], parts: [] },
+               threadId: cached.threadId,
+               id: cached.id
+             };
+             // Přílohy a tělo jsou už vytaženy, takže to vyřešíme bypassnutím thread parsing fáze
+             // a rovnou nastavíme emailData do state... no wait, the logic expects `data` to be a raw API payload!
+             // OK, zjednodušený offline parser zrovna nastaví stav:
+             setEmailData({
+                messageId: cached.id,
+                threadId: cached.threadId,
+                html: cached.html,
+                text: cached.text,
+                attachments: cached.attachments || []
+             });
+             setExpandedThreads([cached.id]);
+             setThreadMessages([{
+               id: cached.id,
+               date: new Date(cached.rawDate),
+               dateText: new Date(cached.rawDate).toLocaleDateString('cs-CZ'),
+               timeText: new Date(cached.rawDate).toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit'}),
+               from: cached.from,
+               to: cached.to,
+               cc: cached.cc,
+               snippet: cached.snippet,
+               html: cached.html,
+               text: cached.text,
+               attachments: cached.attachments || []
+             }]);
+             setLoading(false);
+             return;
+          }
+        }
+
         const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${selectedEmailId}?format=full`, {
           headers: { Authorization: `Bearer ${googleToken}` }
         });
-        let data = await res.json();
+        data = await res.json();
 
         // ------------------ ZPRACOVÁNÍ THREADŮ ------------------
         // Pokud najdeme theardid, dotáhneme si celé vlákno pro zobrazení mých odeslaných odpovědí!
@@ -1123,12 +1165,10 @@ ${ccLine}
               </div>
               <span className="hidden md:block shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10 md:self-auto">{emailData?.date}</span>
             </div>
-          </div>
-          <div className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar relative">
 
-            {/* Přílohy */}
+            {/* Přílohy PŘESUNUTÉ DO HLAVIČKY (Zůstanou zakotvené při scrollování a sdílí px s odesílatelem) */}
             {emailData?.attachments?.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-4 pt-5 border-t border-white/10 overflow-y-auto custom-scrollbar pb-2 max-h-48">
+              <div className="flex flex-row md:flex-wrap gap-3 mt-4 pt-4 border-t border-white/5 pb-1 w-full overflow-x-auto md:overflow-visible overflow-y-hidden md:overflow-y-auto max-h-[90px] md:max-h-[180px] custom-scrollbar snap-x snap-mandatory">
                 {emailData.attachments.map(att => {
                   const mType = att.mimeType.toLowerCase();
                   const fName = att.filename.toLowerCase();
@@ -1136,23 +1176,23 @@ ${ccLine}
                   const isIcs = fName.endsWith('.ics') || mType === 'text/calendar';
 
                   return (
-                    <div key={att.attachmentId} className="flex shrink-0 items-center justify-between p-1 pl-1.5 rounded-xl border border-[#00f3ff]/30 bg-black/40 shadow-[0_4px_10px_rgba(0,0,0,0.3)] group hover:border-[#00f3ff]/70 transition-all relative">
+                    <div key={att.attachmentId} className="flex w-[85%] md:w-auto shrink-0 items-center justify-between p-1 pl-1.5 rounded-xl border border-[#00f3ff]/30 bg-black/40 shadow-[0_4px_10px_rgba(0,0,0,0.3)] group hover:border-[#00f3ff]/70 transition-all relative snap-start">
 
                       <button
                         onClick={() => handleActionAttachment(att, isPreviewable ? 'open' : 'download')}
                         disabled={downloadingAttachId === att.attachmentId}
-                        className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-lg hover:bg-[#00f3ff]/10 transition-colors disabled:opacity-50 text-left"
+                        className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-lg hover:bg-[#00f3ff]/10 transition-colors disabled:opacity-50 text-left"
                         title={isPreviewable ? "Otevřít zobrazení" : "Stáhnout soubor na disk"}
                       >
                         {downloadingAttachId === att.attachmentId ? (
-                          <div className="w-4 h-4 rounded-full border-[2px] border-[#00f3ff]/20 border-t-[#00f3ff] animate-spin"></div>
+                          <div className="w-4 h-4 rounded-full border-[2px] border-[#00f3ff]/20 border-t-[#00f3ff] animate-spin shrink-0"></div>
                         ) : isPreviewable ? (
-                          <Eye size={16} className="text-[#00f3ff]" />
+                          <Eye size={16} className="text-[#00f3ff] shrink-0" />
                         ) : (
-                          <Paperclip size={16} className="text-[#00f3ff]" />
+                          <Paperclip size={16} className="text-[#00f3ff] shrink-0" />
                         )}
-                        <div className="flex flex-col text-left pl-1">
-                          <span className="truncate max-w-[220px] text-[#00f3ff] text-sm font-semibold tracking-wide drop-shadow-[0_0_5px_rgba(0,243,255,0.1)]">{att.filename}</span>
+                        <div className="flex flex-col text-left pl-1 flex-1 min-w-0">
+                          <span className="truncate text-[#00f3ff] text-sm font-semibold tracking-wide drop-shadow-[0_0_5px_rgba(0,243,255,0.1)]">{att.filename}</span>
                           {isIcs && icsDetails[att.attachmentId] && (
                             <span className="text-[10px] text-[#f800ff] font-bold tracking-[0.15em] uppercase animate-pulse">📅 {icsDetails[att.attachmentId]}</span>
                           )}
@@ -1187,6 +1227,8 @@ ${ccLine}
                 })}
               </div>
             )}
+          </div>
+          <div className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar relative">
 
           <div className="shrink-0 relative w-full bg-transparent flex flex-col pt-4 pb-12">
             {emailData?.htmlBody ? (
@@ -1424,14 +1466,22 @@ ${ccLine}
                 URL.revokeObjectURL(previewBlob.url);
                 setPreviewBlob(null);
               }}
-              className="pointer-events-auto px-6 py-3 bg-[#ef4444]/10 border border-[#ef4444]/40 hover:bg-[#ef4444]/30 hover:border-[#ef4444] text-[#ef4444] rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.6)] font-black uppercase tracking-widest text-[11px]"
+              className="pointer-events-auto p-2 bg-black/40 hover:bg-[#ef4444]/20 text-gray-300 hover:text-[#ef4444] rounded-full transition-all border border-white/10 hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center backdrop-blur-md"
+              title="Zavřít zobrazení"
             >
-              Zavřít zobrazení ✖
+              <X size={24} strokeWidth={2.5} />
             </button>
           </div>
           <div className="flex-1 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,243,255,0.15)] bg-black border border-[#00f3ff]/20 flex items-center justify-center preview-checkered" onClick={(e) => e.stopPropagation()}>
             {previewBlob.type.startsWith('image/') ? (
               <img src={previewBlob.url} className="max-w-full max-h-full object-contain p-2 drop-shadow-2xl" alt="Preview" />
+            ) : previewBlob.type === 'application/pdf' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center h-full w-full bg-[#050810]/95">
+                 <FileText size={64} className="text-[#00f3ff] mb-6 drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]" />
+                 <h3 className="text-2xl font-black tracking-widest text-white mb-4 uppercase drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">Náhled na mobilu</h3>
+                 <p className="text-[#00f3ff]/70 max-w-md mb-8 text-sm leading-relaxed">Mobilní systémy (iOS/Android) z bezpečnostních a technických důvodů blokují přímé zobrazení PDF souborů uvnitř okna webových aplikací.</p>
+                 <a href={previewBlob.url} target="_blank" rel="noopener noreferrer" className="px-8 py-4 bg-[#00f3ff]/10 border-2 border-[#00f3ff]/50 hover:bg-[#00f3ff]/30 text-[#00f3ff] hover:text-white rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(0,243,255,0.2)] hover:shadow-[0_0_40px_rgba(0,243,255,0.6)] tracking-wide">OTEVŘÍT PDF SOUBOR</a>
+              </div>
             ) : (
               <iframe src={previewBlob.url} className="w-full h-full bg-white" title="Preview" />
             )}

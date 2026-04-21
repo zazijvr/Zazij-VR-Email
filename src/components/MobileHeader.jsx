@@ -20,6 +20,9 @@ export default function MobileHeader({
           setTimeout(() => searchInputRef.current?.focus(), 100);
           return true;
         }
+        // Při zavírání přes toggle (vrátí false) se vymaže query stejně jako u křížku
+        setSearchQuery('');
+        window.dispatchEvent(new CustomEvent('vr-mobile-search-query-change', { detail: '' }));
         return false;
       });
     };

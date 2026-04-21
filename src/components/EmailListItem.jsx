@@ -174,22 +174,25 @@ export default function EmailListItem({
           {selectedMailIds.has(email.id) ? <CheckSquare size={18} /> : <Square size={18} className="opacity-40 group-hover:opacity-100" />}
         </div>
 
+        {/* Odesílatel Mobilní Badge (Nyní absolutně vycentrovaný a zvětšený) */}
+        <div 
+          onClick={(e) => { e.stopPropagation(); toggleSelectEmail(email.id, e); }}
+          className="md:hidden absolute left-2 top-1/2 flex-shrink-0 w-[46px] h-[46px] transition-transform duration-500 [transform-style:preserve-3d] z-10"
+          style={{ transform: isMultiSelected ? 'translateY(-50%) rotateY(180deg)' : 'translateY(-50%) rotateY(0deg)' }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-gradient-to-br from-[#00f3ff]/20 to-[#f800ff]/20 border border-[#00f3ff]/40 shadow-[0_0_10px_rgba(0,243,255,0.2)] [backface-visibility:hidden]">
+            <span className="font-black text-xl text-[#00f3ff]">
+               {getAvatarInitial(activeFolder === 'Odeslané' ? email.to : email.from)}
+            </span>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[#00f3ff] shadow-[0_0_15px_rgba(0,243,255,0.6)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+            <Check className="text-black" size={24} strokeWidth={4} />
+          </div>
+        </div>
+
         {/* Sender / Initial */}
         <div className="flex w-full md:w-[20%] items-center mb-1 md:mb-0 shrink-0">
-          <div 
-            onClick={(e) => { e.stopPropagation(); toggleSelectEmail(email.id, e); }}
-            className={`md:hidden relative flex-shrink-0 w-10 h-10 mr-3 transition-transform duration-500 [transform-style:preserve-3d] ${isMultiSelected ? '[transform:rotateY(180deg)]' : ''}`}
-          >
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-gradient-to-br from-[#00f3ff]/20 to-[#f800ff]/20 border border-[#00f3ff]/40 shadow-[0_0_10px_rgba(0,243,255,0.2)] [backface-visibility:hidden]">
-              <span className="font-black text-lg text-[#00f3ff]">
-                 {getAvatarInitial(activeFolder === 'Odeslané' ? email.to : email.from)}
-              </span>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[#00f3ff] shadow-[0_0_15px_rgba(0,243,255,0.6)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
-              <Check className="text-black" size={20} strokeWidth={4} />
-            </div>
-          </div>
-          <div className={`font-bold truncate w-full md:pr-4 flex items-center gap-2 ${email.isUnread || isActiveRow ? 'text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-gray-200'}`}>
+          <div className={`font-bold truncate w-full md:pr-4 flex items-center gap-2 pl-[58px] md:pl-0 ${email.isUnread || isActiveRow ? 'text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-gray-200'}`}>
             <div className="flex items-center gap-1.5 shrink-0">
               {email.isUnread && (
                 <span className="w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]" title="Nepřečteno"></span>
@@ -199,14 +202,15 @@ export default function EmailListItem({
               )}
             </div>
             <span className="truncate">{activeFolder === 'Odeslané' ? email.to : email.from}</span>
-            <span className="md:hidden ml-auto flex-shrink-0 text-xs text-[#00f3ff]/60 font-normal">
+            <span className="md:hidden ml-auto flex-shrink-0 text-xs text-[#00f3ff]/60 font-normal flex items-center gap-1">
+              {email.hasAttachment && <Paperclip size={12} className={email.isUnread || isActiveRow ? 'text-[#00f3ff]' : 'text-[#00f3ff]/50'} />}
               {email.dateText && email.dateText !== 'Dnes' ? email.dateText : email.timeText}
             </span>
           </div>
         </div>
 
         {/* Subject and Snippet */}
-        <div className="flex-1 md:pr-4 flex flex-col overflow-hidden w-full pl-[52px] md:pl-0 mt-0.5 md:mt-0">
+        <div className="flex-1 md:pr-4 flex flex-col overflow-hidden w-full pl-[58px] md:pl-0 mt-0.5 md:mt-0">
           <div className="flex items-center gap-2">
             <span className={`truncate text-sm ${email.isUnread || isActiveRow ? 'text-white font-bold' : 'text-gray-300 font-semibold'}`}>
               {email.subject}

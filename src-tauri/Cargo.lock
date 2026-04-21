@@ -6193,7 +6193,7 @@ dependencies = [
 
 [[package]]
 name = "zazijvr-email"
-version = "1.0.3"
+version = "1.1.0"
 dependencies = [
  "log",
  "open",

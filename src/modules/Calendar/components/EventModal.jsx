@@ -17,30 +17,42 @@ export default function EventModal({
   userEmail
 }) {
   if (!isCreateModalOpen) return null;
-  return createPortal(
-      
-        <div className="fixed inset-0 z-[1000] flex items-start md:items-center justify-center p-0 md:p-4 bg-black/100 md:bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+    return createPortal(
+      <>
+        {/* MOBILE TOP BAR */}
+        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 h-16 bg-[#0f172a] border-b border-[#00f3ff]/20 z-[1010] shrink-0 pointer-events-auto">
+           <button
+             onClick={handleAttemptCloseCreateModal}
+             className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow -ml-2"
+           >
+             <X size={22} strokeWidth={2.5} />
+           </button>
+           <span className="text-[#00f3ff] text-xs uppercase font-bold tracking-[0.2em]">{editEventId ? "Úprava" : "Nová"}</span>
+           <div className="w-10 h-10"></div> {/* Spacer for symmetry */}
+        </div>
+
+        <div className="fixed inset-0 pt-16 md:pt-0 z-[1000] flex items-start md:items-center justify-center p-0 md:p-4 bg-black/100 md:bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
           <div 
-             className="relative bg-[#0f172a] md:border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] md:rounded-3xl w-full h-full md:h-auto max-w-5xl md:max-h-[90vh] overflow-hidden flex flex-col p-3 pt-6 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
+             className="relative bg-[#0f172a] md:border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] md:rounded-3xl w-full h-full md:h-auto max-w-5xl md:max-h-[90vh] overflow-hidden flex flex-col p-4 pt-6 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
              onMouseDown={(e) => e.stopPropagation()}
           >
             {/* Ornamenty */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-[#00f3ff]/10 blur-[60px] pointer-events-none rounded-full" />
+            <div className="hidden md:block absolute top-0 right-0 w-40 h-40 bg-[#00f3ff]/10 blur-[60px] pointer-events-none rounded-full" />
             <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#f800ff]/10 blur-[60px] pointer-events-none rounded-full" />
             
             <button 
                onClick={handleAttemptCloseCreateModal}
-               className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-20 p-2 hover:bg-white/5 rounded-full"
+               className="hidden md:flex absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-20 p-2 hover:bg-white/5 rounded-full"
             >
                <X size={20} />
             </button>
             
-            <span className="text-[#00f3ff] text-[10px] uppercase font-bold tracking-[0.2em] mb-4 flex items-center gap-2 shrink-0">
+            <span className="hidden md:flex text-[#00f3ff] text-[10px] uppercase font-bold tracking-[0.2em] mb-4 items-center gap-2 shrink-0">
               <span className="w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff] animate-pulse"></span>
               Nová synchronizace
             </span>
             
-            <h2 className="text-2xl md:text-3xl font-black text-white mb-4 md:mb-6 mt-1 md:mt-0 uppercase tracking-widest drop-shadow-md shrink-0 pr-8 md:pr-0">
+            <h2 className="hidden md:block text-2xl md:text-3xl font-black text-white mb-4 md:mb-6 mt-1 md:mt-0 uppercase tracking-widest drop-shadow-md shrink-0 pr-8 md:pr-0">
               {editEventId ? "Úprava události" : "Nová událost"}
             </h2>
 
@@ -364,7 +376,8 @@ export default function EventModal({
               </button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
+      </>,
+      document.body
   );
 }

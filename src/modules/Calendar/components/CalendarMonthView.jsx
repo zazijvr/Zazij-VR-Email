@@ -329,11 +329,11 @@ export default function CalendarMonthView({
                      <div
                          key={ev.key}
                          onClick={() => setSelectedEvent(ev.rawEvent)}
-                         className={`${colStartMap[ev.colStart]} ${colSpanMap[ev.colSpan]} ${rowStartMap[ev.rowStart]} self-start h-6 z-20 flex justify-center items-center shadow-lg border transition-colors overflow-hidden pointer-events-auto cursor-pointer hover:z-30 ${ev.edgeClasses} ${
+                         className={`${colStartMap[ev.colStart]} ${colSpanMap[ev.colSpan]} ${rowStartMap[ev.rowStart]} self-start h-6 z-20 flex justify-center items-center shadow-[0_2px_5px_rgba(0,0,0,0.3)] border transition-all overflow-hidden pointer-events-auto cursor-pointer ${
                            ev.isPast 
-                             ? 'bg-gray-800/60 border-gray-600 text-gray-400 opacity-60 grayscale-[80%] hover:brightness-110 hover:opacity-100 hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]' 
-                             : `${ev.colorClass} hover:brightness-125 hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]`
-                         }`}
+                             ? 'bg-transparent border-dashed border-white/10 text-white/30 opacity-40 grayscale line-through hover:opacity-100 hover:decoration-transparent hover:z-30 hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]' 
+                             : `${ev.colorClass} hover:z-30 hover:brightness-125 hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]`
+                         } ${ev.edgeClasses}`}
                          style={{ marginTop: `${35 + ev.slotIndex * 26}px` }}
                          title={ev.title}
                      >
