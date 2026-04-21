@@ -37,9 +37,10 @@ jobs:
           echo "VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}" >> .env
           npx tauri android init || true
           npx tauri android build --apk
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Publikace zkompilované verze do Release složky
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/')
         with:
-          name: app-universal-release.apk
-          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
-          retention-days: 7
+          tag_name: latest-build
+          files: src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+          prerelease: false

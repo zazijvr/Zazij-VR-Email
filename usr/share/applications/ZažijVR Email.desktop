@@ -1,0 +1,9 @@
+[Desktop Entry]
+Categories=
+Comment=Zazij VR Email Client
+Exec=zazijvr-email
+StartupWMClass=zazijvr-email
+Icon=zazijvr-email
+Name=ZažijVR Email
+Terminal=false
+Type=Application

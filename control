@@ -1,0 +1,9 @@
+Package: zažij-vr-email
+Version: 1.2.0
+Architecture: amd64
+Installed-Size: 25704
+Maintainer: Sefin
+Priority: optional
+Depends: libayatana-appindicator3-1, libwebkit2gtk-4.1-0, libgtk-3-0
+Description: Zazij VR Email Client
+ (none)
