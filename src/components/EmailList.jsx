@@ -51,35 +51,54 @@ const parseDate = (dateStr) => {
   };
 };
 
-const formatMessage = (m) => {
-  const headers = m.payload?.headers || [];
-  const fromFull = getHeader(headers, 'From');
-  const toFull = getHeader(headers, 'To');
-  const ccFull = getHeader(headers, 'Cc');
-  let snippet = m.snippet || '';
-  const isUnread = m.labelIds?.includes('UNREAD') || false;
-  const isStarred = m.labelIds?.includes('STARRED') || false;
-  const dateData = parseDate(getHeader(headers, 'Date'));
+const formatThreadMessage = (thread) => {
+  const messages = thread.messages || [];
+  if (messages.length === 0) return null;
+
+  const firstMsg = messages[0];
+  const firstHeaders = firstMsg.payload?.headers || [];
+
+  const repliedMessages = messages.filter((m, i) => i > 0 && (m.labelIds || []).includes('SENT'));
+  const hasCloudRepliedFlag = repliedMessages.length > 0;
+
+  const lastReceivedMsg = messages.slice().reverse().find(m => !(m.labelIds || []).includes('SENT')) || firstMsg;
+  const receivedHeaders = lastReceivedMsg.payload?.headers || [];
+
+  const latestMsg = messages[messages.length - 1];
+  const latestHeaders = latestMsg.payload?.headers || [];
+
+  const fromFull = getHeader(receivedHeaders, 'From');
+  const toFull = getHeader(receivedHeaders, 'To');
+  const ccFull = getHeader(receivedHeaders, 'Cc');
+  const dateData = parseDate(getHeader(latestHeaders, 'Date'));
 
   const fromParsed = fromFull.split('<')[0].trim() || fromFull;
   const toParsed = toFull.split('<')[0].trim() || toFull;
 
-  const threadId = m.threadId || m.id;
+  const threadId = thread.id;
+  const elementId = latestMsg.id; 
+
+  const isUnread = messages.some(m => (m.labelIds || []).includes('UNREAD'));
+  const isStarred = messages.some(m => (m.labelIds || []).includes('STARRED'));
+
+  let snippet = thread.snippet || latestMsg.snippet || '';
 
   try {
-    const replied = JSON.parse(localStorage.getItem('vr-replied-threads') || '[]');
+    const repliedLocal = JSON.parse(localStorage.getItem('vr-replied-threads') || '[]');
     const repliedLabelId = localStorage.getItem('vr-replied-label-id');
-    const hasCloudRepliedFlag = repliedLabelId && (m.labelIds || []).includes(repliedLabelId);
+    const hasCustomRepliedFlag = repliedLabelId && messages.some(m => (m.labelIds || []).includes(repliedLabelId));
 
-    if ((replied.includes(threadId) || hasCloudRepliedFlag) && !snippet.startsWith('↩️ ')) {
+    if ((repliedLocal.includes(threadId) || hasCustomRepliedFlag || hasCloudRepliedFlag) && !snippet.startsWith('↩️ ')) {
       snippet = '↩️ ' + snippet;
     }
   } catch (err) {}
 
   return {
-    id: m.id,
+    id: elementId,
     threadId: threadId,
-    labelIds: m.labelIds || [],
+    messageIds: new Set(messages.map(m => m.id)),
+    messageCount: messages.length,
+    labelIds: latestMsg.labelIds || [],
     from: fromParsed,
     to: toParsed,
     originalFrom: fromParsed,
@@ -87,19 +106,19 @@ const formatMessage = (m) => {
     originalFromRaw: fromFull,
     originalToRaw: toFull,
     originalCcRaw: ccFull,
-    subject: getHeader(headers, 'Subject') || '(Bez předmětu)',
+    subject: getHeader(firstHeaders, 'Subject') || '(Bez předmětu)',
     snippet: snippet,
     isUnread,
     isStarred,
     dateText: dateData.dateText,
     timeText: dateData.timeText,
     rawDate: dateData.time,
-    sizeText: formatSize(m.sizeEstimate),
-    rawSize: m.sizeEstimate || 0,
-    hasAttachment: hasAttachment(m.payload),
-    html: getMessageBody(m.payload).html || '',
-    text: getMessageBody(m.payload).text || '',
-    attachments: extractAttachments(m.payload)
+    sizeText: formatSize(latestMsg.sizeEstimate),
+    rawSize: latestMsg.sizeEstimate || 0,
+    hasAttachment: messages.some(m => hasAttachment(m.payload)),
+    html: '', 
+    text: '', 
+    attachments: [] 
   };
 };
 
@@ -403,7 +422,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       setDisplayedEmailLimit(10);
       try {
         const labelId = getLabelId(activeFolder);
-        let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=40`;
+        let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=40`;
         let queryParts = [];
         if (showOnlyUnread) queryParts.push('is:unread');
         if (searchQuery.trim()) queryParts.push(searchQuery.trim());
@@ -414,7 +433,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
         });
         const listData = await listRes.json();
 
-        if (!listData.messages) {
+        if (!listData.threads) {
           setEmails([]);
           fetchedFolderRef.current = activeFolder;
           setLoading(false);
@@ -423,16 +442,17 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
         setNextPageToken(listData.nextPageToken || null);
 
-        const messagesPromises = listData.messages.map(async (msg) => {
-          const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full&fields=id,threadId,labelIds,snippet,sizeEstimate,internalDate,payload(headers,mimeType,filename,body,parts(mimeType,filename,body,parts(mimeType,filename,body,parts(mimeType,filename,body))))`, {
+        const threadsPromises = listData.threads.map(async (thread) => {
+          const threadRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}?format=full`, {
             headers: { Authorization: `Bearer ${googleToken}` }
           });
-          return await msgRes.json();
+          return await threadRes.json();
         });
 
-        const fullMessages = await Promise.all(messagesPromises);
+        const fullThreads = await Promise.all(threadsPromises);
+        const validThreads = fullThreads.filter(t => t && t.messages && t.messages.length > 0);
+        const formattedEmails = validThreads.map(formatThreadMessage);
 
-        const formattedEmails = fullMessages.map(formatMessage);
         formattedEmails.forEach(e => {
           e.folderLabel = activeFolder; // Nutné pro DB Index
           globalNotifiedSet.add(e.id);
@@ -484,7 +504,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       const silentFetch = async () => {
         try {
           const labelId = getLabelId(activeFolder);
-          let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=40`;
+          let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=40`;
           let queryParts = [];
           if (showOnlyUnread) queryParts.push('is:unread');
           if (searchQuery.trim()) queryParts.push(searchQuery.trim());
@@ -492,18 +512,18 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
           const listRes = await fetch(url, { headers: { Authorization: `Bearer ${googleToken}` } });
           const listData = await listRes.json();
-          if (!listData.messages) return;
+          if (!listData.threads) return;
 
-          const messagesPromises = listData.messages.map(async (msg) => {
-            const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full&fields=id,threadId,labelIds,snippet,sizeEstimate,internalDate,payload(headers,mimeType,filename,parts(mimeType,filename,parts(mimeType,filename,parts(mimeType,filename))))`, {
+          const threadsPromises = listData.threads.map(async (thread) => {
+            const threadRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}?format=full`, {
               headers: { Authorization: `Bearer ${googleToken}` }
             });
-            return await msgRes.json();
+            return await threadRes.json();
           });
 
-          const fullMessages = await Promise.all(messagesPromises);
-
-          const formattedEmails = fullMessages.map(formatMessage);
+          const fullThreads = await Promise.all(threadsPromises);
+          const validThreads = fullThreads.filter(t => t && t.messages && t.messages.length > 0);
+          const formattedEmails = validThreads.map(formatThreadMessage);
 
           let permissionGranted = await isPermissionGranted();
           if (!permissionGranted) {
@@ -721,7 +741,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     setLoadingMore(true);
     try {
       const labelId = getLabelId(activeFolder);
-      let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=${labelId}&maxResults=40&pageToken=${nextPageToken}`;
+      let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=40&pageToken=${nextPageToken}`;
       let queryParts = [];
       if (showOnlyUnread) queryParts.push('is:unread');
       if (searchQuery.trim()) queryParts.push(searchQuery.trim());
@@ -732,23 +752,24 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       });
       const listData = await listRes.json();
 
-      if (!listData.messages) {
+      if (!listData.threads) {
         setLoadingMore(false);
         return;
       }
 
       setNextPageToken(listData.nextPageToken || null);
 
-      const messagesPromises = listData.messages.map(async (msg) => {
-        const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full&fields=id,threadId,labelIds,snippet,sizeEstimate,internalDate,payload(headers,mimeType,filename,parts(mimeType,filename,parts(mimeType,filename,parts(mimeType,filename))))`, {
+      const threadsPromises = listData.threads.map(async (thread) => {
+        const threadRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}?format=full`, {
           headers: { Authorization: `Bearer ${googleToken}` }
         });
-        return await msgRes.json();
+        return await threadRes.json();
       });
 
-      const fullMessages = await Promise.all(messagesPromises);
-
-      const formattedEmails = fullMessages.map(formatMessage);
+      const fullThreads = await Promise.all(threadsPromises);
+      const validThreads = fullThreads.filter(t => t && t.messages && t.messages.length > 0);
+      const formattedEmails = validThreads.map(formatThreadMessage);
+      
       formattedEmails.forEach(e => {
         globalNotifiedSet.add(e.id);
         globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);

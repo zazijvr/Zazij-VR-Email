@@ -3,9 +3,9 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onAction, registerActionTypes } from '@tauri-apps/plugin-notification';
 import { message } from '@tauri-apps/plugin-dialog';
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
-
-const apiFetch = (...args) => (window.__TAURI_INTERNALS__ ? tauriFetch(...args) : fetch(...args));
+// Vracíme čistý nativní fetch pro přímou podporu WebView Android vrstvy, 
+// jelikož tauriFetch(reqwest) zde občas neověří kořenové certifikáty Googlu z důvodu chybějících Android trust stores.
+const apiFetch = (...args) => fetch(...args);
 
 
 import { useAlert } from './components/AlertProvider';
