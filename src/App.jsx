@@ -86,7 +86,7 @@ function App() {
            method: "POST",
            headers: { "Content-Type": "application/x-www-form-urlencoded" },
            body: new URLSearchParams({
-             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
              client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
              refresh_token: refreshToken,
              grant_type: "refresh_token"
@@ -202,7 +202,7 @@ function App() {
            method: "POST",
            headers: { "Content-Type": "application/x-www-form-urlencoded" },
            body: new URLSearchParams({
-             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
              client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
              refresh_token: refreshToken,
              grant_type: "refresh_token"
@@ -353,9 +353,9 @@ function App() {
           onOpenUrl(deepLinkResolver);
         });
 
-        // Otevřeme prohlížeč
+        // Otevřeme prohlížeč pro mobil - ten používá GCloud iOS Client ID!
         await invoke('start_google_login', {
-          clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE,
         });
         
         console.log('Prohlížeč otevřen, čekám na deep-link callback...');
@@ -365,15 +365,15 @@ function App() {
         console.log('Kód přijat přes deep-link. Vyměňuji za tokeny...');
 
         // Token exchange – redirect_uri musí přesně odpovídat tomu co je v Google Console!
+        // U iOS / Mobile klientů se neposílá client_secret (neexistuje, vyhodilo by to chybu)
         const res = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE,
             code: authCode,
             grant_type: 'authorization_code',
-            redirect_uri: 'cz.zazijvr.email://oauth/callback'
+            redirect_uri: 'cz.zazijvr.email:/oauth2redirect'
           }).toString()
         });
         
@@ -396,7 +396,7 @@ function App() {
       } else {
         // === DESKTOP FLOW: TCP localhost server (beze změny) ===
         const authCode = await invoke('start_google_login', {
-          clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
         });
         console.log('Kód přijat. Měním kód za token přístupů...');
         
@@ -404,7 +404,7 @@ function App() {
            method: "POST",
            headers: { "Content-Type": "application/x-www-form-urlencoded" },
            body: new URLSearchParams({
-             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
              client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
              code: authCode,
              grant_type: "authorization_code",

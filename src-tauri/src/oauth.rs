@@ -14,7 +14,7 @@ pub async fn start_google_login(
     let url = format!(
         "https://accounts.google.com/o/oauth2/v2/auth\
          ?client_id={}\
-         &redirect_uri=cz.zazijvr.email://oauth/callback\
+         &redirect_uri=cz.zazijvr.email:/oauth2redirect\
          &response_type=code\
          &scope=https://mail.google.com/%20https://www.googleapis.com/auth/calendar\
          &access_type=offline\
