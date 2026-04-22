@@ -61,7 +61,7 @@ export default function MobileHeader({
   }, [isDropdownOpen]);
 
   return (
-    <div className="md:hidden flex items-center justify-between px-4 h-16 bg-black/20 border-b border-[#00f3ff]/20 z-40 relative">
+    <div className="md:hidden flex items-center justify-between px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top,2rem))] bg-black/20 border-b border-[#00f3ff]/20 z-40 relative">
       <div className="absolute right-0 top-0 h-[100px] w-[250px] pointer-events-none opacity-60 z-0 overflow-hidden mix-blend-screen">
          <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute right-[0px] top-[0px] scale-[0.6] transform origin-top-right">
            <defs>

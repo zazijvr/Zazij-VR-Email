@@ -828,7 +828,7 @@ ${ccLine}
     <>
       {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER (PORTALLED) --- */}
       {createPortal(
-        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 h-16 bg-transparent border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto">
+        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top,2rem))] bg-[#0f172a]/95 backdrop-blur-md border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto shadow-[0_4px_20px_rgba(0,0,0,0.6)]">
           {onMobileBack && (
             <button
               onClick={onMobileBack}
@@ -863,7 +863,7 @@ ${ccLine}
       {/* Hlavní Tělo Detailu */}
       <div
         key={emailData?.messageId || "loading"}
-        className={`flex-1 flex flex-col pt-16 md:pt-0 bg-[#0f172a] overflow-hidden fixed inset-0 z-50 md:relative md:inset-auto md:z-auto pointer-events-auto shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none ${slideAnimationClass}`}
+        className={`flex-1 flex flex-col pt-[calc(3.5rem+env(safe-area-inset-top,2rem))] md:pt-0 bg-[#0f172a] overflow-hidden fixed inset-0 z-50 md:relative md:inset-auto md:z-auto pointer-events-auto shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none ${slideAnimationClass}`}
         onDoubleClick={() => {
           if (emailData?.isDraft) handleResumeDraft(emailData);
         }}

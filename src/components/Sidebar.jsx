@@ -137,7 +137,7 @@ export default function Sidebar({
       }
     } catch(e) {}
   };  return (
-    <div className="min-w-[16rem] w-max max-w-[26rem] bg-[#02050e] md:bg-black/40 backdrop-blur-3xl md:backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col py-4 md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
+    <div className="min-w-[16rem] w-max max-w-[26rem] bg-[#02050e] md:bg-black/40 backdrop-blur-3xl md:backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col pb-4 pt-[calc(1rem+env(safe-area-inset-top,2rem))] md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
       <div className="flex justify-center w-full px-4 mb-4 md:mb-8">
         <img
           src="/cropped-logo-neon-pruhledna-150x50.png"
