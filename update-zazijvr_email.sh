@@ -11,15 +11,38 @@ echo "------------------------------------------------"
 echo "🔒 Přihlašuji se do privátního repozitáře..."
 TOKEN="ghp_eAK7"$"tFqxaCjFd8qNzOoPi4Ska2ZAGr0ZOpaT"
 
-ASSET_URL=$(curl -sL -H "Authorization: Bearer $TOKEN" https://api.github.com/repos/zazijvr/Zazij-VR-Email/releases/tags/latest-build | grep -wo "https://api.github.com/repos/zazijvr/Zazij-VR-Email/releases/assets/[0-9]*" | head -n 1)
+# Získáme ID konkrétně .deb souboru (ne APK nebo .exe)
+ASSET_ID=$(curl -sL -H "Authorization: Bearer $TOKEN" \
+    "https://api.github.com/repos/zazijvr/Zazij-VR-Email/releases/tags/latest-build" \
+    | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for asset in data.get('assets', []):
+    if asset['name'].endswith('.deb'):
+        print(asset['id'])
+        break
+")
 
-if [ -z "$ASSET_URL" ]; then
-    echo "❌ Chyba: Nemohu najít balíček v privátním repozitáři. Je token platný a máte nejnovější verzi vydanou?"
+if [ -z "$ASSET_ID" ]; then
+    echo "❌ Chyba: Nemohu najít .deb balíček v privátním repozitáři. Je token platný a byl dokončen Linux build?"
     exit 1
 fi
 
+ASSET_URL="https://api.github.com/repos/zazijvr/Zazij-VR-Email/releases/assets/${ASSET_ID}"
+
 echo "📥 Stahuji plně sestavenou a nakonfigurovanou aplikaci ze serveru..."
-curl -# -L -H "Authorization: Bearer $TOKEN" -H "Accept: application/octet-stream" -o zazijvr-email.deb "$ASSET_URL"
+curl -# -L \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Accept: application/octet-stream" \
+    -o zazijvr-email.deb \
+    "$ASSET_URL"
+
+# Ověřit že je to opravdu deb soubor
+if ! file zazijvr-email.deb | grep -q "Debian binary package"; then
+    echo "❌ Stažený soubor není platný .deb balíček. Zkuste to znovu."
+    rm -f zazijvr-email.deb
+    exit 1
+fi
 
 # 2. Kontrola debtapu
 if ! command -v debtap &> /dev/null; then
@@ -33,7 +56,7 @@ rm -f *.zst
 debtap -q zazijvr-email.deb
 
 # 4. Samotná instalace
-ZST_FILE=$(ls *.pkg.tar.zst | head -n 1)
+ZST_FILE=$(ls *.pkg.tar.zst 2>/dev/null | head -n 1)
 
 if [ -z "$ZST_FILE" ]; then
     echo "❌ Chyba: Převod balíčku přes debtap selhal."
