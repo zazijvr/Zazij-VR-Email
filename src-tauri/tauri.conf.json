@@ -10,9 +10,6 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
-    "deepLink": {
-      "schemes": ["cz.zazijvr.email"]
-    },
     "windows": [
       {
         "title": "ZAŽIJ VR E-mail & Kalendář",
