@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ZažijVR Email",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "identifier": "cz.zazijvr.email",
   "build": {
     "frontendDist": "../dist",
@@ -38,5 +38,15 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [
+        {
+          "scheme": "cz.zazijvr.email",
+          "host": "oauth"
+        }
+      ]
+    }
   }
 }

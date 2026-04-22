@@ -3,6 +3,35 @@ use tauri_plugin_shell::ShellExt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
+/// Vrátí OAuth URL pro mobilní platformy (bez TCP serveru).
+/// Frontend si sám vyčká na deep-link callback a provede token exchange.
+#[cfg(mobile)]
+#[command]
+pub async fn start_google_login(
+    app: AppHandle,
+    client_id: String,
+) -> Result<String, String> {
+    let url = format!(
+        "https://accounts.google.com/o/oauth2/v2/auth\
+         ?client_id={}\
+         &redirect_uri=cz.zazijvr.email://oauth/callback\
+         &response_type=code\
+         &scope=https://mail.google.com/%20https://www.googleapis.com/auth/calendar\
+         &access_type=offline\
+         &prompt=consent",
+        client_id
+    );
+
+    // Otevře Chrome Custom Tab (Android) nebo Safari View Controller (iOS)
+    app.shell().open(url, None).map_err(|e| e.to_string())?;
+
+    // Na Androidu dál čeká deep-link plugin – vrátíme prázdný řetězec
+    // jako signál pro frontend, že flow pokračuje přes deep-link callback.
+    Ok("AWAITING_DEEP_LINK".to_string())
+}
+
+/// Desktop flow – beze změny. Lokální TCP server zachytí redirect.
+#[cfg(desktop)]
 #[command]
 pub async fn start_google_login(
     app: AppHandle,
@@ -17,11 +46,12 @@ pub async fn start_google_login(
         client_id
     );
 
-    #[cfg(desktop)]
+    #[cfg(target_os = "linux")]
     open::that(&url).map_err(|e| e.to_string())?;
-
-    #[cfg(mobile)]
-    app.shell().open(url.clone(), None).map_err(|e| e.to_string())?;
+    #[cfg(target_os = "windows")]
+    open::that(&url).map_err(|e| e.to_string())?;
+    #[cfg(target_os = "macos")]
+    open::that(&url).map_err(|e| e.to_string())?;
 
     let (mut stream, _) = listener.accept().await.map_err(|e| e.to_string())?;
 
@@ -45,7 +75,7 @@ pub async fn start_google_login(
         return Err("Authorization code not found in response".into());
     }
 
-    let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<html><head><style>body { background: #0f172a; color: #00f3ff; font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; } h2 { text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }</style></head><body><h2>[ SYSTÉM PROPOJEN ]</h2><p>Rekalibrace tokenu byla úspěšně dokončena. <br>Vracím zpět do aplikace...</p><script>setTimeout(() => { window.location.href = 'intent://#Intent;scheme=cz.zazijvr.email;package=cz.zazijvr.email;end'; }, 500);</script></body></html>";
+    let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<html><head><style>body { background: #0f172a; color: #00f3ff; font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; } h2 { text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }</style></head><body><h2>[ SYSTÉM PROPOJEN ]</h2><p>Rekalibrace tokenu byla úspěšně dokončena. <br>Vracím zpět do aplikace...</p></body></html>";
     let _ = stream.write_all(response.as_bytes()).await;
 
     Ok(auth_code)

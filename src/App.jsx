@@ -312,44 +312,129 @@ function App() {
         showAlert('Google zablokuje pokus o přihlášení z neověřené lokální sítě (Error 400: redirect_uri_mismatch).\n\nPro vývoj mobilního UI:\n1. Otevři appku klasicky na Linuxu (Tauri).\n2. Zmáčkni F12 (Konzole).\n3. Po zobrazení mailů zkopíruj vygenerovaný testovací DEV URL odkaz a otevři si ho v mobilním prohlížeči.', 'Jste ve webovém prohlížeči', 'info');
         return;
       }
-      console.log('Navazuji zabezpečené oAuth spojení přes Rust backend...');
-      const authCode = await invoke('start_google_login', {
-        clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-      });
-      console.log('Kód přijat. Měním kód za token přístupů v prohlížeči...');
-      
-      const res = await apiFetch("https://oauth2.googleapis.com/token", {
-         method: "POST",
-         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-         body: new URLSearchParams({
-           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-           client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-           code: authCode,
-           grant_type: "authorization_code",
-           redirect_uri: "http://localhost:3456/callback"
-         }).toString()
-      });
-      const data = await res.json();
-      const accessToken = data.access_token;
-      const refreshToken = data.refresh_token;
 
-      if (!accessToken) throw new Error("Chyba při parsování Google tokenu.");
+      console.log('Navazuji zabezpečené oAuth spojení...');
 
-      const profileRes = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const profileData = await profileRes.json();
-      const userEmail = profileData.emailAddress;
+      // Detekujeme Android/iOS pomocí platformy – Tauri na mobile nemá tray-icon ani window events
+      const isMobile = !('__TAURI_INTERNALS__' in window) || 
+                       navigator.userAgent.includes('Android') || 
+                       navigator.userAgent.includes('iPhone');
 
-      await invoke('save_google_account', { email: userEmail, refreshToken: refreshToken || "" });
+      if (isMobile) {
+        // === ANDROID FLOW: Deep Link ===
+        // 1. Rust backend otevře Chrome Custom Tab a vrátí "AWAITING_DEEP_LINK"
+        // 2. Čekáme na deep-link callback přes Tauri plugin
+        const { onOpenUrl } = await import('@tauri-apps/plugin-deep-link');
+        
+        let deepLinkResolver = null;
+        
+        // Nastavíme listener PŘED otevřením prohlížeče
+        const deepLinkPromise = new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('Přihlášení vypršelo (60s). Zkuste znovu.')), 60000);
+          
+          deepLinkResolver = async (urls) => {
+            clearTimeout(timeout);
+            const callbackUrl = Array.isArray(urls) ? urls[0] : urls;
+            console.log('[OAuth] Deep link přijat:', callbackUrl);
+            
+            try {
+              const url = new URL(callbackUrl);
+              const code = url.searchParams.get('code');
+              const error = url.searchParams.get('error');
+              
+              if (error) reject(new Error(`Google odmítl přihlášení: ${error}`));
+              else if (code) resolve(code);
+              else reject(new Error('V callback URL nebyl nalezen kód.'));
+            } catch (e) {
+              reject(new Error('Chybná callback URL: ' + callbackUrl));
+            }
+          };
+          
+          onOpenUrl(deepLinkResolver);
+        });
 
-      console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${accessToken}`);
-      setGoogleToken(accessToken);
+        // Otevřeme prohlížeč
+        await invoke('start_google_login', {
+          clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        });
+        
+        console.log('Prohlížeč otevřen, čekám na deep-link callback...');
+
+        // Čekáme na callback
+        const authCode = await deepLinkPromise;
+        console.log('Kód přijat přes deep-link. Vyměňuji za tokeny...');
+
+        // Token exchange – redirect_uri musí přesně odpovídat tomu co je v Google Console!
+        const res = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+            code: authCode,
+            grant_type: 'authorization_code',
+            redirect_uri: 'cz.zazijvr.email://oauth/callback'
+          }).toString()
+        });
+        
+        const data = await res.json();
+        if (!data.access_token) throw new Error('Token exchange selhal: ' + JSON.stringify(data));
+        
+        const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+          headers: { Authorization: `Bearer ${data.access_token}` }
+        });
+        const profileData = await profileRes.json();
+        
+        await invoke('save_google_account', { 
+          email: profileData.emailAddress || 'unknown', 
+          refreshToken: data.refresh_token || '' 
+        });
+        
+        setGoogleToken(data.access_token);
+        if (profileData.emailAddress) setUserInfo({ email: profileData.emailAddress });
+
+      } else {
+        // === DESKTOP FLOW: TCP localhost server (beze změny) ===
+        const authCode = await invoke('start_google_login', {
+          clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        });
+        console.log('Kód přijat. Měním kód za token přístupů...');
+        
+        const res = await apiFetch("https://oauth2.googleapis.com/token", {
+           method: "POST",
+           headers: { "Content-Type": "application/x-www-form-urlencoded" },
+           body: new URLSearchParams({
+             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+             client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+             code: authCode,
+             grant_type: "authorization_code",
+             redirect_uri: "http://localhost:3456/callback"
+           }).toString()
+        });
+        const data = await res.json();
+        const accessToken = data.access_token;
+        const refreshToken = data.refresh_token;
+
+        if (!accessToken) throw new Error("Chyba při parsování Google tokenu.");
+
+        const profileRes = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const profileData = await profileRes.json();
+        const userEmail = profileData.emailAddress;
+
+        await invoke('save_google_account', { email: userEmail, refreshToken: refreshToken || "" });
+
+        console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${accessToken}`);
+        setGoogleToken(accessToken);
+      }
+
     } catch (error) {
       console.error('Kriticky selhalo spojení s backendem/Google API:', error);
       showAlert('Systémová chyba při startu přihlášení:\n\n' + String(error) + '\n\nZkuste zmáčknout F12 a podívat se do konzole.', 'Chyba přihlášení', 'error');
     }
   };
+
 
   const [customLabels, setCustomLabels] = useState([]);
 

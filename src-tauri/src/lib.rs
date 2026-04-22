@@ -10,6 +10,11 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build());
 
+    #[cfg(mobile)]
+    {
+        builder = builder.plugin(tauri_plugin_deep_link::init());
+    }
+
     #[cfg(desktop)]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
