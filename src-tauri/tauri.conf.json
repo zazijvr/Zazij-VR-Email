@@ -43,8 +43,7 @@
     "deep-link": {
       "mobile": [
         {
-          "scheme": ["cz.zazijvr.email"],
-          "host": "oauth2redirect"
+          "scheme": ["cz.zazijvr.email"]
         }
       ]
     },
