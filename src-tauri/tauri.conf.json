@@ -44,7 +44,7 @@
       "mobile": [
         {
           "scheme": ["cz.zazijvr.email"],
-          "host": ["oauth"]
+          "host": "oauth"
         }
       ]
     },
