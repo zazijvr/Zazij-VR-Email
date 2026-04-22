@@ -90,7 +90,7 @@ function App() {
              client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
              refresh_token: refreshToken,
              grant_type: "refresh_token"
-           })
+           }).toString()
         });
         const data = await res.json();
         if (data.access_token) {
@@ -206,7 +206,7 @@ function App() {
              client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
              refresh_token: refreshToken,
              grant_type: "refresh_token"
-           })
+           }).toString()
         });
         const data = await res.json();
         if (data.access_token) {
@@ -327,7 +327,7 @@ function App() {
            code: authCode,
            grant_type: "authorization_code",
            redirect_uri: "http://localhost:3456/callback"
-         })
+         }).toString()
       });
       const data = await res.json();
       const accessToken = data.access_token;

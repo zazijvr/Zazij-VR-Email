@@ -45,7 +45,7 @@ pub async fn start_google_login(
         return Err("Authorization code not found in response".into());
     }
 
-    let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<html><head><style>body { background: #0f172a; color: #00f3ff; font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; } h2 { text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }</style></head><body><h2>[ SYSTÉM PROPOJEN ]</h2><p>Rekalibrace tokenu byla úspěšně dokončena. <br>Tuto záložku můžeš zavřít a vrátit se do aplikace.</p></body></html>";
+    let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<html><head><style>body { background: #0f172a; color: #00f3ff; font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; } h2 { text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }</style></head><body><h2>[ SYSTÉM PROPOJEN ]</h2><p>Rekalibrace tokenu byla úspěšně dokončena. <br>Vracím zpět do aplikace...</p><script>setTimeout(() => { window.location.href = 'intent://#Intent;scheme=cz.zazijvr.email;package=cz.zazijvr.email;end'; }, 500);</script></body></html>";
     let _ = stream.write_all(response.as_bytes()).await;
 
     Ok(auth_code)
