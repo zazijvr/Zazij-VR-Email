@@ -33,7 +33,8 @@ jobs:
 
       - name: Generování Tajného .env souboru
         run: |
-          echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > .env
+          echo "VITE_GOOGLE_CLIENT_ID_DESKTOP=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > .env
+          echo "VITE_GOOGLE_CLIENT_ID_MOBILE=998474655983-jq4t5k74j14rav8jhehlrmj7qa0fr07v.apps.googleusercontent.com" >> .env
           echo "VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}" >> .env
 
       - name: Stažení NPM balíčků
@@ -76,7 +77,8 @@ jobs:
       - name: Generování Tajného .env souboru
         shell: bash
         run: |
-          echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > .env
+          echo "VITE_GOOGLE_CLIENT_ID_DESKTOP=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > .env
+          echo "VITE_GOOGLE_CLIENT_ID_MOBILE=998474655983-jq4t5k74j14rav8jhehlrmj7qa0fr07v.apps.googleusercontent.com" >> .env
           echo "VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}" >> .env
 
       - name: Stažení NPM balíčků
