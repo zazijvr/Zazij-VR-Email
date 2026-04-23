@@ -20,7 +20,7 @@ export default function EventModal({
     return createPortal(
       <>
         {/* MOBILE TOP BAR */}
-        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 h-16 bg-[#0f172a] border-b border-[#00f3ff]/20 z-[1010] shrink-0 pointer-events-auto">
+        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top,2rem))] bg-[#0f172a] border-b border-[#00f3ff]/20 z-[1010] shrink-0 pointer-events-auto">
            <button
              onClick={handleAttemptCloseCreateModal}
              className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow -ml-2"
@@ -31,7 +31,7 @@ export default function EventModal({
            <div className="w-10 h-10"></div> {/* Spacer for symmetry */}
         </div>
 
-        <div className="fixed inset-0 pt-16 md:pt-0 z-[1000] flex items-start md:items-center justify-center p-0 md:p-4 bg-black/100 md:bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+        <div className="fixed inset-0 pt-[calc(4rem+env(safe-area-inset-top,2rem))] md:pt-0 z-[1000] flex items-start md:items-center justify-center p-0 md:p-4 bg-black/100 md:bg-black/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
           <div 
              className="relative bg-[#0f172a] md:border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] md:rounded-3xl w-full h-full md:h-auto max-w-5xl md:max-h-[90vh] overflow-hidden flex flex-col p-4 pt-6 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
              onMouseDown={(e) => e.stopPropagation()}

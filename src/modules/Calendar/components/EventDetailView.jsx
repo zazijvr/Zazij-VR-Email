@@ -16,7 +16,7 @@ export default function EventDetailView({
     <>
       {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER (PORTALLED) --- */}
       {createPortal(
-        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 h-16 bg-transparent border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto">
+        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top,2rem))] bg-transparent border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto">
            <button
              onClick={() => setSelectedEvent(null)}
              className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow -ml-2"
@@ -31,7 +31,7 @@ export default function EventDetailView({
         document.body
       )}
 
-      <div className="fixed pt-16 md:pt-0 inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4 animate-in slide-in-from-right duration-300 md:animate-in md:fade-in md:zoom-in md:slide-in-from-left-0 bg-[#0f172a] md:bg-transparent shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none pointer-events-auto">
+      <div className="fixed pt-[calc(4rem+env(safe-area-inset-top,2rem))] md:pt-0 inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4 animate-in slide-in-from-right duration-300 md:animate-in md:fade-in md:zoom-in md:slide-in-from-left-0 bg-[#0f172a] md:bg-transparent shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none pointer-events-auto">
         <div className="hidden md:block absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)}></div>
         
         <div className="relative bg-[#0f172a] md:border border-[#00f3ff]/40 md:shadow-[0_0_50px_rgba(0,243,255,0.2)] md:rounded-3xl rounded-none w-full h-full md:h-auto max-w-3xl md:max-h-[90vh] flex flex-col p-0 md:p-8 shrink-0 overflow-hidden md:z-10 box-border pointer-events-auto">

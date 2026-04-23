@@ -462,7 +462,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   };
 
   return (
-    <div ref={modalRef} className="fixed inset-0 bg-black/85 z-[99999] flex items-center justify-center p-0 sm:p-6 lg:p-10">
+    <div ref={modalRef} className="fixed inset-0 bg-black/85 z-[99999] flex items-center justify-center p-0 pt-[env(safe-area-inset-top)] sm:p-6 lg:p-10">
       <div className="bg-[#02040a] sm:border-[2px] border-[#00f3ff]/40 sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
         
         {/* Dekorační linky nahoře */}

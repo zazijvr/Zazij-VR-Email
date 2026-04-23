@@ -198,15 +198,25 @@ function App() {
       console.log("Hledám uložené Google pověření a případně potají žádám o čerstvy Token...");
       const refreshToken = await invoke('get_active_refresh_token');
       if (refreshToken) {
+        const isMobile = !('__TAURI_INTERNALS__' in window) || 
+                         navigator.userAgent.includes('Android') || 
+                         navigator.userAgent.includes('iPhone');
+
+        const requestBody = isMobile ? {
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE,
+            refresh_token: refreshToken,
+            grant_type: "refresh_token"
+        } : {
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
+            client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+            refresh_token: refreshToken,
+            grant_type: "refresh_token"
+        };
+
         const res = await apiFetch("https://oauth2.googleapis.com/token", {
            method: "POST",
            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-           body: new URLSearchParams({
-             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
-             client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-             refresh_token: refreshToken,
-             grant_type: "refresh_token"
-           }).toString()
+           body: new URLSearchParams(requestBody).toString()
         });
         const data = await res.json();
         if (data.access_token) {
