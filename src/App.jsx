@@ -16,7 +16,7 @@ import EmailApp from './modules/Email/EmailApp';
 import CalendarApp from './modules/Calendar/CalendarApp';
 
 function App() {
-  const { showAlert } = useAlert();
+  const { showAlert, showConfirm } = useAlert();
   const [activeFolder, setActiveFolder] = useState('Doručené');
   const [activeCalendarView, setActiveCalendarView] = useState('Co mě čeká?');
   const [appMode, setAppMode] = useState('email');
@@ -78,7 +78,18 @@ function App() {
     loadSavedAccounts();
   }, [loadSavedAccounts, googleToken]);
 
+  /** Uložené přihlášení k účtu už u Googlu neplatí – nabídne nové přihlášení */
+  const offerRelogin = (email) => {
+    showConfirm(
+      `Přihlášení k účtu ${email} už neplatí – Google ho zrušil nebo vypršelo.\n\nPřihlaste se k tomuto účtu znovu (v okně Googlu vyberte ${email}).`,
+      'Účet je potřeba znovu přihlásit',
+      () => loginWithGoogle(),
+      { type: 'warning', confirmText: 'Přihlásit znovu', cancelText: 'Zavřít' }
+    );
+  };
+
   const switchGoogleAccount = async (email) => {
+    const previous = userInfo?.email;
     try {
       const refreshToken = await invoke('switch_google_account', { email });
       if (refreshToken) {
@@ -94,12 +105,27 @@ function App() {
         });
         const data = await res.json();
         if (data.access_token) {
+           // Jiný účet – seznam si nesmí vzít poštu z mezipaměti předchozího účtu
+           setUserInfo(null);
+           window.dispatchEvent(new Event('vr-account-switched'));
            setGoogleToken(data.access_token);
            setIsSettingsOpen(false); // zavre po prepnuti modal
+           return;
         }
+        throw new Error(data.error || 'token_error');
       }
+      throw new Error('missing_refresh_token');
     } catch (err) {
       console.error('Chyba prepnuti uctu:', err);
+      // Aktivní zůstane účet, na kterém uživatel byl
+      if (previous && previous !== email) {
+        await invoke('switch_google_account', { email: previous }).catch(() => {});
+      }
+      if (String(err?.message || err).includes('invalid_grant') || String(err?.message || err).includes('missing_refresh_token')) {
+        offerRelogin(email);
+      } else {
+        showAlert(`Na účet ${email} se nepodařilo přepnout.\n\n${String(err?.message || err)}`, 'Chyba přepnutí účtu', 'error');
+      }
     }
   };
 
@@ -218,6 +244,9 @@ function App() {
           console.log("Automatické přihlášení na pozadí proběhlo úspěšně!");
           console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${data.access_token}`);
           setGoogleToken(data.access_token);
+        } else if (data.error === 'invalid_grant') {
+          const email = await invoke('get_active_account').catch(() => '');
+          if (email) offerRelogin(email);
         }
       }
     } catch (err) {
@@ -431,6 +460,8 @@ function App() {
         await invoke('save_google_account', { email: userEmail, refreshToken: refreshToken || "" });
 
         console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${accessToken}`);
+        setUserInfo(null);
+        window.dispatchEvent(new Event('vr-account-switched'));
         setGoogleToken(accessToken);
       }
 

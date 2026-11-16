@@ -81,22 +81,109 @@ pub async fn start_google_login(
     Ok(auth_code)
 }
 
+// ───────────── Úložiště refresh tokenů ─────────────
+// Ve vault.bin (tauri-plugin-store) je jen seznam účtů a aktivní účet.
+// Samotné refresh tokeny jsou na desktopu v systémové klíčence; ve vault.bin je u účtu prázdný řetězec.
+// Když klíčenka není k dispozici, token zůstane ve vault.bin a soubor je čitelný jen pro uživatele.
+
+const STORE_FILE: &str = "vault.bin";
+#[cfg(desktop)]
+const KEYRING_SERVICE: &str = "cz.zazijvr.email";
+
+#[cfg(desktop)]
+fn keyring_set(email: &str, token: &str) -> bool {
+    match keyring::Entry::new(KEYRING_SERVICE, email).and_then(|e| e.set_password(token)) {
+        Ok(()) => true,
+        Err(e) => {
+            log::warn!("Klíčenka není dostupná, token zůstane v souboru: {e}");
+            false
+        }
+    }
+}
+
+#[cfg(desktop)]
+fn keyring_get(email: &str) -> Option<String> {
+    keyring::Entry::new(KEYRING_SERVICE, email)
+        .and_then(|e| e.get_password())
+        .ok()
+        .filter(|t| !t.is_empty())
+}
+
+#[cfg(desktop)]
+fn keyring_delete(email: &str) {
+    if let Ok(e) = keyring::Entry::new(KEYRING_SERVICE, email) {
+        let _ = e.delete_credential();
+    }
+}
+
+#[cfg(mobile)]
+fn keyring_set(_email: &str, _token: &str) -> bool { false }
+#[cfg(mobile)]
+fn keyring_get(_email: &str) -> Option<String> { None }
+#[cfg(mobile)]
+fn keyring_delete(_email: &str) {}
+
+/// vault.bin jen pro vlastníka (rw-------)
+fn restrict_store_file(app: &AppHandle) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        use tauri::Manager;
+        if let Ok(dir) = app.path().app_data_dir() {
+            let _ = std::fs::set_permissions(dir.join(STORE_FILE), std::fs::Permissions::from_mode(0o600));
+        }
+    }
+    #[cfg(not(unix))]
+    let _ = app;
+}
+
+/// Uloží token: do klíčenky, a jen když to nejde, do souboru
+fn store_token(accounts: &mut serde_json::Map<String, serde_json::Value>, email: &str, token: &str) {
+    let in_file = if keyring_set(email, token) { "" } else { token };
+    accounts.insert(email.to_string(), serde_json::json!(in_file));
+}
+
+/// Přesune tokeny, které jsou ještě v souboru (starší verze aplikace), do klíčenky
+fn migrate_tokens(app: &AppHandle) {
+    use tauri_plugin_store::StoreExt;
+    let Ok(store) = app.store(STORE_FILE) else { return };
+    let Some(serde_json::Value::Object(mut accounts)) = store.get("google_accounts") else { return };
+    let mut changed = false;
+    for (email, val) in accounts.iter_mut() {
+        if let Some(token) = val.as_str().filter(|t| !t.is_empty()).map(str::to_string) {
+            if keyring_set(email, &token) {
+                *val = serde_json::json!("");
+                changed = true;
+            }
+        }
+    }
+    if changed {
+        store.set("google_accounts", serde_json::Value::Object(accounts));
+        let _ = store.save();
+    }
+    restrict_store_file(app);
+}
+
+fn token_for(accounts: &serde_json::Value, email: &str) -> Option<String> {
+    keyring_get(email).or_else(|| {
+        accounts.get(email).and_then(|v| v.as_str()).filter(|t| !t.is_empty()).map(str::to_string)
+    })
+}
+
 #[command]
 pub async fn save_google_account(app: AppHandle, email: String, refresh_token: String) -> Result<(), String> {
     use tauri_plugin_store::StoreExt;
     if !refresh_token.is_empty() && email != "unknown" {
-        if let Ok(store) = app.store("vault.bin") {
-            let mut accounts = store.get("google_accounts").unwrap_or(serde_json::json!({}));
-            if let Some(obj) = accounts.as_object_mut() {
-                obj.insert(email.clone(), serde_json::json!(refresh_token));
-            } else {
-                let mut new_map = serde_json::Map::new();
-                new_map.insert(email.clone(), serde_json::json!(refresh_token));
-                accounts = serde_json::Value::Object(new_map);
-            }
-            store.set("google_accounts", accounts);
+        if let Ok(store) = app.store(STORE_FILE) {
+            let mut accounts = match store.get("google_accounts") {
+                Some(serde_json::Value::Object(map)) => map,
+                _ => serde_json::Map::new(),
+            };
+            store_token(&mut accounts, &email, &refresh_token);
+            store.set("google_accounts", serde_json::Value::Object(accounts));
             store.set("active_google_account", serde_json::json!(email));
             let _ = store.save();
+            restrict_store_file(&app);
         }
     }
     Ok(())
@@ -105,8 +192,9 @@ pub async fn save_google_account(app: AppHandle, email: String, refresh_token: S
 #[command]
 pub async fn get_active_refresh_token(app: AppHandle) -> Result<String, String> {
     use tauri_plugin_store::StoreExt;
-    let store = app.store("vault.bin").map_err(|e| e.to_string())?;
-    
+    migrate_tokens(&app);
+    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
+
     let active_email = match store.get("active_google_account") {
         Some(val) => val.as_str().unwrap_or("").to_string(),
         None => return Err("No active account selected".into()),
@@ -117,37 +205,24 @@ pub async fn get_active_refresh_token(app: AppHandle) -> Result<String, String> 
     }
 
     let accounts = store.get("google_accounts").unwrap_or(serde_json::json!({}));
-    let refresh_token = match accounts.get(&active_email) {
-        Some(val) => val.as_str().unwrap_or("").to_string(),
-        None => return Err("No refresh token for active account".into()),
-    };
-
-    if refresh_token.is_empty() {
-        return Err("Token is empty".into());
+    if accounts.get(&active_email).is_none() {
+        return Err("No refresh token for active account".into());
     }
-
-    Ok(refresh_token)
+    token_for(&accounts, &active_email).ok_or_else(|| "Token is empty".into())
 }
 
 #[command]
 pub async fn get_saved_accounts(app: tauri::AppHandle) -> Result<Vec<String>, String> {
     use tauri_plugin_store::StoreExt;
-    let store = app.store("vault.bin").map_err(|e| e.to_string())?;
+    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
     let accounts = store.get("google_accounts").unwrap_or(serde_json::json!({}));
-    
-    let mut emails = Vec::new();
-    if let Some(obj) = accounts.as_object() {
-        for key in obj.keys() {
-            emails.push(key.clone());
-        }
-    }
-    Ok(emails)
+    Ok(accounts.as_object().map(|o| o.keys().cloned().collect()).unwrap_or_default())
 }
 
 #[command]
 pub async fn get_active_account(app: tauri::AppHandle) -> Result<String, String> {
     use tauri_plugin_store::StoreExt;
-    let store = app.store("vault.bin").map_err(|e| e.to_string())?;
+    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
     match store.get("active_google_account") {
         Some(val) => Ok(val.as_str().unwrap_or("").to_string()),
         None => Ok("".to_string()),
@@ -156,17 +231,17 @@ pub async fn get_active_account(app: tauri::AppHandle) -> Result<String, String>
 
 #[command]
 pub async fn switch_google_account(
-    app: tauri::AppHandle, 
+    app: tauri::AppHandle,
     email: String
 ) -> Result<String, String> {
     use tauri_plugin_store::StoreExt;
-    let store = app.store("vault.bin").map_err(|e| e.to_string())?;
-    
+    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
+
     let accounts = store.get("google_accounts").unwrap_or(serde_json::json!({}));
     if accounts.get(&email).is_none() {
         return Err("Account not found".into());
     }
-    
+
     store.set("active_google_account", serde_json::json!(email));
     let _ = store.save();
 
@@ -176,20 +251,21 @@ pub async fn switch_google_account(
 #[command]
 pub async fn logout_google_account(app: tauri::AppHandle, email: String) -> Result<String, String> {
     use tauri_plugin_store::StoreExt;
-    let store = app.store("vault.bin").map_err(|e| e.to_string())?;
-    
+    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
+
     let mut accounts = store.get("google_accounts").unwrap_or(serde_json::json!({}));
     if let Some(obj) = accounts.as_object_mut() {
         obj.remove(&email);
     }
     store.set("google_accounts", accounts);
+    keyring_delete(&email);
 
     let active_email = store.get("active_google_account").and_then(|v| v.as_str().map(|s| s.to_string())).unwrap_or_default();
-    
+
     if active_email == email {
         store.set("active_google_account", serde_json::json!(""));
     }
-    
+
     let _ = store.save();
     Ok("Logged out".into())
 }

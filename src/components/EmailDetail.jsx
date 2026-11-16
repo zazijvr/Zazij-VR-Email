@@ -586,6 +586,9 @@ ${ccLine}
       return;
     }
 
+    // Při rychlém proklikávání se výsledek staršího e-mailu zahodí
+    let cancelled = false;
+
     const fetchEmail = async () => {
       setLoading(true);
       try {
@@ -618,44 +621,47 @@ ${ccLine}
           }
         }
 
-        const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${selectedEmailId}?format=full`, {
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-        data = await res.json();
+        const authHeaders = { headers: { Authorization: `Bearer ${googleToken}` } };
+        const fetchThread = async (threadId) => {
+          const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadId}?format=full`, authHeaders);
+          return r.ok ? r.json() : null;
+        };
+
+        // Id vlákna známe ze seznamu (lokální keš) – vlákno se stáhne hned, bez mezikroku přes zprávu
+        let threadData = null;
+        const knownThreadId = (await db.emails.get(selectedEmailId).catch(() => null))?.threadId;
+        if (knownThreadId) {
+          try { threadData = await fetchThread(knownThreadId); } catch (te) { console.warn('Vlákno z keše nešlo načíst', te); }
+        }
+        if (!threadData?.messages?.length) {
+          const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${selectedEmailId}?format=full`, authHeaders);
+          data = await res.json();
+          if (data.threadId) {
+            try { threadData = await fetchThread(data.threadId); } catch (te) { console.error("Vlákno se nepodařilo nalistovat, padám na base zprávu", te); }
+          }
+        }
+        if (cancelled) return;
 
         // ------------------ ZPRACOVÁNÍ THREADŮ ------------------
-        // Pokud najdeme theardid, dotáhneme si celé vlákno pro zobrazení mých odeslaných odpovědí!
         let allAttachments = [];
         let allInlineTokens = [];
 
-        if (data.threadId) {
-          try {
-            const threadRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${data.threadId}?format=full`, {
-              headers: { Authorization: `Bearer ${googleToken}` }
-            });
-            if (threadRes.ok) {
-              const threadData = await threadRes.json();
-              if (threadData.messages && threadData.messages.length > 0) {
-                // Přepíšeme vybranou zprávu na úplně tu nejdřívější v řetězci
-                data = threadData.messages[threadData.messages.length - 1];
+        if (threadData?.messages?.length) {
+          // Zobrazuje se poslední zpráva vlákna
+          data = threadData.messages[threadData.messages.length - 1];
 
-                // A posbíráme všechny existující přílohy/obrázky skrze starší zprávy (historie)
-                for (const msg of threadData.messages) {
-                  const msgAtts = extractAttachments(msg.payload);
-                  msgAtts.forEach(a => Object.assign(a, { messageId: msg.id }));
-                  allAttachments = allAttachments.concat(msgAtts);
-                  
-                  const msgInlines = extractInlineImages(msg.payload);
-                  msgInlines.forEach(a => Object.assign(a, { messageId: msg.id }));
-                  allInlineTokens = allInlineTokens.concat(msgInlines);
-                }
-              }
-            }
-          } catch (te) {
-            console.error("Vlákno se nepodařilo nalistovat, padám na base zprávu", te);
+          // Přílohy a vložené obrázky z celé historie vlákna
+          for (const msg of threadData.messages) {
+            const msgAtts = extractAttachments(msg.payload);
+            msgAtts.forEach(a => Object.assign(a, { messageId: msg.id }));
+            allAttachments = allAttachments.concat(msgAtts);
+
+            const msgInlines = extractInlineImages(msg.payload);
+            msgInlines.forEach(a => Object.assign(a, { messageId: msg.id }));
+            allInlineTokens = allInlineTokens.concat(msgInlines);
           }
         }
-        
+
         // Pokud jsmee neměli thready, zkusíme najít normálně přílohy
         if (allAttachments.length === 0) allAttachments = extractAttachments(data.payload);
         if (allInlineTokens.length === 0) allInlineTokens = extractInlineImages(data.payload);
@@ -695,7 +701,7 @@ ${ccLine}
         // Zpracování extrémně velkých emailových těl z attachmentId
         if (bodyExtract.attachmentId) {
           try {
-            const attachRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${selectedEmailId}/attachments/${bodyExtract.attachmentId}`, {
+            const attachRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${data.id || selectedEmailId}/attachments/${bodyExtract.attachmentId}`, {
               headers: { Authorization: `Bearer ${googleToken}` }
             });
             const attachData = await attachRes.json();
@@ -721,27 +727,28 @@ ${ccLine}
 
         let processedHtmlBody = htmlBody;
 
-        for (const inline of inlineImagesTokens) {
-          if (inline.attachmentId) {
-            try {
+        // Vložené obrázky: jen ty, na které zobrazená zpráva opravdu odkazuje, a všechny najednou
+        const escRe = (str) => str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const lowerHtml = htmlBody.toLowerCase();
+        const neededInlines = inlineImagesTokens.filter(t => t.cid && lowerHtml.includes(`cid:${t.cid.toLowerCase()}`));
+        const inlineResults = await Promise.all(neededInlines.map(async (inline) => {
+          try {
+            let raw = inline.data;
+            if (!raw && inline.attachmentId) {
               const sourceMsgId = inline.messageId || data.id;
-              const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${sourceMsgId}/attachments/${inline.attachmentId}`, {
-                headers: { Authorization: `Bearer ${googleToken}` }
-              });
-              const attData = await res.json();
-              if (attData.data) {
-                const base64 = attData.data.replace(/-/g, '+').replace(/_/g, '/');
-                const dataUrl = `data:${inline.mimeType || 'image/png'};base64,${base64}`;
-                processedHtmlBody = processedHtmlBody.replace(new RegExp(`cid:${inline.cid.replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&')}`, 'gi'), dataUrl);
-              }
-            } catch (e) {
-              console.error("Failed to fetch inline image", e);
+              const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${sourceMsgId}/attachments/${inline.attachmentId}`, authHeaders);
+              raw = (await res.json()).data;
             }
-          } else if (inline.data) {
-            const base64 = inline.data.replace(/-/g, '+').replace(/_/g, '/');
-            const dataUrl = `data:${inline.mimeType || 'image/png'};base64,${base64}`;
-            processedHtmlBody = processedHtmlBody.replace(new RegExp(`cid:${inline.cid.replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&')}`, 'gi'), dataUrl);
+            if (!raw) return null;
+            return [inline.cid, `data:${inline.mimeType || 'image/png'};base64,${raw.replace(/-/g, '+').replace(/_/g, '/')}`];
+          } catch (e) {
+            console.error("Failed to fetch inline image", e);
+            return null;
           }
+        }));
+        if (cancelled) return;
+        for (const r of inlineResults) {
+          if (r) processedHtmlBody = processedHtmlBody.replace(new RegExp(`cid:${escRe(r[0])}`, 'gi'), r[1]);
         }
 
         // Auto-linkifikace emailů v surovém textu nebo v historii (aby se dalo kliknout i na plain-text emaily)
@@ -755,6 +762,7 @@ ${ccLine}
           }
         );
 
+        if (cancelled) return;
         setEmailData({
           subject,
           from: displayFrom,
@@ -776,10 +784,11 @@ ${ccLine}
       } catch (err) {
         console.error("Chyba při načítání detailu:", err);
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
 
     fetchEmail();
+    return () => { cancelled = true; };
   }, [selectedEmailId, googleToken, refreshTrigger]);
 
   // Žádný email není navolen v listu

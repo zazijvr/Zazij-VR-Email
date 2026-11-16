@@ -55,18 +55,33 @@ const parseDate = (dateStr) => {
 
 /** Pro seznam stačí hlavičky – celé tělo e-mailu se stahuje až v detailu */
 const LIST_HEADERS = ['From', 'To', 'Cc', 'Subject', 'Date'].map(h => `&metadataHeaders=${h}`).join('');
-const fetchThreadsMeta = async (threads, token) => {
-  const full = await Promise.all(threads.map(async (thread) => {
-    try {
-      const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}?format=metadata${LIST_HEADERS}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return await res.json();
-    } catch {
-      return null;
+/** Gmail povolí na účet jen omezený počet dotazů za sekundu (vlákno ≈ 10 jednotek z 250/s).
+ *  Proto nejvýš 10 souběžně a při 429 (moc dotazů) krátké počkání a nový pokus. */
+const THREAD_CONCURRENCY = 10;
+const fetchThreadMeta = async (id, token) => {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}?format=metadata${LIST_HEADERS}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.status === 429 || res.status === 503) {
+      await new Promise(r => setTimeout(r, 300 * 2 ** attempt + Math.random() * 200));
+      continue;
     }
-  }));
-  return full.filter(t => t && t.messages && t.messages.length > 0).map(formatThreadMessage);
+    return res.ok ? res.json() : null;
+  }
+  return null;
+};
+const fetchThreadsMeta = async (threads, token) => {
+  const results = new Array(threads.length).fill(null);
+  let next = 0;
+  const worker = async () => {
+    while (next < threads.length) {
+      const i = next++;
+      try { results[i] = await fetchThreadMeta(threads[i].id, token); } catch { results[i] = null; }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(THREAD_CONCURRENCY, threads.length) }, worker));
+  return results.filter(t => t && t.messages && t.messages.length > 0).map(formatThreadMessage);
 };
 
 /** Pevné šířky sloupců seznamu – společné pro hlavičku i řádky */
@@ -415,10 +430,19 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       return;
     }
 
+    // Účet se zjistí chvilku po přihlášení/přepnutí – do té doby se nic nestahuje,
+    // aby se pošta nemíchala mezi účty (a zbytečně se nestahovalo dvakrát)
+    if (!userEmail) {
+      setEmails([]);
+      setLoading(true);
+      return;
+    }
+
     // Každé načtení má pořadové číslo – výsledek staršího požadavku (jiná složka) se zahodí
     const seq = ++fetchSeqRef.current;
     const isCurrent = () => fetchSeqRef.current === seq;
-    const cacheKey = `${activeFolder}|${showOnlyUnread ? 1 : 0}|${searchQuery.trim()}`;
+    const account = userEmail;
+    const cacheKey = `${account}|${activeFolder}|${showOnlyUnread ? 1 : 0}|${searchQuery.trim()}`;
 
     const fetchEmails = async () => {
       setDisplayedEmailLimit(10);
@@ -434,7 +458,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       } else {
         // 1) Offline keš v databázi
         try {
-          const cached = await db.emails.where('folderLabel').equals(activeFolder).toArray();
+          const cached = await db.emails.where('folderLabel').equals(activeFolder).filter(e => e.account === account).toArray();
           if (!isCurrent()) return;
           let filteredCache = cached || [];
           if (showOnlyUnread) filteredCache = filteredCache.filter(e => e.isUnread);
@@ -497,6 +521,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
         formattedEmails.forEach(e => {
           e.folderLabel = activeFolder; // Nutné pro DB Index
+          e.account = account;
           globalNotifiedSet.add(e.id);
           globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
         });
@@ -517,7 +542,17 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     };
 
     fetchEmails();
-  }, [googleToken, activeFolder, showOnlyUnread, searchQuery, refreshTriggerList]);
+  }, [googleToken, userEmail, activeFolder, showOnlyUnread, searchQuery, refreshTriggerList]);
+
+  // Přepnutí / přidání účtu – paměť složek patří předchozímu účtu
+  useEffect(() => {
+    const clear = () => {
+      folderMemCache.clear();
+      fetchedFolderRef.current = null; // tiché dotahování nové pošty počká na první načtení
+    };
+    window.addEventListener('vr-account-switched', clear);
+    return () => window.removeEventListener('vr-account-switched', clear);
+  }, []);
 
   const emailsRef = React.useRef(emails);
   useEffect(() => { emailsRef.current = emails; }, [emails]);
@@ -525,10 +560,10 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   // Změny v seznamu (přečtení, smazání, hvězdička…) se propíšou i do paměti složky
   useEffect(() => {
     if (fetchedFolderRef.current !== activeFolder) return;
-    const key = `${activeFolder}|${showOnlyUnread ? 1 : 0}|${searchQuery.trim()}`;
+    const key = `${userEmail}|${activeFolder}|${showOnlyUnread ? 1 : 0}|${searchQuery.trim()}`;
     const mem = folderMemCache.get(key);
     if (mem && mem.emails !== emails) folderMemCache.set(key, { ...mem, emails, nextPageToken });
-  }, [emails, nextPageToken, activeFolder, showOnlyUnread, searchQuery]);
+  }, [emails, nextPageToken, activeFolder, showOnlyUnread, searchQuery, userEmail]);
 
   // Auto-refresh vybraného vlákna: pokud přijde novější zpráva do již otevřeného vlákna
   useEffect(() => {
@@ -549,7 +584,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     const isFolderSwitch = prevFolderRef.current !== activeFolder;
 
     // Ignorujeme přepnutí složky a spoléháme jen na inkrementální růst.
-    const shouldFetch = !isFolderSwitch && (currentUnread > prevUnreadRef.current);
+    // …a až když je složka načtená (po přepnutí účtu se počty změní, ale není to nová pošta)
+    const shouldFetch = !isFolderSwitch && fetchedFolderRef.current === activeFolder && (currentUnread > prevUnreadRef.current);
 
     prevUnreadRef.current = currentUnread;
     prevFolderRef.current = activeFolder;
@@ -558,7 +594,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       const silentFetch = async () => {
         try {
           const labelId = getLabelId(activeFolder);
-          let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=40`;
+          let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=15`; // nová pošta je vždy nahoře
           let queryParts = [];
           if (showOnlyUnread) queryParts.push('is:unread');
           if (searchQuery.trim()) queryParts.push(searchQuery.trim());
