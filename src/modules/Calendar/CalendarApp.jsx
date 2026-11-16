@@ -653,11 +653,11 @@ export default function CalendarApp({
   if (activeCalendarView !== 'Měsíční přehled' && activeCalendarView !== 'Co mě čeká?') {
     currentMainView = (
        <div className="flex-1 flex items-center justify-center p-10 relative h-full">
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#f800ff] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
-         <p className="text-[#f800ff]/60 uppercase tracking-[0.2em] font-bold z-10 text-xl border border-[#f800ff]/20 bg-[#f800ff]/5 px-8 py-4 rounded-2xl shadow-[0_0_30px_rgba(248,0,255,0.1)] backdrop-blur-md">
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#f72585] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
+         <p className="text-[#f72585]/60 uppercase tracking-[0.2em] font-bold z-10 text-xl border border-[#f72585]/20 bg-[#f72585]/5 px-8 py-4 rounded-2xl shadow-[0_0_30px_rgba(247,37,133,0.1)] backdrop-blur-md">
            [ {activeCalendarView.toUpperCase()} VE VÝVOJI ]
          </p>
-         <img src="/vr_calendar_trans.png" alt="VR Mascot" className="absolute bottom-10 right-10 w-64 h-auto opacity-70 object-contain drop-shadow-[0_0_20px_rgba(248,0,255,0.4)] pointer-events-none animate-pulse-slow" />
+         <img src="/vr_calendar.svg" alt="VR Mascot" className="absolute bottom-10 right-10 w-64 h-auto opacity-70 object-contain pointer-events-none" />
        </div>
     );
   } else if (activeCalendarView === 'Co mě čeká?') {
@@ -741,15 +741,15 @@ export default function CalendarApp({
 
       {/* Warning Overlay */}
       {showEventCloseWarning && createPortal(
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[2000] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
-          <div className="bg-[#0f172a] border border-[#ef4444]/50 shadow-[0_0_30px_rgba(239,68,68,0.3)] rounded-2xl p-8 max-w-sm flex flex-col items-center gap-6 text-center relative overflow-hidden pointer-events-auto">
+        <div className="fixed inset-0 bg-[#020817]/80 backdrop-blur-md z-[2000] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
+          <div className="bg-[#061026] border border-[#ef4444]/50 shadow-[0_0_30px_rgba(239,68,68,0.3)] rounded-2xl p-8 max-w-sm flex flex-col items-center gap-6 text-center relative overflow-hidden pointer-events-auto">
              <div className="w-16 h-16 rounded-full bg-[#ef4444]/10 border border-[#ef4444]/30 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.2)]">
                <AlertTriangle size={32} className="text-[#ef4444]" />
              </div>
              <h3 className="text-xl font-bold text-white tracking-wide">Zahodit událost?</h3>
-             <p className="text-sm text-gray-400 font-mono tracking-tight leading-relaxed">Máte rozpracovanou událost. Opravdu ji chcete zavřít bez uložení? Všechna nezuložená data budou ztracena.</p>
+             <p className="text-sm text-slate-400 font-mono tracking-tight leading-relaxed">Máte rozpracovanou událost. Opravdu ji chcete zavřít bez uložení? Všechna nezuložená data budou ztracena.</p>
              <div className="flex w-full gap-3 mt-2">
-               <button onClick={() => setShowEventCloseWarning(false)} className="flex-1 py-3 text-xs font-bold text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10 tracking-widest uppercase">Zpět</button>
+               <button onClick={() => setShowEventCloseWarning(false)} className="flex-1 py-3 text-xs font-bold text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-[#00f3ff]/[0.15] tracking-widest uppercase">Zpět</button>
                <button onClick={() => { setShowEventCloseWarning(false); setIsCreateModalOpen(false); }} className="flex-1 py-3 text-xs font-bold text-[#ef4444] bg-[#ef4444]/10 hover:bg-[#ef4444]/20 rounded-xl transition-all border border-[#ef4444]/30 hover:border-[#ef4444] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] tracking-widest uppercase">Zahodit</button>
              </div>
           </div>
@@ -759,23 +759,23 @@ export default function CalendarApp({
 
       {/* App Error Overlay */}
       {appError && createPortal(
-        <div className="fixed inset-0 bg-black/90 z-[2000] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
-          <div className="bg-[#0f172a] border border-[#00f3ff]/50 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-3xl p-10 max-w-[420px] flex flex-col items-center gap-7 text-center relative overflow-hidden pointer-events-auto">
+        <div className="fixed inset-0 bg-[#020817]/90 z-[2000] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
+          <div className="bg-[#061026] border border-[#00f3ff]/50 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-3xl p-10 max-w-[420px] flex flex-col items-center gap-7 text-center relative overflow-hidden pointer-events-auto">
              
-             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#00f3ff]/20 to-[#f800ff]/20 border-2 border-[#00f3ff]/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,243,255,0.4)] z-10 shrink-0">
+             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#00f3ff]/20 to-[#f72585]/20 border-2 border-[#00f3ff]/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,243,255,0.4)] z-10 shrink-0">
                <AlertTriangle size={36} className="text-[#00f3ff] drop-shadow-[0_0_10px_#00f3ff]" />
              </div>
              
              <div className="z-10 flex flex-col gap-2 relative">
                  <h3 className="text-2xl font-black text-white tracking-widest uppercase drop-shadow-md">Chyba API</h3>
-                 <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-[#f800ff] to-transparent mx-auto opacity-50 relative mt-1 mb-2"></div>
-                 <p className="text-sm font-mono text-gray-300 leading-relaxed drop-shadow-sm tracking-tight">{appError}</p>
+                 <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-[#f72585] to-transparent mx-auto opacity-50 relative mt-1 mb-2"></div>
+                 <p className="text-sm font-mono text-slate-300 leading-relaxed drop-shadow-sm tracking-tight">{appError}</p>
              </div>
              
              <div className="w-full mt-4 z-10">
                <button 
                  onClick={() => setAppError(null)} 
-                 className="w-full py-4 bg-black/50 hover:bg-[#00f3ff]/10 rounded-2xl transition-all border border-[#00f3ff]/30 text-[#00f3ff] font-bold text-xs uppercase tracking-[0.25em] hover:shadow-[0_0_20px_rgba(0,243,255,0.3)] hover:border-[#00f3ff] active:scale-95"
+                 className="w-full py-4 bg-[#020817]/50 hover:bg-[#00f3ff]/10 rounded-2xl transition-all border border-[#00f3ff]/30 text-[#00f3ff] font-bold text-xs uppercase tracking-[0.25em] hover:shadow-[0_0_20px_rgba(0,243,255,0.3)] hover:border-[#00f3ff] active:scale-95"
                >
                  OK
                </button>

@@ -52,7 +52,7 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999999] flex items-center justify-center p-4 bg-[#020817]/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         ref={modalRef}
         tabIndex={-1}
@@ -61,7 +61,7 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
       >
         <button 
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 bg-white/5 hover:bg-[#ef4444]/20 text-gray-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center z-10"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 bg-white/5 hover:bg-[#ef4444]/20 text-slate-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center z-10"
         >
           <X size={20} className="sm:w-[22px] sm:h-[22px]" strokeWidth={2} />
         </button>
@@ -74,7 +74,7 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
             <h3 className={`text-base sm:text-lg lg:text-xl font-black uppercase tracking-wider sm:tracking-widest ${colorClass} mb-2 break-words`}>
               {title || (type === 'error' ? 'Chyba' : type === 'success' ? 'Hotovo' : 'Informace')}
             </h3>
-            <p className="text-gray-300 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">
+            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">
               {message}
             </p>
           </div>
@@ -83,7 +83,7 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
         <div className="mt-4 flex gap-3 justify-end">
           {onConfirm ? (
              <>
-               <button onClick={onClose} className="px-6 py-2.5 rounded-lg border border-gray-600/50 font-bold tracking-widest uppercase transition-all text-gray-400 hover:text-white hover:bg-white/10 hover:border-gray-500">
+               <button onClick={onClose} className="px-6 py-2.5 rounded-lg border border-slate-600/50 font-bold tracking-widest uppercase transition-all text-slate-400 hover:text-white hover:bg-white/10 hover:border-slate-500">
                  {cancelText || 'Zrušit'}
                </button>
                <button

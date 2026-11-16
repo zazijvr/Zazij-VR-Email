@@ -455,7 +455,8 @@ ${ccLine}
     const quotedBody = `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid #00f3ff;padding-left:1ex">${emailData?.htmlBody || ''}</blockquote>`;
     
     // Check if the latest message was sent by the user themselves
-    let replyTo = emailData?.from;
+    // Celá adresa „Jméno <email>“ (from je jen zobrazované jméno), přednost má hlavička Reply-To
+    let replyTo = emailData?.replyTo || emailData?.rawFrom || emailData?.from;
     const isFromMe = userEmail && emailData?.rawFrom && emailData.rawFrom.toLowerCase().includes(userEmail.toLowerCase());
     if (isFromMe && emailData?.to) replyTo = emailData.to;
 
@@ -468,7 +469,7 @@ ${ccLine}
       rfcMessageId: emailData?.rfcMessageId,
       htmlBody: getHistoryHeader('reply') + quotedBody,
       initialBody: '',
-      originalFrom: emailData?.from,
+      originalFrom: emailData?.replyTo || emailData?.rawFrom || emailData?.from,
       originalTo: emailData?.to,
       originalCc: emailData?.cc
     });
@@ -478,7 +479,7 @@ ${ccLine}
     const quotedBody = `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid #00f3ff;padding-left:1ex">${emailData?.htmlBody || ''}</blockquote>`;
     
     const isFromMe = userEmail && emailData?.rawFrom && emailData.rawFrom.toLowerCase().includes(userEmail.toLowerCase());
-    const baseTo = (isFromMe && emailData?.to) ? emailData.to : emailData?.from;
+    const baseTo = (isFromMe && emailData?.to) ? emailData.to : (emailData?.replyTo || emailData?.rawFrom || emailData?.from);
     const allTo = `${baseTo}${emailData?.cc ? `, ${emailData.cc}` : ''}`;
     
     onActionReply({ type: 'replyAll', initialTo: allTo, initialSubject: emailData?.subject?.match(/^Re:/i) ? emailData.subject : `Re: ${emailData?.subject}`, messageId: emailData?.messageId, threadId: emailData?.threadId, rfcMessageId: emailData?.rfcMessageId, htmlBody: getHistoryHeader('reply') + quotedBody, initialBody: '' });
@@ -594,36 +595,24 @@ ${ccLine}
           // OFFLINE FALLBACK
           const cached = await db.emails.where('id').equals(selectedEmailId).first();
           if (cached) {
-             // Mockup struktury aby app nespadla a vyrenderovala tělo
-             data = {
-               payload: { headers: [], parts: [] },
-               threadId: cached.threadId,
-               id: cached.id
-             };
-             // Přílohy a tělo jsou už vytaženy, takže to vyřešíme bypassnutím thread parsing fáze
-             // a rovnou nastavíme emailData do state... no wait, the logic expects `data` to be a raw API payload!
-             // OK, zjednodušený offline parser zrovna nastaví stav:
+             // Offline: v mezipaměti je jen hlavička a úryvek (tělo se ukládá až online)
+             const esc = (str) => String(str || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
              setEmailData({
+                subject: cached.subject || '(Bez předmětu)',
+                from: cached.from,
+                rawFrom: cached.originalFromRaw || cached.from,
+                to: cached.originalToRaw || cached.to || '',
+                cc: cached.originalCcRaw || '',
+                date: [cached.dateText, cached.timeText].filter(Boolean).join(' '),
+                htmlBody: `<p>${esc(cached.snippet)}…</p><p style="opacity:.6"><i>Jste offline – celý obsah zprávy se načte po připojení k internetu.</i></p>`,
+                textBody: cached.snippet || '',
+                rawTextBody: cached.snippet || '',
+                attachments: [],
                 messageId: cached.id,
                 threadId: cached.threadId,
-                html: cached.html,
-                text: cached.text,
-                attachments: cached.attachments || []
+                isStarred: !!cached.isStarred,
+                isDraft: (cached.labelIds || []).includes('DRAFT')
              });
-             setExpandedThreads([cached.id]);
-             setThreadMessages([{
-               id: cached.id,
-               date: new Date(cached.rawDate),
-               dateText: new Date(cached.rawDate).toLocaleDateString('cs-CZ'),
-               timeText: new Date(cached.rawDate).toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit'}),
-               from: cached.from,
-               to: cached.to,
-               cc: cached.cc,
-               snippet: cached.snippet,
-               html: cached.html,
-               text: cached.text,
-               attachments: cached.attachments || []
-             }]);
              setLoading(false);
              return;
           }
@@ -675,6 +664,7 @@ ${ccLine}
         const subject = getHeader(headers, 'Subject') || '(Bez předmětu)';
         const from = getHeader(headers, 'From');
         const to = getHeader(headers, 'To');
+        const replyToHeader = getHeader(headers, 'Reply-To') || '';
         const dateRaw = getHeader(headers, 'Date');
         const rfcMessageId = getHeader(headers, 'Message-ID');
 
@@ -769,6 +759,7 @@ ${ccLine}
           subject,
           from: displayFrom,
           rawFrom: from,
+          replyTo: replyToHeader,
           to,
           date: niceDate,
           cc,
@@ -795,7 +786,7 @@ ${ccLine}
   if (!selectedEmailId) {
     return (
       <div className="flex-1 relative flex flex-col items-center justify-center p-10 h-full overflow-hidden bg-transparent">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#f800ff] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#f72585] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
         <div className="absolute top-1/4 left-3/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#00f3ff] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
 
         <div className="z-10 flex flex-col items-center opacity-20 hover:opacity-40 transition-opacity">
@@ -812,7 +803,7 @@ ${ccLine}
   // Průběh The Fetchování
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-[#00f3ff]/60 h-full relative overflow-hidden bg-[#0f172a]">
+      <div className="flex-1 flex flex-col items-center justify-center text-[#00f3ff]/60 h-full relative overflow-hidden bg-[#061026]">
         <div className="w-16 h-16 rounded-full border-[6px] border-[#00f3ff]/10 border-t-[#00f3ff] animate-spin mb-6 drop-shadow-[0_0_15px_rgba(0,243,255,0.4)]"></div>
         <p className="font-bold tracking-widest uppercase animate-pulse">Dešifruji data z matrixu...</p>
       </div>
@@ -828,11 +819,11 @@ ${ccLine}
     <>
       {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER (PORTALLED) --- */}
       {createPortal(
-        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top,2rem))] bg-[#0f172a]/95 backdrop-blur-md border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto shadow-[0_4px_20px_rgba(0,0,0,0.6)]">
+        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top,2rem))] bg-[#061026]/95 backdrop-blur-md border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto shadow-[0_4px_20px_rgba(0,0,0,0.6)]">
           {onMobileBack && (
             <button
               onClick={onMobileBack}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow"
             >
               <ArrowLeft size={22} strokeWidth={2.5} />
             </button>
@@ -841,7 +832,7 @@ ${ccLine}
             {emailData && (
               <button
                 onClick={toggleReadStatus}
-                className={`w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-[#00f3ff] border-[#00f3ff]/60 drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)]' : 'text-white/80 border-white/50 drop-shadow-[0_0_10px_rgba(255,255,255,0.6)] shadow-[inset_0_0_12px_rgba(255,255,255,0.2)] hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.9)] hover:border-white hover:text-white'}`}
+                className={`w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-[#00f3ff] border-[#00f3ff]/60 drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)]' : 'text-white/80 border-white/50 drop-shadow-[0_0_10px_rgba(255,255,255,0.6)] shadow-[inset_0_0_12px_rgba(255,255,255,0.2)] hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.9)] hover:border-white hover:text-white'}`}
                 title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
               >
                 {emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}
@@ -850,7 +841,7 @@ ${ccLine}
             {onTrash && (
               <button
                 onClick={handleTrashClick}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/80 text-[#ef4444] drop-shadow-[0_0_15px_rgba(239,68,68,1)] shadow-[inset_0_0_20px_rgba(239,68,68,0.4)] transition-all active:scale-95 hover:bg-[#ef4444]/20"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/80 text-[#ef4444] drop-shadow-[0_0_15px_rgba(239,68,68,1)] shadow-[inset_0_0_20px_rgba(239,68,68,0.4)] transition-all active:scale-95 hover:bg-[#ef4444]/20"
               >
                 <Trash2 size={20} />
               </button>
@@ -863,20 +854,20 @@ ${ccLine}
       {/* Hlavní Tělo Detailu */}
       <div
         key={emailData?.messageId || "loading"}
-        className={`flex-1 flex flex-col pt-[calc(3.5rem+env(safe-area-inset-top,2rem))] md:pt-0 bg-[#0f172a] overflow-hidden fixed inset-0 z-50 md:relative md:inset-auto md:z-auto pointer-events-auto shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none ${slideAnimationClass}`}
+        className={`flex-1 flex flex-col pt-[calc(3.5rem+env(safe-area-inset-top,2rem))] md:pt-0 bg-[#061026] overflow-hidden fixed inset-0 z-50 md:relative md:inset-auto md:z-auto pointer-events-auto shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none ${slideAnimationClass}`}
         onDoubleClick={() => {
           if (emailData?.isDraft) handleResumeDraft(emailData);
         }}
       >
 
         {/* Detail Hlaviček - Floating Frame na Desktopu s dynamickou výškou pro dlouhé texty */}
-        <div className="shrink-0 px-4 py-5 md:py-4 md:px-6 md:m-6 md:mb-0 md:min-h-[100px] border-t-0 md:border md:rounded-2xl border-transparent md:border-[#00f3ff]/20 bg-[#050810] md:bg-[#0a0f1d] shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-[70] flex flex-col gap-4 relative w-full md:w-auto overflow-hidden">
+        <div className="shrink-0 px-4 py-5 md:py-4 md:px-6 md:m-6 md:mb-0 md:min-h-[100px] border-t-0 md:border md:rounded-2xl border-transparent md:border-[#00f3ff]/20 bg-[#061026] md:bg-[#061026] shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-[70] flex flex-col gap-4 relative w-full md:w-auto overflow-hidden">
 
           {/* Horní neonová linka ze Seznamu Emailů (Pouze mobil) */}
           <div className="md:hidden absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
 
           {/* Dekorační levé zakončení (Pouze mobil) */}
-          <div className="md:hidden absolute top-0 left-0 w-1 h-full bg-[#f800ff]/20"></div>
+          <div className="md:hidden absolute top-0 left-0 w-1 h-full bg-[#f72585]/20"></div>
 
           {/* Velmi jemný radialní odlesk v pozadí (Pouze mobil) */}
           <div className="md:hidden absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(0,243,255,0.06)_0%,transparent_60%)] pointer-events-none"></div>
@@ -890,11 +881,11 @@ ${ccLine}
                 <div className="mb-4">
                   <button
                     onClick={() => handleResumeDraft(emailData)}
-                    className="w-full relative overflow-hidden group rounded-2xl flex items-center justify-center p-1 cursor-pointer bg-[#f800ff]/10 border border-[#f800ff]/40 shadow-[0_0_20px_rgba(248,0,255,0.2)] hover:shadow-[0_0_40px_rgba(248,0,255,0.5)] transition-all animate-pulse hover:animate-none"
+                    className="w-full relative overflow-hidden group rounded-2xl flex items-center justify-center p-1 cursor-pointer bg-[#f72585]/10 border border-[#f72585]/40 shadow-[0_0_20px_rgba(247,37,133,0.2)] hover:shadow-[0_0_40px_rgba(247,37,133,0.5)] transition-all animate-pulse hover:animate-none"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#f800ff]/20 to-transparent group-hover:translate-x-[200%] transition-transform duration-1000 -translate-x-full"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#f72585]/20 to-transparent group-hover:translate-x-[200%] transition-transform duration-1000 -translate-x-full"></div>
                     <div className="relative z-10 py-3 mx-4 flex items-center justify-center gap-3">
-                      <span className="font-black tracking-[0.3em] text-[#f800ff] text-xl drop-shadow-[0_0_10px_#f800ff]">POKRAČOVAT V PSANÍ (UPRAVIT KONCEPT)</span>
+                      <span className="font-black tracking-[0.3em] text-[#f72585] text-xl drop-shadow-[0_0_10px_#f72585]">POKRAČOVAT V PSANÍ (UPRAVIT KONCEPT)</span>
                     </div>
                   </button>
                 </div>
@@ -918,18 +909,18 @@ ${ccLine}
                       });
                     } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm border cursor-pointer hover:brightness-125 active:scale-95 transition-all ${emailData?.isStarred ? 'bg-[#f800ff]/10 border-[#f800ff]/30 text-[#f800ff] drop-shadow-[0_0_5px_rgba(248,0,255,0.4)]' : 'bg-[#00f3ff]/10 border-[#00f3ff]/30 text-[#00f3ff]'}`}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm border cursor-pointer hover:brightness-125 active:scale-95 transition-all ${emailData?.isStarred ? 'bg-[#f72585]/10 border-[#f72585]/30 text-[#f72585] drop-shadow-[0_0_5px_rgba(247,37,133,0.4)]' : 'bg-[#00f3ff]/10 border-[#00f3ff]/30 text-[#00f3ff]'}`}
                   title={emailData?.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${emailData?.isStarred ? 'bg-[#f800ff] shadow-[0_0_8px_#f800ff]' : 'bg-[#00f3ff] shadow-[0_0_5px_#00f3ff]'}`}></div>
+                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${emailData?.isStarred ? 'bg-[#f72585] shadow-[0_0_8px_#f72585]' : 'bg-[#00f3ff] shadow-[0_0_5px_#00f3ff]'}`}></div>
                   <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-current">Link_Active</span>
                 </button>
 
                 {/* Attachments status */}
                 {emailData?.attachments?.length > 0 && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#f800ff]/10 border border-[#f800ff]/30">
-                    <Paperclip size={12} strokeWidth={3} className="text-[#f800ff]" />
-                    <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-[#f800ff]">Datacore_{emailData.attachments.length}</span>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#f72585]/10 border border-[#f72585]/30">
+                    <Paperclip size={12} strokeWidth={3} className="text-[#f72585]" />
+                    <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-[#f72585]">Datacore_{emailData.attachments.length}</span>
                   </div>
                 )}
 
@@ -980,11 +971,11 @@ ${ccLine}
                     <button
                       onClick={handleForward}
                       disabled={isPreparingForward}
-                      className="p-2 rounded-xl text-[#00f3ff]/70 bg-[#00f3ff]/5 border border-[#00f3ff]/20 hover:text-[#f800ff] hover:bg-[#f800ff]/15 hover:border-[#f800ff]/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(248,0,255,0.4)] disabled:opacity-50"
+                      className="p-2 rounded-xl text-[#00f3ff]/70 bg-[#00f3ff]/5 border border-[#00f3ff]/20 hover:text-[#f72585] hover:bg-[#f72585]/15 hover:border-[#f72585]/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(247,37,133,0.4)] disabled:opacity-50"
                       title="Přeposlat (Forward)"
                     >
                       {isPreparingForward ? (
-                        <div className="w-[22px] h-[22px] rounded-full border-[2px] border-[#f800ff]/20 border-t-[#f800ff] animate-spin m-[0.5px]"></div>
+                        <div className="w-[22px] h-[22px] rounded-full border-[2px] border-[#f72585]/20 border-t-[#f72585] animate-spin m-[0.5px]"></div>
                       ) : (
                         <Forward size={22} />
                       )}
@@ -1026,7 +1017,7 @@ ${ccLine}
                     <div className="hidden md:block w-px h-6 bg-white/20 mx-1"></div>
                     <button
                       onClick={onClose}
-                      className="hidden md:flex p-2 bg-white/5 hover:bg-[#ef4444]/20 text-gray-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
+                      className="hidden md:flex p-2 bg-white/5 hover:bg-[#ef4444]/20 text-slate-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
                       title="Zavřít"
                     >
                       <X size={22} strokeWidth={2} />
@@ -1043,9 +1034,9 @@ ${ccLine}
         <div className="hidden md:block absolute left-0 w-full h-[1px] top-[192px] bg-gradient-to-r from-[#00f3ff]/20 to-transparent opacity-80 shadow-[0_1px_5px_rgba(0,243,255,0.2)] pointer-events-none z-10"></div>
 
         {/* Samotné Iframe Tělo zprávy s neonovým okrajem */}
-        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[213px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-[#00f3ff]/40 shadow-[0_5px_20px_rgba(0,0,0,0.5)] md:shadow-[0_0_20px_rgba(0,243,255,0.2)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#0a0f1d] relative z-20">
+        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[213px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-[#00f3ff]/20 md:border-[#00f3ff]/40 shadow-[0_5px_20px_rgba(0,0,0,0.5)] md:shadow-[0_0_20px_rgba(0,243,255,0.2)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#061026] relative z-20">
           {/* Sender Info Block */}
-          <div className="shrink-0 w-full px-4 py-3 md:px-6 md:py-4 border-b border-white/5 bg-[#0a0f1d] z-20">
+          <div className="shrink-0 w-full px-4 py-3 md:px-6 md:py-4 border-b border-[#00f3ff]/10 bg-[#061026] z-20">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm gap-3 w-full">
               <div className="flex items-center justify-between w-full md:w-auto min-w-0">
                 <div className="flex items-start gap-3 w-full md:w-auto min-w-0">
@@ -1060,9 +1051,9 @@ ${ccLine}
                           {copiedId === 'from' ? <Check size={14} className="md:w-4 md:h-4 text-green-400" /> : <Copy size={14} className="md:w-4 md:h-4" />}
                         </button>
                       )}
-                      <span className="text-gray-400 font-semibold md:hidden ml-1">{emailData?.date}</span>
+                      <span className="text-slate-400 font-semibold md:hidden ml-1">{emailData?.date}</span>
                     </div>
-                    <div className="flex flex-col text-gray-400 text-xs tracking-wider mt-0.5 max-w-full gap-1">
+                    <div className="flex flex-col text-slate-400 text-xs tracking-wider mt-0.5 max-w-full gap-1">
                       {emailData?.to && (
                         <div className="flex items-center gap-2">
                           <span className="truncate max-w-xl" title={emailData.to}>Komu: <span className="opacity-70">{emailData.to}</span></span>
@@ -1107,14 +1098,14 @@ ${ccLine}
 
                         {/* Celostránkový neviditelný štít pro odchytnutí kliku (nyní řešen globálním click trapem v capture fázi viz useEffect) */}
                         <div
-                          className="absolute inset-0 bg-black/40"
+                          className="absolute inset-0 bg-[#0a1630]"
                           style={{ animation: 'mobileSheetFadeIn 0.3s ease-out forwards' }}
                         ></div>
 
                         {/* Moderní Mobile Bottom Sheet místo plovoucího okna */}
                         <div
                           ref={bottomSheetRef}
-                          className="relative w-full max-w-lg bg-[#050810] border-t border-[#00f3ff]/40 rounded-t-[30px] shadow-[0_-15px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,243,255,0.15)] flex flex-col p-6 pb-12 gap-1 z-10"
+                          className="relative w-full max-w-lg bg-[#061026] border-t border-[#00f3ff]/40 rounded-t-[30px] shadow-[0_-15px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,243,255,0.15)] flex flex-col p-6 pb-12 gap-1 z-10"
                           style={{ animation: 'mobileSheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
                         >
                           {/* Designové držátko/čárka typická pro Bottom sheets */}
@@ -1146,9 +1137,9 @@ ${ccLine}
                                 body: JSON.stringify(currentIsStarred ? { removeLabelIds: ['STARRED'] } : { addLabelIds: ['STARRED'] })
                               });
                             } catch (err) { console.error(err); setEmailData(prev => ({ ...prev, isStarred: currentIsStarred })); }
-                          }} className={`flex items-center gap-4 p-4 rounded-2xl transition-all w-full text-left font-bold tracking-wide active:scale-[0.98] ${emailData.isStarred ? 'hover:bg-[#f800ff]/10 text-[#f800ff]/90 active:bg-[#f800ff]/20' : 'hover:bg-[#f800ff]/10 text-[#f800ff]/50 active:bg-[#f800ff]/20'}`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-transparent border-2 border-[#f800ff]/30' : 'bg-[#f800ff]/10'}`}>
-                              <div className={`w-4 h-4 rounded-full transition-all ${emailData.isStarred ? 'border-2 border-[#f800ff]/50' : 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse'}`}></div>
+                          }} className={`flex items-center gap-4 p-4 rounded-2xl transition-all w-full text-left font-bold tracking-wide active:scale-[0.98] ${emailData.isStarred ? 'hover:bg-[#f72585]/10 text-[#f72585]/90 active:bg-[#f72585]/20' : 'hover:bg-[#f72585]/10 text-[#f72585]/50 active:bg-[#f72585]/20'}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-transparent border-2 border-[#f72585]/30' : 'bg-[#f72585]/10'}`}>
+                              <div className={`w-4 h-4 rounded-full transition-all ${emailData.isStarred ? 'border-2 border-[#f72585]/50' : 'bg-[#f72585] shadow-[0_0_8px_#f72585]'}`}></div>
                             </div>
                             {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                           </button>
@@ -1163,12 +1154,12 @@ ${ccLine}
                   </div>
                 </div>
               </div>
-              <span className="hidden md:block shrink-0 text-gray-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-white/10 md:self-auto">{emailData?.date}</span>
+              <span className="hidden md:block shrink-0 text-slate-400 font-semibold bg-white/5 py-1 px-3 rounded-lg border border-[#00f3ff]/[0.15] md:self-auto">{emailData?.date}</span>
             </div>
 
             {/* Přílohy PŘESUNUTÉ DO HLAVIČKY (Zůstanou zakotvené při scrollování a sdílí px s odesílatelem) */}
             {emailData?.attachments?.length > 0 && (
-              <div className="flex flex-row md:flex-wrap gap-3 mt-4 pt-4 border-t border-white/5 pb-1 w-full overflow-x-auto md:overflow-visible overflow-y-hidden md:overflow-y-auto max-h-[90px] md:max-h-[180px] custom-scrollbar snap-x snap-mandatory">
+              <div className="flex flex-row md:flex-wrap gap-3 mt-4 pt-4 border-t border-[#00f3ff]/10 pb-1 w-full overflow-x-auto md:overflow-visible overflow-y-hidden md:overflow-y-auto max-h-[90px] md:max-h-[180px] custom-scrollbar snap-x snap-mandatory">
                 {emailData.attachments.map(att => {
                   const mType = att.mimeType.toLowerCase();
                   const fName = att.filename.toLowerCase();
@@ -1176,7 +1167,7 @@ ${ccLine}
                   const isIcs = fName.endsWith('.ics') || mType === 'text/calendar';
 
                   return (
-                    <div key={att.attachmentId} className="flex w-[85%] md:w-auto shrink-0 items-center justify-between p-1 pl-1.5 rounded-xl border border-[#00f3ff]/30 bg-black/40 shadow-[0_4px_10px_rgba(0,0,0,0.3)] group hover:border-[#00f3ff]/70 transition-all relative snap-start">
+                    <div key={att.attachmentId} className="flex w-[85%] md:w-auto shrink-0 items-center justify-between p-1 pl-1.5 rounded-xl border border-[#00f3ff]/30 bg-[#0a1630] shadow-[0_4px_10px_rgba(0,0,0,0.3)] group hover:border-[#00f3ff]/70 transition-all relative snap-start">
 
                       <button
                         onClick={() => handleActionAttachment(att, isPreviewable ? 'open' : 'download')}
@@ -1194,7 +1185,7 @@ ${ccLine}
                         <div className="flex flex-col text-left pl-1 flex-1 min-w-0">
                           <span className="truncate text-[#00f3ff] text-sm font-semibold tracking-wide drop-shadow-[0_0_5px_rgba(0,243,255,0.1)]">{att.filename}</span>
                           {isIcs && icsDetails[att.attachmentId] && (
-                            <span className="text-[10px] text-[#f800ff] font-bold tracking-[0.15em] uppercase animate-pulse">📅 {icsDetails[att.attachmentId]}</span>
+                            <span className="text-[10px] text-[#f72585] font-bold tracking-[0.15em] uppercase animate-pulse">📅 {icsDetails[att.attachmentId]}</span>
                           )}
                           {!isIcs && <span className="text-[10px] text-[#00f3ff]/50 font-bold uppercase tracking-wider">{Math.round(att.size / 1024)} KB</span>}
                         </div>
@@ -1216,7 +1207,7 @@ ${ccLine}
                         <button
                           onClick={() => handleActionAttachment(att, 'download')}
                           disabled={downloadingAttachId === att.attachmentId}
-                          className="p-2 mx-1 text-[#00f3ff]/60 hover:text-[#f800ff] hover:bg-[#f800ff]/20 rounded-lg transition-all disabled:opacity-50"
+                          className="p-2 mx-1 text-[#00f3ff]/60 hover:text-[#f72585] hover:bg-[#f72585]/20 rounded-lg transition-all disabled:opacity-50"
                           title="Vynutit klasické stažení do počítače"
                         >
                           <Download size={16} />
@@ -1291,7 +1282,7 @@ ${ccLine}
                   
                   /* Linky držíme svítivě modré */
                   a, a * { color: #00f3ff !important; text-decoration: none !important; }
-                  a:hover, a:hover * { text-decoration: underline !important; color: #f800ff !important; text-shadow: 0 0 10px #f800ff !important; }
+                  a:hover, a:hover * { text-decoration: underline !important; color: #f72585 !important; text-shadow: 0 0 10px #f72585 !important; }
                   
                   /* Stylování iFrame posuvníku do neonu */
                   ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -1436,7 +1427,7 @@ ${ccLine}
              `}
               />
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-500 font-medium">
+              <div className="flex items-center justify-center h-full text-slate-500 font-medium">
                 Zpráva neobsahuje žádný textový, ani HTML obsah ke čtení.
               </div>
             )}
@@ -1452,12 +1443,12 @@ ${ccLine}
           id="attachment-preview-modal"
           ref={modalRef}
           tabIndex={0}
-          className="fixed inset-0 z-[999999] bg-black/95 flex flex-col p-4 sm:p-10 backdrop-blur-md outline-none"
+          className="fixed inset-0 z-[999999] bg-[#020817]/95 flex flex-col p-4 sm:p-10 backdrop-blur-md outline-none"
           onClick={(e) => { e.stopPropagation(); URL.revokeObjectURL(previewBlob.url); setPreviewBlob(null); }}
           onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); URL.revokeObjectURL(previewBlob.url); setPreviewBlob(null); } }}
         >
           <div className="flex justify-between items-center mb-4 text-[#00f3ff]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 bg-black/40 px-6 py-3 rounded-xl border border-[#00f3ff]/20">
+            <div className="flex items-center gap-3 bg-[#0a1630] px-6 py-3 rounded-xl border border-[#00f3ff]/20">
               <Eye size={24} className="animate-pulse" />
               <h2 className="text-xl font-bold tracking-wide truncate max-w-md">{previewBlob.filename}</h2>
             </div>
@@ -1466,7 +1457,7 @@ ${ccLine}
                 URL.revokeObjectURL(previewBlob.url);
                 setPreviewBlob(null);
               }}
-              className="pointer-events-auto p-2 bg-black/40 hover:bg-[#ef4444]/20 text-gray-300 hover:text-[#ef4444] rounded-full transition-all border border-white/10 hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center backdrop-blur-md"
+              className="pointer-events-auto p-2 bg-[#0a1630] hover:bg-[#ef4444]/20 text-slate-300 hover:text-[#ef4444] rounded-full transition-all border border-[#00f3ff]/[0.15] hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center backdrop-blur-md"
               title="Zavřít zobrazení"
             >
               <X size={24} strokeWidth={2.5} />
@@ -1476,7 +1467,7 @@ ${ccLine}
             {previewBlob.type.startsWith('image/') ? (
               <img src={previewBlob.url} className="max-w-full max-h-full object-contain p-2 drop-shadow-2xl" alt="Preview" />
             ) : previewBlob.type === 'application/pdf' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (
-              <div className="flex flex-col items-center justify-center p-8 text-center h-full w-full bg-[#050810]/95">
+              <div className="flex flex-col items-center justify-center p-8 text-center h-full w-full bg-[#061026]/95">
                  <FileText size={64} className="text-[#00f3ff] mb-6 drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]" />
                  <h3 className="text-2xl font-black tracking-widest text-white mb-4 uppercase drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">Náhled na mobilu</h3>
                  <p className="text-[#00f3ff]/70 max-w-md mb-8 text-sm leading-relaxed">Mobilní systémy (iOS/Android) z bezpečnostních a technických důvodů blokují přímé zobrazení PDF souborů uvnitř okna webových aplikací.</p>

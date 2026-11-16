@@ -14,6 +14,8 @@ const globalNotifiedSet = new Set();
 let globalHighestEmailDate = 0;
 const hasAttachment = (payload) => {
   if (!payload) return false;
+  // Seznam se stahuje jen s hlavičkami (bez částí) – příloha se pozná podle multipart/mixed
+  if (!payload.parts && payload.mimeType === 'multipart/mixed') return true;
   if (payload.filename && payload.filename.length > 0) return true;
   if (payload.parts) {
     return payload.parts.some(hasAttachment);
@@ -51,6 +53,29 @@ const parseDate = (dateStr) => {
   };
 };
 
+/** Pro seznam stačí hlavičky – celé tělo e-mailu se stahuje až v detailu */
+const LIST_HEADERS = ['From', 'To', 'Cc', 'Subject', 'Date'].map(h => `&metadataHeaders=${h}`).join('');
+const fetchThreadsMeta = async (threads, token) => {
+  const full = await Promise.all(threads.map(async (thread) => {
+    try {
+      const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}?format=metadata${LIST_HEADERS}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }));
+  return full.filter(t => t && t.messages && t.messages.length > 0).map(formatThreadMessage);
+};
+
+/** Pevné šířky sloupců seznamu – společné pro hlavičku i řádky */
+const COL_STYLE = { '--col-from': 'clamp(130px, 26%, 230px)', '--col-date': '84px' };
+
+/** Naposledy zobrazený obsah složek v paměti (klíč: složka + filtr) – návrat do složky je okamžitý,
+ *  aktuální stav se pak dotáhne na pozadí */
+const folderMemCache = new Map();
+
 const formatThreadMessage = (thread) => {
   const messages = thread.messages || [];
   if (messages.length === 0) return null;
@@ -72,8 +97,10 @@ const formatThreadMessage = (thread) => {
   const ccFull = getHeader(receivedHeaders, 'Cc');
   const dateData = parseDate(getHeader(latestHeaders, 'Date'));
 
-  const fromParsed = fromFull.split('<')[0].trim() || fromFull;
-  const toParsed = toFull.split('<')[0].trim() || toFull;
+  // Jméno bez e-mailu a bez uvozovek („"Alza.cz" <info@alza.cz>“ → Alza.cz)
+  const displayName = (full) => (full.split('<')[0].trim().replace(/^["']+|["']+$/g, '').replace(/\\"/g, '').trim() || full);
+  const fromParsed = displayName(fromFull);
+  const toParsed = displayName(toFull);
 
   const threadId = thread.id;
   const elementId = latestMsg.id; 
@@ -102,7 +129,7 @@ const formatThreadMessage = (thread) => {
     from: fromParsed,
     to: toParsed,
     originalFrom: fromParsed,
-    cc: ccFull ? (ccFull.split('<')[0].trim() || ccFull) : '',
+    cc: ccFull ? displayName(ccFull) : '',
     originalFromRaw: fromFull,
     originalToRaw: toFull,
     originalCcRaw: ccFull,
@@ -191,6 +218,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   };
 
   const [emails, setEmails] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [displayedEmailLimit, setDisplayedEmailLimit] = useState(10);
   const [sortField, setSortField] = useState('date');
@@ -380,35 +408,57 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }, [selectedEmailId, googleToken, emails]);
 
   const fetchedFolderRef = React.useRef(null);
+  const fetchSeqRef = React.useRef(0);
   useEffect(() => {
     if (!googleToken) {
       setEmails([]);
       return;
     }
 
+    // Každé načtení má pořadové číslo – výsledek staršího požadavku (jiná složka) se zahodí
+    const seq = ++fetchSeqRef.current;
+    const isCurrent = () => fetchSeqRef.current === seq;
+    const cacheKey = `${activeFolder}|${showOnlyUnread ? 1 : 0}|${searchQuery.trim()}`;
+
     const fetchEmails = async () => {
-      // 1) Pokus o nahrání z Offline Keše (Zajišťuje instantní zobrazení pro uživatele nebo plný chod při offline)
-      try {
-        const cached = await db.emails.where('folderLabel').equals(activeFolder).toArray();
-        if (cached && cached.length > 0) {
-          // Aplikovat filtry vyhledávání na cache
-          let filteredCache = cached;
+      setDisplayedEmailLimit(10);
+      let hasData = false;
+
+      // 0) Paměť – okamžité zobrazení, při čerstvých datech se nic nestahuje
+      const mem = folderMemCache.get(cacheKey);
+      if (mem) {
+        setEmails(mem.emails);
+        setNextPageToken(mem.nextPageToken);
+        setLoading(false);
+        hasData = true;
+      } else {
+        // 1) Offline keš v databázi
+        try {
+          const cached = await db.emails.where('folderLabel').equals(activeFolder).toArray();
+          if (!isCurrent()) return;
+          let filteredCache = cached || [];
           if (showOnlyUnread) filteredCache = filteredCache.filter(e => e.isUnread);
           if (searchQuery.trim()) {
             const lowQ = searchQuery.toLowerCase();
-            filteredCache = filteredCache.filter(e => 
-              (e.subject && e.subject.toLowerCase().includes(lowQ)) || 
-              (e.from && e.from.toLowerCase().includes(lowQ)) || 
+            filteredCache = filteredCache.filter(e =>
+              (e.subject && e.subject.toLowerCase().includes(lowQ)) ||
+              (e.from && e.from.toLowerCase().includes(lowQ)) ||
               (e.snippet && e.snippet.toLowerCase().includes(lowQ))
             );
           }
           if (filteredCache.length > 0) {
+            filteredCache.sort((a, b) => (b.rawDate || 0) - (a.rawDate || 0));
             setEmails(mergeAndGroupEmails([], filteredCache));
-            setLoading(false); // Okamžité skrytí spinneru
+            setLoading(false);
+            hasData = true;
           }
+        } catch (cacheErr) {
+          console.warn("Nepodařilo se natáhnout offline data:", cacheErr);
         }
-      } catch (cacheErr) {
-        console.warn("Nepodařilo se natáhnout offline data:", cacheErr);
+        if (!hasData) {
+          // Nic v keši – neukazovat obsah předchozí složky
+          setEmails([]);
+        }
       }
 
       if (!navigator.onLine) {
@@ -417,9 +467,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
          return; // Zastavit network request, pokud jsme offline
       }
 
-      // 2) Běžný Network Fetch
-      if (emails.length === 0) setLoading(true); // Ukázat spinner, jen pokud nemáme aspoň ta cache data
-      setDisplayedEmailLimit(10);
+      // 2) Stažení ze serveru
+      if (!hasData) setLoading(true);
       try {
         const labelId = getLabelId(activeFolder);
         let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=40`;
@@ -432,40 +481,37 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           headers: { Authorization: `Bearer ${googleToken}` }
         });
         const listData = await listRes.json();
+        if (!isCurrent()) return;
 
         if (!listData.threads) {
           setEmails([]);
+          setNextPageToken(null);
+          folderMemCache.set(cacheKey, { emails: [], nextPageToken: null });
           fetchedFolderRef.current = activeFolder;
           setLoading(false);
           return;
         }
 
-        setNextPageToken(listData.nextPageToken || null);
-
-        const threadsPromises = listData.threads.map(async (thread) => {
-          const threadRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}?format=full`, {
-            headers: { Authorization: `Bearer ${googleToken}` }
-          });
-          return await threadRes.json();
-        });
-
-        const fullThreads = await Promise.all(threadsPromises);
-        const validThreads = fullThreads.filter(t => t && t.messages && t.messages.length > 0);
-        const formattedEmails = validThreads.map(formatThreadMessage);
+        const formattedEmails = await fetchThreadsMeta(listData.threads, googleToken);
+        if (!isCurrent()) return;
 
         formattedEmails.forEach(e => {
           e.folderLabel = activeFolder; // Nutné pro DB Index
           globalNotifiedSet.add(e.id);
           globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
         });
-        
+
         // Asynchronní zápis/update do lokální databáze
         db.emails.bulkPut(formattedEmails).catch(e => console.warn('Chyba při cachování:', e));
 
-        setEmails(mergeAndGroupEmails([], formattedEmails));
+        const grouped = mergeAndGroupEmails([], formattedEmails);
+        setNextPageToken(listData.nextPageToken || null);
+        setEmails(grouped);
+        folderMemCache.set(cacheKey, { emails: grouped, nextPageToken: listData.nextPageToken || null });
       } catch (err) {
         console.error("Chyba načítání pošty:", err);
       }
+      if (!isCurrent()) return;
       fetchedFolderRef.current = activeFolder;
       setLoading(false);
     };
@@ -475,6 +521,14 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
   const emailsRef = React.useRef(emails);
   useEffect(() => { emailsRef.current = emails; }, [emails]);
+
+  // Změny v seznamu (přečtení, smazání, hvězdička…) se propíšou i do paměti složky
+  useEffect(() => {
+    if (fetchedFolderRef.current !== activeFolder) return;
+    const key = `${activeFolder}|${showOnlyUnread ? 1 : 0}|${searchQuery.trim()}`;
+    const mem = folderMemCache.get(key);
+    if (mem && mem.emails !== emails) folderMemCache.set(key, { ...mem, emails, nextPageToken });
+  }, [emails, nextPageToken, activeFolder, showOnlyUnread, searchQuery]);
 
   // Auto-refresh vybraného vlákna: pokud přijde novější zpráva do již otevřeného vlákna
   useEffect(() => {
@@ -514,16 +568,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           const listData = await listRes.json();
           if (!listData.threads) return;
 
-          const threadsPromises = listData.threads.map(async (thread) => {
-            const threadRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}?format=full`, {
-              headers: { Authorization: `Bearer ${googleToken}` }
-            });
-            return await threadRes.json();
-          });
-
-          const fullThreads = await Promise.all(threadsPromises);
-          const validThreads = fullThreads.filter(t => t && t.messages && t.messages.length > 0);
-          const formattedEmails = validThreads.map(formatThreadMessage);
+          const formattedEmails = await fetchThreadsMeta(listData.threads, googleToken);
 
           let permissionGranted = await isPermissionGranted();
           if (!permissionGranted) {
@@ -759,17 +804,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
       setNextPageToken(listData.nextPageToken || null);
 
-      const threadsPromises = listData.threads.map(async (thread) => {
-        const threadRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}?format=full`, {
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-        return await threadRes.json();
-      });
-
-      const fullThreads = await Promise.all(threadsPromises);
-      const validThreads = fullThreads.filter(t => t && t.messages && t.messages.length > 0);
-      const formattedEmails = validThreads.map(formatThreadMessage);
-      
+      const formattedEmails = await fetchThreadsMeta(listData.threads, googleToken);
       formattedEmails.forEach(e => {
         globalNotifiedSet.add(e.id);
         globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
@@ -919,7 +954,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
   const HeaderItem = ({ label, field, className = "" }) => (
     <div
-      className={`flex items-center gap-1 cursor-pointer hover:text-[#00f3ff] transition-colors select-none ${className} ${sortField === field ? 'text-[#00f3ff] font-bold' : 'text-gray-400'}`}
+      className={`flex items-center gap-1 cursor-pointer hover:text-[#00f3ff] transition-colors select-none ${className} ${sortField === field ? 'text-[#00f3ff] font-bold' : 'text-slate-400'}`}
       onClick={() => handleSort(field)}
     >
       <span>{label}</span>
@@ -934,13 +969,13 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
   if (!googleToken) {
     return (
-      <div className="flex-1 relative bg-[#0f172a]/80 backdrop-blur-md flex flex-col items-center justify-center h-full p-8 text-center shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
+      <div className="flex-1 relative bg-[#061026]/80 backdrop-blur-md flex flex-col items-center justify-center h-full p-8 text-center shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
         <div className="flex flex-col items-center max-w-md gap-6 z-10">
           <div className="w-24 h-24 rounded-full bg-[#00f3ff]/10 flex items-center justify-center shadow-[0_0_40px_rgba(0,243,255,0.2)] border-2 border-[#00f3ff]/40 mb-2 group animate-pulse-slow">
             <Mail className="w-10 h-10 text-[#00f3ff]" />
           </div>
           <h2 className="text-3xl text-white font-black tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]">Systém uzamčen</h2>
-          <p className="text-gray-400 text-sm tracking-widest font-mono uppercase opacity-70">Zabezpečená zóna: Vyžaduje se autentizace operátora</p>
+          <p className="text-slate-400 text-sm tracking-widest font-mono uppercase opacity-70">Zabezpečená zóna: Vyžaduje se autentizace operátora</p>
 
           <button
             onClick={(e) => { e.stopPropagation(); loginWithGoogle && loginWithGoogle(); }}
@@ -948,7 +983,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           >
             <div className="absolute inset-0 w-full h-full bg-[#00f3ff] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 pointer-events-none"></div>
             <span className="relative z-10 flex items-center gap-3 pointer-events-none">
-              <span className="w-2 h-2 rounded-full bg-[#f800ff] group-hover:bg-black shadow-[0_0_8px_#f800ff] transition-colors duration-300"></span>
+              <span className="w-2 h-2 rounded-full bg-[#f72585] group-hover:bg-black shadow-[0_0_8px_#f72585] transition-colors duration-300"></span>
               Přihlásit se
             </span>
           </button>
@@ -960,22 +995,25 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }
 
   return (
-    <div className="flex-1 relative bg-[#0f172a]/20 md:bg-[#0f172a]/80 md:backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
+    <div
+      style={COL_STYLE}
+      className="mail-list flex-1 relative bg-[#061026]/20 md:bg-[#061026]/80 md:backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]"
+    >
 
       {/* Mobilní Nadpis Složky */}
       {(() => {
         const iconMap = {
-          'Doručené': '/vr_inbox_trans.png',
-          'Důležité': '/vr_important_trans.png',
-          'Odeslané': '/vr_sent_trans.png',
-          'Rozepsané': '/vr_drafts_trans.png',
-          'Spam': '/vr_spam_trans.png',
-          'Koš': '/vr_trash_trans.png'
+          'Doručené': '/vr_inbox.svg',
+          'Důležité': '/vr_important.svg',
+          'Odeslané': '/vr_sent.svg',
+          'Rozepsané': '/vr_drafts.svg',
+          'Spam': '/vr_spam.svg',
+          'Koš': '/vr_trash.svg'
         };
-        const mascotImg = iconMap[activeFolder] ? <img src={iconMap[activeFolder]} alt="Mascot" className="h-14 w-auto object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] animate-pulse-slow" /> : null;
+        const mascotImg = iconMap[activeFolder] ? <img src={iconMap[activeFolder]} alt="Mascot" className="h-14 w-auto object-contain" /> : null;
 
         return (
-          <div className="md:hidden px-6 pt-5 pb-3 bg-gradient-to-b from-black/60 to-transparent shrink-0 flex items-center justify-start gap-4 relative z-10">
+          <div className="md:hidden px-6 pt-5 pb-3 bg-gradient-to-b from-[#020817]/60 to-transparent shrink-0 flex items-center justify-start gap-4 relative z-10">
 
             {/* Horní neonová linka (Synchronizovaná) */}
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
@@ -993,7 +1031,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('vr-mobile-search-toggle')); }}
-                className="group relative p-3.5 rounded-full bg-[#0f172a]/80 backdrop-blur-md border border-[#00f3ff]/40 text-[#00f3ff] active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-[#00f3ff]/10 ml-4 overflow-hidden focus:outline-none"
+                className="group relative p-3.5 rounded-full bg-[#061026]/80 backdrop-blur-md border border-[#00f3ff]/40 text-[#00f3ff] active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-[#00f3ff]/10 ml-4 overflow-hidden focus:outline-none"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-[#00f3ff]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 <div className="absolute inset-[3px] rounded-full border border-[#00f3ff]/20 group-hover:border-[#00f3ff]/50 pointer-events-none"></div>
@@ -1005,14 +1043,14 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       })()}
 
       {/* Sub-toolbar */}
-      <div className="hidden md:flex items-center pl-7 py-3 pr-[38px] md:m-6 md:mb-0 md:h-[100px] md:rounded-2xl bg-black/40 md:bg-[#0a0f1d] border-b md:border border-[#00f3ff]/10 md:border-[#00f3ff]/20 md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-20 shrink-0">
+      <div className="hidden md:flex items-center pl-7 py-3 pr-[38px] md:mx-3 md:mt-3 md:rounded-xl bg-[#0a1630] md:bg-[#061026] border-b md:border border-[#00f3ff]/10 md:border-[#00f3ff]/20 md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-20 shrink-0">
 
         {/* Placeholder šířky pro sloupec s Checkboxy */}
         <div className="w-[40px] pr-2" />
 
         {/* Šířka pro sloupec Odesílatel */}
-        <div className="w-[20%] pr-4 flex items-center">
-          <span className="text-gray-400 text-[10px] sm:text-xs tracking-widest uppercase truncate" title={`Zobrazeno ${visibleEmails.length} konverzací`}>
+        <div className="w-[var(--col-from)] shrink-0 pr-4 flex items-center">
+          <span className="text-slate-400 text-[10px] sm:text-xs tracking-widest uppercase truncate" title={`Zobrazeno ${visibleEmails.length} konverzací`}>
             Výpis {visibleEmails.length} konverzací
           </span>
         </div>
@@ -1035,7 +1073,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
                 setSortField('date');
                 setSortAscending(false);
               }}
-              className="absolute right-6 top-1/2 -translate-y-1/2 text-[#00f3ff]/60 hover:text-[#f800ff] transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(248,0,255,0.5)] z-10 hover:scale-125"
+              className="absolute right-6 top-1/2 -translate-y-1/2 text-[#00f3ff]/60 hover:text-[#f72585] transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(247,37,133,0.5)] z-10 hover:scale-125"
               title="Vymazat hledání a obnovit řazení"
             >
               ✕
@@ -1057,7 +1095,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       </div>
 
       {/* Pevný Header vytažený mimo scrollovací kontejner, aby scrollbar neprotínal jeho pravý okraj */}
-      <div className="hidden md:flex items-center pl-7 py-4 pr-[38px] bg-[#0f172a]/40 border-b border-[#00f3ff]/20 text-sm font-semibold tracking-wider uppercase shadow-[0_5px_15px_-5px_rgba(0,0,0,0.5)] shrink-0 z-30 w-full md:mt-4">
+      <div className="hidden md:flex items-center pl-7 py-2.5 pr-[38px] bg-[#061026]/40 border-b border-[#00f3ff]/20 text-xs font-semibold tracking-wider uppercase shrink-0 z-30 w-full md:mt-2">
         <div
           className="w-[40px] pr-2 flex justify-center cursor-pointer text-[#00f3ff] hover:text-white transition-colors"
           onClick={toggleSelectAll}
@@ -1084,10 +1122,10 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
               <button
                 onClick={handleBulkToggleStar}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#f800ff]/20 text-[#00f3ff] hover:text-[#f800ff] border border-transparent hover:border-[#f800ff]/50 transition-all font-bold uppercase tracking-wider text-xs"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#f72585]/20 text-[#00f3ff] hover:text-[#f72585] border border-transparent hover:border-[#f72585]/50 transition-all font-bold uppercase tracking-wider text-xs"
                 title="Označit jako důležité"
               >
-                <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-[#f800ff]/50' : 'bg-[#f800ff] shadow-[0_0_8px_#f800ff] animate-pulse'}`}></div>
+                <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-[#f72585]/50' : 'bg-[#f72585] shadow-[0_0_8px_#f72585]'}`}></div>
                 {isFirstStarred ? 'Odebrat' : 'Důležité'}
               </button>
 
@@ -1112,15 +1150,18 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           </div>
         ) : (
           <>
-            <HeaderItem label="Odesílatel" field="from" className="w-[20%] pr-4" />
-            <HeaderItem label="Předmět" field="subject" className="flex-1 pr-4" />
-            <div className="w-[100px] shrink-0"></div>
-            <HeaderItem label="Velikost" field="size" className="w-[90px] shrink-0 text-right pr-4" />
-            <div className="w-[50px] shrink-0 flex items-center justify-center">
-              <Paperclip size={14} className="text-[#00f3ff]/40" />
+            <div className="shrink-0 w-[var(--col-from)]">
+              <HeaderItem label={activeFolder === 'Odeslané' ? 'Příjemce' : 'Odesílatel'} field="from" className="w-full pr-4 overflow-hidden whitespace-nowrap" />
             </div>
-            <HeaderItem label="Datum" field="date" className="w-[100px] shrink-0 text-right" />
-            <div className="w-[30px] shrink-0"></div>
+            <div className="flex-1 min-w-0 pl-3">
+              <HeaderItem label="Předmět" field="subject" className="w-full pr-4 overflow-hidden whitespace-nowrap" />
+            </div>
+            <div className="mcol-size shrink-0 w-[70px]">
+              <HeaderItem label="Velikost" field="size" className="w-full justify-end pr-3 whitespace-nowrap" />
+            </div>
+            <div className="shrink-0 w-[var(--col-date)]">
+              <HeaderItem label="Datum" field="date" className="w-full justify-end whitespace-nowrap" />
+            </div>
           </>
         )}
       </div>
@@ -1133,7 +1174,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
             <span className="font-semibold tracking-wide">Stahování pošty...</span>
           </div>
         ) : visibleEmails.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-gray-500 font-medium min-h-64">
+          <div className="flex-1 flex items-center justify-center text-slate-500 font-medium min-h-64">
             Složka je prázdná
           </div>
         ) : (
@@ -1188,17 +1229,17 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
       {/* Mobile Multiselect Floating Bar */}
       {selectedMailIds.size > 0 && (
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-[90] bg-[#050810]/95 backdrop-blur-xl border border-[#00f3ff]/40 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,243,255,0.2)] animate-in slide-in-from-bottom-5 duration-300">
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-[90] bg-[#061026]/95 backdrop-blur-xl border border-[#00f3ff]/40 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,243,255,0.2)] animate-in slide-in-from-bottom-5 duration-300">
           <div className="flex items-center justify-between mb-4 border-b border-[#00f3ff]/20 pb-3">
             <div className="flex items-center gap-3">
-              <button onClick={() => setSelectedMailIds(new Set())} className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 transition-colors">
+              <button onClick={() => setSelectedMailIds(new Set())} className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 transition-colors">
                 <X size={20} />
               </button>
               <span className="font-bold text-[#00f3ff] text-sm tracking-widest">{selectedMailIds.size} Vybráno</span>
             </div>
             <button
               onClick={toggleSelectAll}
-              className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
+              className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
             >
               {selectedMailIds.size === visibleEmails.length ? 'Odznačit vše' : 'Vybrat vše'}
             </button>
@@ -1210,9 +1251,9 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
               <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstUnread ? 'Přečtené' : 'Nepřeč.'}</span>
             </button>
 
-            <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-[#f800ff] hover:text-white transition-colors">
-              <div className="p-3 rounded-xl bg-[#f800ff]/10 shadow-[inset_0_0_10px_rgba(248,0,255,0.2)]">
-                <div className={`w-5 h-5 rounded-full transition-all ${isFirstStarred ? 'border-2 border-[#f800ff]/50' : 'bg-[#f800ff] shadow-[0_0_10px_#f800ff] animate-pulse'}`}></div>
+            <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-[#f72585] hover:text-white transition-colors">
+              <div className="p-3 rounded-xl bg-[#f72585]/10 shadow-[inset_0_0_10px_rgba(247,37,133,0.2)]">
+                <div className={`w-5 h-5 rounded-full transition-all ${isFirstStarred ? 'border-2 border-[#f72585]/50' : 'bg-[#f72585] shadow-[0_0_10px_#f72585] animate-pulse'}`}></div>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstStarred ? 'Odebrat' : 'Důležité'}</span>
             </button>
@@ -1234,14 +1275,14 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
       {/* Mobile Delete Confirmation Modal */}
       {mobileDeletePending && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#0f172a] border-2 border-[#ff3366]/50 rounded-2xl p-6 w-full max-w-sm shadow-[0_0_40px_rgba(255,51,102,0.3)]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020817]/80 backdrop-blur-sm p-4">
+          <div className="bg-[#061026] border-2 border-[#ff3366]/50 rounded-2xl p-6 w-full max-w-sm shadow-[0_0_40px_rgba(255,51,102,0.3)]">
             <h3 className="text-xl font-black text-[#ff3366] tracking-widest uppercase mb-2">Potvrdit smazání</h3>
-            <p className="text-gray-300 mb-6 font-semibold">Opravdu chcete tento e-mail přesunout do koše?</p>
+            <p className="text-slate-300 mb-6 font-semibold">Opravdu chcete tento e-mail přesunout do koše?</p>
             <div className="flex gap-4">
               <button
                 onClick={() => setMobileDeletePending(null)}
-                className="flex-1 py-3 rounded-xl border border-gray-600 text-gray-300 font-bold tracking-widest uppercase transition-colors hover:bg-gray-800"
+                className="flex-1 py-3 rounded-xl border border-slate-600 text-slate-300 font-bold tracking-widest uppercase transition-colors hover:bg-slate-800"
               >
                 Zrušit
               </button>

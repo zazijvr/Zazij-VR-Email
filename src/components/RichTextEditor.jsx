@@ -12,7 +12,7 @@ const EditorDropdown = ({ defaultLabel, icon, options, onSelect }) => {
       <button 
         type="button"
         onMouseDown={(e) => { e.preventDefault(); setIsOpen(!isOpen); }}
-        className="px-2 py-1.5 hover:bg-[#00f3ff]/20 text-gray-300 hover:text-[#00f3ff] rounded flex items-center gap-1.5 border border-white/10 hover:border-[#00f3ff]/40 transition-colors bg-black/50 tracking-wide"
+        className="px-2 py-1.5 hover:bg-[#00f3ff]/20 text-slate-300 hover:text-[#00f3ff] rounded flex items-center gap-1.5 border border-[#00f3ff]/[0.15] hover:border-[#00f3ff]/40 transition-colors bg-[#020817]/50 tracking-wide"
       >
         {icon && <div>{icon}</div>}
         {currentLabel && <div className="text-xs font-bold">{currentLabel}</div>}
@@ -24,7 +24,7 @@ const EditorDropdown = ({ defaultLabel, icon, options, onSelect }) => {
              className="fixed inset-0 z-[90]" 
              onMouseDown={(e) => { e.stopPropagation(); setIsOpen(false); }}
           />
-          <div className="absolute top-[calc(100%+4px)] left-0 min-w-[140px] bg-black/95 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_20px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
+          <div className="absolute top-[calc(100%+4px)] left-0 min-w-[140px] bg-[#020817]/95 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_20px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
           <div className="max-h-56 overflow-y-auto custom-scrollbar">
             {options.map(opt => (
                <div 
@@ -35,7 +35,7 @@ const EditorDropdown = ({ defaultLabel, icon, options, onSelect }) => {
                    onSelect(opt.value); 
                    setIsOpen(false); 
                  }}
-                 className="px-3 py-2 hover:bg-[#00f3ff]/20 text-gray-300 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 text-xs font-semibold flex items-center gap-2"
+                 className="px-3 py-2 hover:bg-[#00f3ff]/20 text-slate-300 hover:text-white cursor-pointer transition-colors border-b border-[#00f3ff]/10 last:border-0 text-xs font-semibold flex items-center gap-2"
                  style={opt.style || {}}
                >
                  <span className="w-3 flex justify-center text-[#00f3ff] shrink-0 font-black">
@@ -115,7 +115,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
       <button 
         type="button"
         onMouseDown={(e) => { e.preventDefault(); setIsOpen(!isOpen); }}
-        className="px-2 py-1.5 hover:bg-[#00f3ff]/20 text-gray-300 hover:text-[#00f3ff] rounded flex items-center gap-1.5 border border-transparent hover:border-[#00f3ff]/40 transition-colors bg-black/50"
+        className="px-2 py-1.5 hover:bg-[#00f3ff]/20 text-slate-300 hover:text-[#00f3ff] rounded flex items-center gap-1.5 border border-transparent hover:border-[#00f3ff]/40 transition-colors bg-[#020817]/50"
         title="Barva textu a podbarvení"
       >
         <div 
@@ -148,21 +148,21 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
              onMouseDown={(e) => { e.stopPropagation(); setIsOpen(false); }}
           />
           <div 
-            className="absolute top-[calc(100%+4px)] left-0 min-w-[320px] bg-black/95 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_20px_rgba(0,243,255,0.3)] p-4 z-[100] flex flex-col gap-3"
+            className="absolute top-[calc(100%+4px)] left-0 min-w-[320px] bg-[#020817]/95 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_20px_rgba(0,243,255,0.3)] p-4 z-[100] flex flex-col gap-3"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex gap-4">
                 {/* Background Color Section */}
                 <div className="flex-1">
-                   <span className="text-[9px] text-[#f800ff] font-bold tracking-widest uppercase mb-2 block">Podbarvení</span>
+                   <span className="text-[9px] text-[#f72585] font-bold tracking-widest uppercase mb-2 block">Podbarvení</span>
                    
                    <button 
                      onMouseDown={(e) => { e.preventDefault(); setCurrentBg('transparent'); onSelectBackground('transparent'); setIsOpen(false); }}
-                     className={`w-full border py-1 mb-3 rounded transition-colors flex flex-col items-center justify-center ${currentBg === 'transparent' ? 'border-[#f800ff] bg-[#f800ff]/20 text-white shadow-[0_0_10px_rgba(248,0,255,0.3)]' : 'border-white/20 hover:border-[#f800ff] hover:text-[#f800ff] bg-white/5 text-gray-300'}`}
+                     className={`w-full border py-1 mb-3 rounded transition-colors flex flex-col items-center justify-center ${currentBg === 'transparent' ? 'border-[#f72585] bg-[#f72585]/20 text-white shadow-[0_0_10px_rgba(247,37,133,0.3)]' : 'border-[#00f3ff]/25 hover:border-[#f72585] hover:text-[#f72585] bg-white/5 text-slate-300'}`}
                      title="Text bez barevného pozadí"
                    >
                      <div className="flex items-center gap-1 text-xs font-bold">
-                        {currentBg === 'transparent' && <span className="text-[#f800ff]">✓</span>}
+                        {currentBg === 'transparent' && <span className="text-[#f72585]">✓</span>}
                         Bez pozadí
                      </div>
                      <span className="text-[9px] opacity-70 font-normal">Čistě průchozí piksely</span>
@@ -172,7 +172,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                        {presetColors.map(c => (
                            <div key={`bg-${c}`} 
                                 onMouseDown={(e) => { e.preventDefault(); setCurrentBg(c); onSelectBackground(c); setIsOpen(false); }} 
-                                className={`w-5 h-5 rounded border cursor-pointer hover:scale-125 transition-all text-xs flex items-center justify-center ${currentBg === c ? 'border-[#f800ff] ring-2 ring-offset-2 ring-offset-[#0f172a] ring-[#f800ff] scale-110 z-10' : 'border-white/20 hover:border-[#f800ff]'}`} 
+                                className={`w-5 h-5 rounded border cursor-pointer hover:scale-125 transition-all text-xs flex items-center justify-center ${currentBg === c ? 'border-[#f72585] ring-2 ring-offset-2 ring-offset-[#061026] ring-[#f72585] scale-110 z-10' : 'border-[#00f3ff]/25 hover:border-[#f72585]'}`} 
                                 style={{ backgroundColor: c }} title={c}>
                                 {currentBg === c && <span style={{ color: getLabelColor(c), fontWeight: 'black', textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>✓</span>}
                            </div>
@@ -186,7 +186,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                            {customColors.map(c => (
                                <div key={`bg-custom-${c}`} 
                                     onMouseDown={(e) => { e.preventDefault(); setCurrentBg(c); onSelectBackground(c); setIsOpen(false); }} 
-                                    className={`w-5 h-5 rounded border cursor-pointer hover:border-[#f800ff] hover:scale-125 transition-all relative group flex items-center justify-center ${currentBg === c ? 'border-[#f800ff] ring-2 ring-offset-2 ring-offset-[#0f172a] ring-[#f800ff] scale-110 z-10' : 'border-white/20 hover:border-[#f800ff]'}`} 
+                                    className={`w-5 h-5 rounded border cursor-pointer hover:border-[#f72585] hover:scale-125 transition-all relative group flex items-center justify-center ${currentBg === c ? 'border-[#f72585] ring-2 ring-offset-2 ring-offset-[#061026] ring-[#f72585] scale-110 z-10' : 'border-[#00f3ff]/25 hover:border-[#f72585]'}`} 
                                     style={{ backgroundColor: c }} title={c}>
                                      {currentBg === c && <span style={{ color: getLabelColor(c), fontWeight: 'black', textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>✓</span>}
                                      <button 
@@ -196,7 +196,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                                           setCustomColors(customColors.filter(color => color !== c));
                                           if (currentBg === c) setCurrentBg('transparent');
                                        }}
-                                       className="absolute -top-1.5 -right-1.5 bg-red-600 rounded-full w-4 h-4 text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-white/20 text-white font-bold z-20"
+                                       className="absolute -top-1.5 -right-1.5 bg-red-600 rounded-full w-4 h-4 text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-[#00f3ff]/25 text-white font-bold z-20"
                                      >✕</button>
                                </div>
                            ))}
@@ -213,7 +213,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                    
                    <button 
                      onMouseDown={(e) => { e.preventDefault(); setCurrentFg('default'); onSelectForeground('inherit'); setIsOpen(false); }}
-                     className={`w-full border py-1 mb-3 rounded transition-colors flex flex-col items-center justify-center ${currentFg === 'default' ? 'border-[#00f3ff] bg-[#00f3ff]/20 text-white shadow-[0_0_10px_rgba(0,243,255,0.3)]' : 'border-white/20 hover:border-[#00f3ff] hover:text-[#00f3ff] bg-white/5 text-gray-300'}`}
+                     className={`w-full border py-1 mb-3 rounded transition-colors flex flex-col items-center justify-center ${currentFg === 'default' ? 'border-[#00f3ff] bg-[#00f3ff]/20 text-white shadow-[0_0_10px_rgba(0,243,255,0.3)]' : 'border-[#00f3ff]/25 hover:border-[#00f3ff] hover:text-[#00f3ff] bg-white/5 text-slate-300'}`}
                      title="Bez vynucené barvy (U příjemce se běžně zobrazí černě, u vás světle)"
                    >
                      <div className="flex items-center gap-1 text-xs font-bold">
@@ -227,7 +227,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                        {presetColors.map(c => (
                            <div key={`fg-${c}`} 
                                 onMouseDown={(e) => { e.preventDefault(); setCurrentFg(c); onSelectForeground(c); setIsOpen(false); }} 
-                                className={`w-5 h-5 rounded border cursor-pointer hover:scale-125 transition-all text-xs flex items-center justify-center ${currentFg === c ? 'border-[#00f3ff] ring-2 ring-offset-2 ring-offset-[#0f172a] ring-[#00f3ff] scale-110 z-10' : 'border-white/20 hover:border-[#00f3ff]'}`} 
+                                className={`w-5 h-5 rounded border cursor-pointer hover:scale-125 transition-all text-xs flex items-center justify-center ${currentFg === c ? 'border-[#00f3ff] ring-2 ring-offset-2 ring-offset-[#061026] ring-[#00f3ff] scale-110 z-10' : 'border-[#00f3ff]/25 hover:border-[#00f3ff]'}`} 
                                 style={{ backgroundColor: c }} title={c}>
                                 {currentFg === c && <span style={{ color: getLabelColor(c), fontWeight: 'black', textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>✓</span>}
                            </div>
@@ -241,7 +241,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                            {customColors.map(c => (
                                <div key={`fg-custom-${c}`} 
                                     onMouseDown={(e) => { e.preventDefault(); setCurrentFg(c); onSelectForeground(c); setIsOpen(false); }} 
-                                    className={`w-5 h-5 rounded border cursor-pointer hover:border-[#00f3ff] hover:scale-125 transition-all relative group flex items-center justify-center ${currentFg === c ? 'border-[#00f3ff] ring-2 ring-offset-2 ring-offset-[#0f172a] ring-[#00f3ff] scale-110 z-10' : 'border-white/20 hover:border-[#00f3ff]'}`} 
+                                    className={`w-5 h-5 rounded border cursor-pointer hover:border-[#00f3ff] hover:scale-125 transition-all relative group flex items-center justify-center ${currentFg === c ? 'border-[#00f3ff] ring-2 ring-offset-2 ring-offset-[#061026] ring-[#00f3ff] scale-110 z-10' : 'border-[#00f3ff]/25 hover:border-[#00f3ff]'}`} 
                                     style={{ backgroundColor: c }} title={c}>
                                      {currentFg === c && <span style={{ color: getLabelColor(c), fontWeight: 'black', textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>✓</span>}
                                      <button 
@@ -251,7 +251,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                                           setCustomColors(customColors.filter(color => color !== c));
                                           if (currentFg === c) setCurrentFg('default');
                                        }}
-                                       className="absolute -top-1.5 -right-1.5 bg-red-600 rounded-full w-4 h-4 text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-white/20 text-white font-bold z-20"
+                                       className="absolute -top-1.5 -right-1.5 bg-red-600 rounded-full w-4 h-4 text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-[#00f3ff]/25 text-white font-bold z-20"
                                      >✕</button>
                                </div>
                            ))}
@@ -264,17 +264,17 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
             {!showMixer ? (
                <button 
                  onMouseDown={(e) => { e.preventDefault(); setShowMixer(true); }}
-                 className="flex justify-center items-center gap-2 mt-2 bg-white/5 p-2 rounded-lg hover:bg-[#00f3ff]/20 transition-colors border border-dashed border-white/20 hover:border-[#00f3ff]/50 cursor-pointer group w-full"
+                 className="flex justify-center items-center gap-2 mt-2 bg-white/5 p-2 rounded-lg hover:bg-[#00f3ff]/20 transition-colors border border-dashed border-[#00f3ff]/25 hover:border-[#00f3ff]/50 cursor-pointer group w-full"
                >
-                 <span className="text-[10px] text-gray-300 font-bold uppercase tracking-wide group-hover:text-[#00f3ff] transition-colors">+ NAMÍCHAT VLASTNÍ BARVU</span>
+                 <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wide group-hover:text-[#00f3ff] transition-colors">+ NAMÍCHAT VLASTNÍ BARVU</span>
                </button>
             ) : (
-               <div className="flex flex-col gap-2 mt-2 p-3 bg-black/60 border border-[#00f3ff]/30 rounded-xl">
+               <div className="flex flex-col gap-2 mt-2 p-3 bg-[#020817]/60 border border-[#00f3ff]/30 rounded-xl">
                  <div className="flex justify-between items-center mb-1">
                     <span className="text-[10px] text-[#00f3ff] font-bold uppercase tracking-widest">Míchačka barev</span>
                     <button 
                        onMouseDown={(e) => { e.preventDefault(); setShowMixer(false); }}
-                       className="text-gray-400 hover:text-white text-xs font-bold"
+                       className="text-slate-400 hover:text-white text-xs font-bold"
                     >✕</button>
                  </div>
                  
@@ -295,13 +295,13 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                  </div>
                  
                  <div className="flex gap-2 mt-2 items-center">
-                   <div className="w-6 h-6 rounded border border-white/20 shrink-0" style={{backgroundColor: mixedColorHex}}></div>
+                   <div className="w-6 h-6 rounded border border-[#00f3ff]/25 shrink-0" style={{backgroundColor: mixedColorHex}}></div>
                    <input 
                      type="text" 
                      value={hexInput} 
                      onChange={handleHexChange}
                      onMouseDown={(e) => e.stopPropagation()}
-                     className="w-[70px] bg-black border border-white/10 rounded text-center text-xs text-gray-300 font-mono py-1 focus:outline-none focus:border-[#00f3ff]/50" 
+                     className="w-[70px] bg-black border border-[#00f3ff]/[0.15] rounded text-center text-xs text-slate-300 font-mono py-1 focus:outline-none focus:border-[#00f3ff]/50" 
                    />
                    <button 
                      onMouseDown={(e) => { 
@@ -348,18 +348,20 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
   const [isFocused, setIsFocused] = useState(false);
   const [formatState, setFormatState] = useState({});
   const [linkModal, setLinkModal] = useState({ isOpen: false, text: '', url: 'https://', savedRange: null, htmlContent: '', existingAnchor: null });
-  const [isCtrlPressed, setIsCtrlPressed] = useState(false);
+  // Stav Ctrl se drží jen jako data atribut na DOM (kvůli kurzoru nad odkazy) – bez re-renderu editoru
+  const rootRef = useRef(null);
   const [selectedImage, setSelectedImage] = useState(null); // { el, rect }
   const [customWidth, setCustomWidth] = useState('');
 
   useEffect(() => {
+    const setCtrl = (on) => { if (rootRef.current) rootRef.current.dataset.ctrl = on ? 'true' : 'false'; };
     const handleKeyDown = (e) => {
-      if (e.key === 'Control' || e.key === 'Meta') setIsCtrlPressed(true);
+      if (e.key === 'Control' || e.key === 'Meta') setCtrl(true);
     };
     const handleKeyUp = (e) => {
-      if (e.key === 'Control' || e.key === 'Meta') setIsCtrlPressed(false);
+      if (e.key === 'Control' || e.key === 'Meta') setCtrl(false);
     };
-    const handleBlur = () => setIsCtrlPressed(false);
+    const handleBlur = () => setCtrl(false);
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -422,19 +424,43 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     }
   };
   
+  // Aktuální onChange v refu – flush při odchodu z editoru / unmountu volá vždy nejnovější verzi
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  /** Okamžitě předá rozepsaný obsah rodiči (zruší čekající debounce) */
+  const flushChange = () => {
+    if (!debounceTimerRef.current) return;
+    clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = null;
+    if (editorRef.current) {
+      const html = editorRef.current.innerHTML;
+      lastExternalValueRef.current = html;
+      onChangeRef.current?.(html);
+    }
+  };
+
   const handleInput = () => {
     if (editorRef.current) {
-      // Debounce 600ms - editor se cítí okamžitě, React state se aktualizuje s odstupem  
+      // Debounce 600ms - editor se cítí okamžitě, React state se aktualizuje s odstupem.
+      // Při odchodu z editoru (klik na Odeslat apod.) se obsah předá hned – viz flushChange.
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = setTimeout(() => {
+        debounceTimerRef.current = null;
         if (editorRef.current) {
           const html = editorRef.current.innerHTML;
           lastExternalValueRef.current = html; // zabraň re-triggeru useEffect
-          onChange(html);
+          onChangeRef.current?.(html);
         }
       }, 600);
     }
   };
+
+  // Při zavření editoru nezahodit posledních 600 ms psaní
+  useEffect(() => () => {
+    flushChange();
+    if (formatThrottleRef.current) clearTimeout(formatThrottleRef.current);
+  }, []);
 
   const execCommand = (cmd, val = null) => {
     document.execCommand(cmd, false, val);
@@ -446,7 +472,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
   };
 
   const activeBtnClass = "bg-[#00f3ff]/20 text-[#00f3ff] shadow-[0_0_10px_rgba(0,243,255,0.2)] border-[#00f3ff]/40";
-  const inactiveBtnClass = "hover:bg-white/10 text-gray-300 hover:text-white border-transparent";
+  const inactiveBtnClass = "hover:bg-white/10 text-slate-300 hover:text-white border-transparent";
   const btnBaseClass = "p-1.5 rounded transition-colors border";
 
   const insertImage = (e) => {
@@ -617,9 +643,9 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
   }, []);
 
   return (
-    <div data-ctrl={isCtrlPressed} className={`flex flex-col border rounded-xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] ${isFocused ? 'border-[#00f3ff]/60 bg-[#0f172a]' : 'border-[#00f3ff]/30 bg-[#0f172a]'} ${className} relative overflow-visible`} style={{contain: 'layout style'}}>
+    <div ref={rootRef} data-ctrl="false" className={`flex flex-col border rounded-xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] ${isFocused ? 'border-[#00f3ff]/60 bg-[#061026]' : 'border-[#00f3ff]/30 bg-[#061026]'} ${className} relative overflow-visible`} style={{contain: 'layout style'}}>
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-2 border-b border-white/5 bg-black/40 shrink-0">
+      <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[#00f3ff]/10 bg-[#0a1630] shrink-0">
         <EditorDropdown defaultLabel="Open Sans" options={fontOptions} onSelect={(val) => execCommand('fontName', val)} />
         <EditorDropdown 
           icon={<span className="font-serif tracking-tighter flex items-end"><span className="text-[10px] leading-none mb-[1px]">t</span><span className="text-sm leading-none">T</span></span>} 
@@ -652,10 +678,10 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
         <button onClick={() => execCommand('justifyCenter')} className={`${btnBaseClass} ${formatState.justifyCenter ? activeBtnClass : inactiveBtnClass}`} title="Zarovnat na střed"><AlignCenter size={16} /></button>
         <button onClick={() => execCommand('justifyRight')} className={`${btnBaseClass} ${formatState.justifyRight ? activeBtnClass : inactiveBtnClass}`} title="Zarovnat vpravo"><AlignRight size={16} /></button>
         <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block"></div>
-        <button onClick={openLinkModal} className="p-1.5 hover:bg-white/10 text-gray-300 hover:text-[#00f3ff] rounded transition-colors" title="Vložit odkaz"><LinkIcon size={16} /></button>
+        <button onClick={openLinkModal} className="p-1.5 hover:bg-white/10 text-slate-300 hover:text-[#00f3ff] rounded transition-colors" title="Vložit odkaz"><LinkIcon size={16} /></button>
         {!hideImageUpload && (
            <React.Fragment>
-             <button onClick={() => fileInputRef.current?.click()} className="px-2 py-1.5 hover:bg-[#00f3ff]/20 text-gray-300 hover:text-[#00f3ff] rounded flex items-center gap-1.5 border border-transparent hover:border-[#00f3ff]/40 transition-colors bg-white/5" title="Vložit obrázek">
+             <button onClick={() => fileInputRef.current?.click()} className="px-2 py-1.5 hover:bg-[#00f3ff]/20 text-slate-300 hover:text-[#00f3ff] rounded flex items-center gap-1.5 border border-transparent hover:border-[#00f3ff]/40 transition-colors bg-white/5" title="Vložit obrázek">
                <ImageIcon size={15} /> <span className="text-[10px] uppercase font-bold tracking-widest hidden sm:block">Obrázek</span>
              </button>
              <input type="file" accept="image/*,.svg,.png,.jpg,.jpeg,.gif,.webp" ref={fileInputRef} onChange={insertImage} className="hidden" />
@@ -665,31 +691,31 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
 
       {/* Link Modal */}
       {linkModal.isOpen && (
-        <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center " onMouseDown={(e) => e.stopPropagation()}>
-          <div className="bg-[#0f172a] border border-[#00f3ff]/40 shadow-[0_0_30px_rgba(0,243,255,0.2)] rounded-xl p-5 w-[#90%] max-w-sm flex flex-col gap-4">
+        <div className="absolute inset-0 bg-[#020817]/60 z-50 flex items-center justify-center " onMouseDown={(e) => e.stopPropagation()}>
+          <div className="bg-[#061026] border border-[#00f3ff]/40 shadow-[0_0_30px_rgba(0,243,255,0.2)] rounded-xl p-5 w-[90%] max-w-sm flex flex-col gap-4">
             <h3 className="text-[#00f3ff] font-bold text-sm tracking-widest uppercase flex items-center gap-2 mb-1">
               <LinkIcon size={16} /> Vložit odkaz
             </h3>
             
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-gray-400 font-bold uppercase">Zobrazený text</label>
+              <label className="text-[10px] text-slate-400 font-bold uppercase">Zobrazený text</label>
               <input 
                 type="text" 
                 value={linkModal.text}
                 onChange={(e) => setLinkModal({...linkModal, text: e.target.value})}
                 placeholder="Např. Zažij VR"
-                className="bg-black/50 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#00f3ff]/50 transition-colors"
+                className="bg-[#020817]/50 border border-[#00f3ff]/[0.15] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#00f3ff]/50 transition-colors"
               />
             </div>
             
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-gray-400 font-bold uppercase">URL adresa</label>
+              <label className="text-[10px] text-slate-400 font-bold uppercase">URL adresa</label>
               <input 
                 type="text" 
                 value={linkModal.url}
                 onChange={(e) => setLinkModal({...linkModal, url: e.target.value})}
                 placeholder="https://..."
-                className="bg-black/50 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#00f3ff]/50 transition-colors"
+                className="bg-[#020817]/50 border border-[#00f3ff]/[0.15] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#00f3ff]/50 transition-colors"
                 onKeyDown={(e) => { if (e.key === 'Enter') submitLink(); }}
               />
             </div>
@@ -697,7 +723,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
             <div className="flex justify-end gap-2 mt-2">
               <button 
                 onClick={() => setLinkModal({ isOpen: false, text: '', url: 'https://', savedRange: null })}
-                className="px-4 py-2 rounded text-xs font-bold text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 rounded text-xs font-bold text-slate-400 hover:text-white transition-colors"
               >
                 ZRUŠIT
               </button>
@@ -721,7 +747,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
         onKeyUp={updateFormatStateThrottled}
         onMouseUp={updateFormatStateThrottled}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onBlur={() => { flushChange(); setIsFocused(false); }}
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
@@ -741,7 +767,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
         return (
           <div
             style={{ position: 'absolute', top: topRelative, left: leftRelative, zIndex: 200 }}
-            className="flex items-center gap-1.5 bg-black/95 border border-[#00f3ff]/60 rounded-xl px-3 py-2 shadow-[0_0_20px_rgba(0,243,255,0.4)] backdrop-blur-sm"
+            className="flex items-center gap-1.5 bg-[#020817]/95 border border-[#00f3ff]/60 rounded-xl px-3 py-2 shadow-[0_0_20px_rgba(0,243,255,0.4)] backdrop-blur-sm"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <span className="text-[9px] text-[#00f3ff] font-bold uppercase tracking-widest mr-1">Velikost</span>
@@ -749,13 +775,13 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
               <button
                 key={label}
                 onMouseDown={(e) => { e.preventDefault(); resizeImage(px); }}
-                className="px-2 py-1 text-[10px] font-black text-gray-300 hover:text-[#00f3ff] hover:bg-[#00f3ff]/20 rounded border border-white/10 hover:border-[#00f3ff]/50 transition-all"
+                className="px-2 py-1 text-[10px] font-black text-slate-300 hover:text-[#00f3ff] hover:bg-[#00f3ff]/20 rounded border border-[#00f3ff]/[0.15] hover:border-[#00f3ff]/50 transition-all"
               >{label}</button>
             ))}
             <div className="w-px h-4 bg-white/20" />
             <button
               onMouseDown={(e) => { e.preventDefault(); resizeImage('auto'); }}
-              className="px-2 py-1 text-[10px] font-black text-gray-300 hover:text-white hover:bg-white/10 rounded border border-white/10 transition-all"
+              className="px-2 py-1 text-[10px] font-black text-slate-300 hover:text-white hover:bg-white/10 rounded border border-[#00f3ff]/[0.15] transition-all"
             >Původní</button>
             <div className="w-px h-4 bg-white/20" />
             <input
@@ -765,15 +791,15 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (customWidth) resizeImage(parseInt(customWidth)); } }}
               onMouseDown={e => e.stopPropagation()}
               placeholder="px"
-              className="w-14 bg-black/60 border border-white/20 rounded px-2 py-1 text-[10px] text-white text-center font-mono focus:outline-none focus:border-[#00f3ff]/50"
+              className="w-14 bg-[#020817]/60 border border-[#00f3ff]/25 rounded px-2 py-1 text-[10px] text-white text-center font-mono focus:outline-none focus:border-[#00f3ff]/50"
             />
             <button
               onMouseDown={(e) => { e.preventDefault(); if (customWidth) resizeImage(parseInt(customWidth)); }}
-              className="px-2 py-1 text-[10px] font-black text-[#f800ff] hover:text-white hover:bg-[#f800ff]/20 rounded border border-[#f800ff]/40 transition-all"
+              className="px-2 py-1 text-[10px] font-black text-[#f72585] hover:text-white hover:bg-[#f72585]/20 rounded border border-[#f72585]/40 transition-all"
             >OK</button>
             <button
               onMouseDown={(e) => { e.preventDefault(); setSelectedImage(null); }}
-              className="ml-1 text-gray-500 hover:text-red-400 text-xs transition-colors"
+              className="ml-1 text-slate-500 hover:text-red-400 text-xs transition-colors"
             >✕</button>
           </div>
         );

@@ -135,16 +135,16 @@ export default function AutofillInput({ userEmail, label, value, onChange, place
       />
       
       {showDropdown && (
-        <ul className="absolute top-[100%] left-0 w-full z-[100] mt-2 bg-[#0f172a] border border-[#00f3ff]/40 rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8),_0_0_15px_rgba(0,243,255,0.2)] max-h-[250px] overflow-y-auto transform-gpu will-change-transform">
+        <ul className="absolute top-[100%] left-0 w-full z-[100] mt-2 bg-[#061026] border border-[#00f3ff]/40 rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8),_0_0_15px_rgba(0,243,255,0.2)] max-h-[250px] overflow-y-auto transform-gpu will-change-transform">
           {suggestions.map((suggestion, index) => (
             <li 
               key={index}
               onClick={() => handleSelectSuggestion(suggestion)}
               onMouseEnter={() => setActiveIndex(index)}
-              className={`px-4 py-3 cursor-pointer text-sm font-mono border-b border-white/5 last:border-none transition-colors ${
+              className={`px-4 py-3 cursor-pointer text-sm font-mono border-b border-[#00f3ff]/10 last:border-none transition-colors ${
                 index === activeIndex 
                 ? 'bg-[#00f3ff]/20 text-white' 
-                : 'text-gray-300 hover:bg-white/5'
+                : 'text-slate-300 hover:bg-white/5'
               }`}
             >
               {suggestion}

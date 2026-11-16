@@ -1,10 +1,7 @@
 name: Měsíční kompilace do Cloudu
 
 on:
-  push:
-    branches:
-      - main
-      - dev
+  workflow_dispatch:
 
 jobs:
   build-and-release:

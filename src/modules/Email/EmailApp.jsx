@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import EmailList from '../../components/EmailList';
 import EmailDetail from '../../components/EmailDetail';
@@ -7,20 +7,58 @@ import { Mail, Inbox, Send, FileEdit, Flag, AlertOctagon, Trash2 } from 'lucide-
 import { useAlert } from '../../components/AlertProvider';
 
 const getFolderIcon = (folder) => {
-  const commonClasses = "w-14 h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]";
+  const commonClasses = "w-14 h-14 md:w-16 md:h-16 object-contain";
   switch (folder) {
-    case 'Doručené': return <img src="/vr_inbox_trans.png" className={commonClasses} alt="Doručené" draggable="false" />;
-    case 'Odeslané': return <img src="/vr_sent_trans.png" className={commonClasses} alt="Odeslané" draggable="false" />;
-    case 'Rozepsané': return <img src="/vr_drafts_trans.png" className={commonClasses} alt="Rozepsané" draggable="false" />;
-    case 'Spam': return <img src="/vr_spam_trans.png" className={commonClasses} alt="Spam" draggable="false" />;
-    case 'Koš': return <img src="/vr_trash_trans.png" className={commonClasses} alt="Koš" draggable="false" />;
-    case 'Důležité': return <img src="/vr_important_trans.png" className={commonClasses} alt="Důležité" draggable="false" />;
-    default: return <img src="/vr_inbox_trans.png" className={commonClasses} alt={folder} draggable="false" />;
+    case 'Doručené': return <img src="/vr_inbox.svg" className={commonClasses} alt="Doručené" draggable="false" />;
+    case 'Odeslané': return <img src="/vr_sent.svg" className={commonClasses} alt="Odeslané" draggable="false" />;
+    case 'Rozepsané': return <img src="/vr_drafts.svg" className={commonClasses} alt="Rozepsané" draggable="false" />;
+    case 'Spam': return <img src="/vr_spam.svg" className={commonClasses} alt="Spam" draggable="false" />;
+    case 'Koš': return <img src="/vr_trash.svg" className={commonClasses} alt="Koš" draggable="false" />;
+    case 'Důležité': return <img src="/vr_important.svg" className={commonClasses} alt="Důležité" draggable="false" />;
+    default: return <img src="/vr_inbox.svg" className={commonClasses} alt={folder} draggable="false" />;
   }
 };
 
 export default function EmailApp({ googleToken, activeFolder, unreadCounts, setUnreadCounts, triggerCompose, triggerMove, loginWithGoogle, isVerticalLayout, customLabels, userEmail }) {
   const [selectedEmailId, setSelectedEmailId] = useState(null);
+
+  // Poměr panelů seznam / náhled – zvlášť pro vodorovné a svislé rozložení, pamatuje se v localStorage
+  const splitKey = isVerticalLayout ? 'vr-split-vertical' : 'vr-split-horizontal';
+  const readSplit = (key) => {
+    try {
+      const v = parseFloat(localStorage.getItem(key));
+      return Number.isFinite(v) && v >= 0.2 && v <= 0.8 ? v : 0.5;
+    } catch { return 0.5; }
+  };
+  const [splitRatio, setSplitRatio] = useState(() => readSplit(splitKey));
+  useEffect(() => { setSplitRatio(readSplit(splitKey)); }, [splitKey]);
+  const splitContainerRef = useRef(null);
+  const [isDraggingSplit, setIsDraggingSplit] = useState(false);
+
+  const startSplitDrag = (e) => {
+    e.preventDefault();
+    const box = splitContainerRef.current?.getBoundingClientRect();
+    if (!box) return;
+    setIsDraggingSplit(true);
+    let ratio = splitRatio;
+    const onMove = (ev) => {
+      const r = isVerticalLayout ? (ev.clientY - box.top) / box.height : (ev.clientX - box.left) / box.width;
+      ratio = Math.min(0.8, Math.max(0.2, r));
+      setSplitRatio(ratio);
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      setIsDraggingSplit(false);
+      try { localStorage.setItem(splitKey, String(ratio)); } catch { /* bez úložiště se jen nezapamatuje */ }
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+  const resetSplit = () => {
+    setSplitRatio(0.5);
+    try { localStorage.removeItem(splitKey); } catch { /* nic */ }
+  };
   const [modalEmailId, setModalEmailId] = useState(null);
   const [autoResumeDraftId, setAutoResumeDraftId] = useState(null);
   const [composerConfig, setComposerConfig] = useState(null);
@@ -36,6 +74,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         if (document.getElementById('attachment-preview-modal')) return;
+        // Escape v okně pro psaní řeší okno samo – nesmí zavřít i otevřený mail pod ním
+        if (composerConfig) return;
         if (modalEmailId) {
           setModalEmailId(null);
         }
@@ -254,35 +294,15 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {googleToken && (
-        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
+        <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-[#0a1630] backdrop-blur-md relative z-[100] overflow-visible">
 
           {/* Synchronizovaná horní neonová linka (Úplně stejná jako u EmailDetail) */}
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
 
           {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
-          <div className="absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
-            <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <filter id="headerRightGlowSVG" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur1" />
-                  <feGaussianBlur stdDeviation="6" result="blur2" />
-                  <feMerge>
-                    <feMergeNode in="blur2" />
-                    <feMergeNode in="blur1" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-              <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#headerRightGlowSVG)" />
-              <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
-              <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#headerRightGlowSVG)" />
-              <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVG)" />
-              <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
-              <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
-              <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#headerRightGlowSVG)" />
-              <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#headerRightGlowSVG)" />
-              <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#headerRightGlowSVG)" />
-            </svg>
+          {/* Neonové čáry – ukotvené ke spodku hlavičky, takže „zatékají“ pod její spodní okraj */}
+          <div className="absolute right-0 top-0 bottom-0 w-[340px] overflow-hidden pointer-events-none opacity-70 z-[5]">
+            <img src="/neon_corner.png" alt="" draggable="false" className="absolute right-0 bottom-0 h-[170px] w-auto max-w-none" />
           </div>
 
           <div className="flex items-center gap-6 relative z-10">
@@ -291,7 +311,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
             </div>
             <div className="flex flex-col justify-center relative mt-1 select-none">
               <div className="flex items-center gap-3 ml-2 mb-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#f800ff] shadow-[0_0_8px_rgba(248,0,255,0.8)]"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#f72585] shadow-[0_0_8px_rgba(247,37,133,0.8)]"></div>
                 <span className="text-[#00f3ff] text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
                   System // Directory // 0xE9
                 </span>
@@ -310,42 +330,15 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
         </div>
       )}
 
-      <div className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
+      <div ref={splitContainerRef} style={{ '--split': `${(splitRatio * 100).toFixed(2)}%` }} className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
         {!googleToken ? (
           <div className="flex-1 flex w-full h-full flex-col">
             <EmailList googleToken={googleToken} loginWithGoogle={loginWithGoogle} />
           </div>
         ) : (
           <>
-            <div className={`flex-1 overflow-hidden relative z-0 ${selectedEmailId ? 'hidden md:flex' : 'flex'} flex-col ${isVerticalLayout ? 'md:max-h-[50%] md:min-h-[50%] border-b border-[#00f3ff]/10' : 'md:max-w-[50%] md:min-w-[50%] border-r border-[#00f3ff]/10'}`}>
-              <div className="hidden md:block absolute left-0 bottom-0 h-[114px] w-[144px] overflow-hidden z-[0] pointer-events-none opacity-40 blur-[3px]">
-                <div className="absolute left-[-256px] bottom-0 h-[114px] w-[400px] rotate-180">
-                  <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <filter id="bottomLeftMiniGlowBlurred" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="3" result="blur1" />
-                        <feGaussianBlur stdDeviation="8" result="blur2" />
-                        <feMerge>
-                          <feMergeNode in="blur2" />
-                          <feMergeNode in="blur1" />
-                          <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                      </filter>
-                    </defs>
-                    <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#bottomLeftMiniGlowBlurred)" />
-                    <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                    <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f800ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#bottomLeftMiniGlowBlurred)" />
-                    <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                    <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                    <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
-                    <circle cx="35" cy="15" r="3" fill="#f800ff" filter="url(#bottomLeftMiniGlowBlurred)" />
-                    <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#bottomLeftMiniGlowBlurred)" />
-                    <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#bottomLeftMiniGlowBlurred)" />
-                  </svg>
-                </div>
-              </div>
-
-              <EmailList
+            <div className={`flex-1 overflow-hidden relative z-0 ${selectedEmailId ? 'hidden md:flex' : 'flex'} flex-col ${isVerticalLayout ? 'md:flex-none md:basis-[var(--split)] md:min-h-0' : 'md:flex-none md:basis-[var(--split)] md:min-w-0'}`}>
+                            <EmailList
                 googleToken={googleToken}
                 activeFolder={activeFolder}
                 selectedEmailId={selectedEmailId}
@@ -368,7 +361,21 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               />
             </div>
 
-            <div className={`flex-1 overflow-hidden relative bg-[#0f172a] z-10 ${selectedEmailId ? 'flex' : 'hidden md:flex'} flex-col ${isVerticalLayout ? 'md:min-h-[50%]' : 'md:min-w-[50%]'}`}>
+            {/* Dělicí lišta – tažením se mění poměr panelů, dvojklik vrátí 50 : 50 */}
+            <div
+              onMouseDown={startSplitDrag}
+              onDoubleClick={resetSplit}
+              title="Táhnutím změníte velikost panelů (dvojklik = půl na půl)"
+              className={`hidden md:block shrink-0 relative z-20 group ${isVerticalLayout ? 'h-[7px] w-full cursor-row-resize' : 'w-[7px] h-full cursor-col-resize'}`}
+            >
+              <div className={`absolute transition-colors ${isDraggingSplit ? 'bg-[#00f3ff] shadow-[0_0_8px_rgba(0,243,255,0.7)]' : 'bg-[#00f3ff]/15 group-hover:bg-[#00f3ff]/70'} ${isVerticalLayout ? 'left-0 right-0 top-[3px] h-px' : 'top-0 bottom-0 left-[3px] w-px'}`} />
+            </div>
+            {isDraggingSplit && (
+              // Během tažení zachytí myš i nad náhledem e-mailu (iframe by jinak pohyb „spolkl“)
+              <div className={`fixed inset-0 z-[9999] ${isVerticalLayout ? 'cursor-row-resize' : 'cursor-col-resize'}`} />
+            )}
+
+            <div className={`flex-1 overflow-hidden relative bg-[#061026] z-10 ${selectedEmailId ? 'flex' : 'hidden md:flex'} flex-col ${isVerticalLayout ? 'md:min-h-0' : 'md:min-w-0'}`}>
               <EmailDetail
                 googleToken={googleToken}
                 isVerticalLayout={isVerticalLayout}
@@ -389,8 +396,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
       </div>
 
       {modalEmailId && createPortal(
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-0 sm:p-6 lg:p-10">
-          <div className="bg-[#02040a] sm:border-[2px] border-[#00f3ff]/30 shadow-[0_0_50px_-10px_rgba(0,243,255,0.3)] sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
+        <div className="fixed inset-0 bg-[#020817]/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-0 sm:p-6 lg:p-10">
+          <div className="bg-[#061026] sm:border-[2px] border-[#00f3ff]/30 shadow-[0_0_50px_-10px_rgba(0,243,255,0.3)] sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
             <EmailDetail
               googleToken={googleToken}
               selectedEmailId={modalEmailId}

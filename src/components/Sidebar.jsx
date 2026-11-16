@@ -137,7 +137,7 @@ export default function Sidebar({
       }
     } catch(e) {}
   };  return (
-    <div className="min-w-[16rem] w-max max-w-[26rem] bg-[#02050e] md:bg-black/40 backdrop-blur-3xl md:backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col pb-4 pt-[calc(1rem+env(safe-area-inset-top,2rem))] md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
+    <div className="relative min-w-[16rem] w-max max-w-[26rem] bg-[#061026] md:bg-[#0a1630] backdrop-blur-3xl md:backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col pb-4 pt-[calc(1rem+env(safe-area-inset-top,2rem))] md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
       <div className="flex justify-center w-full px-4 mb-4 md:mb-8">
         <img
           src="/cropped-logo-neon-pruhledna-150x50.png"
@@ -156,7 +156,7 @@ export default function Sidebar({
           }}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'email'
               ? 'bg-[#00f3ff]/10 border border-[#00f3ff]/30 text-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
-              : 'text-gray-500 hover:text-white hover:bg-white/5 border border-transparent'
+              : 'text-slate-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
         >
           <Mail size={22} strokeWidth={2.5} />
@@ -169,14 +169,14 @@ export default function Sidebar({
           }}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'calendar'
               ? 'bg-[#00f3ff]/10 border border-[#00f3ff]/30 text-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
-              : 'text-gray-500 hover:text-white hover:bg-white/5 border border-transparent'
+              : 'text-slate-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
         >
           <Calendar size={22} strokeWidth={2.5} />
         </div>
         <div
           onClick={() => setIsSettingsOpen(true)}
-          className="p-3 rounded-[18px] cursor-pointer transition-all duration-300 text-gray-500 hover:text-white hover:bg-white/5 border border-transparent"
+          className="p-3 rounded-[18px] cursor-pointer transition-all duration-300 text-slate-500 hover:text-white hover:bg-white/5 border border-transparent"
         >
           <Settings size={22} strokeWidth={2.5} />
         </div>
@@ -212,7 +212,10 @@ export default function Sidebar({
       {/* Cyberpunk Neon Divider za akčním tlačítkem */}
       <div className="w-full h-[1px] mb-4 mt-2 bg-gradient-to-r from-[#00f3ff]/0 via-[#00f3ff]/60 to-[#00f3ff]/0 shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none"></div>
 
-      <nav ref={navScrollRef} onDragOver={handleNavDragOver} className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-6 pt-2">
+      {/* Neonové čáry dole – hotový obrázek (bez živých filtrů, nic nestojí) */}
+      <img src="/neon_sidebar.png" alt="" draggable="false" className="absolute left-0 bottom-0 w-full h-auto opacity-60 pointer-events-none select-none z-0" />
+
+      <nav ref={navScrollRef} onDragOver={handleNavDragOver} className="relative z-10 flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-6 pt-2">
         {appMode === 'email' && folders.map((folder, index) => {
           const isActive = activeFolder === folder.label;
           const isDragOver = dragOverIdx === index;
@@ -270,7 +273,7 @@ export default function Sidebar({
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, -1, null)}
               >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0f172a] px-2 text-[10px] text-[#00f3ff]/50 font-bold tracking-widest uppercase whitespace-nowrap">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#061026] px-2 text-[10px] text-[#00f3ff]/50 font-bold tracking-widest uppercase whitespace-nowrap">
                   Vlastní složky
                 </div>
               </div>
@@ -302,7 +305,7 @@ export default function Sidebar({
                     <React.Fragment key={folder.id}>
                       {isDragOverBefore && (
                         <div 
-                           className="h-1 bg-[#0f172a] border border-[#00f3ff] rounded-full my-1 z-30 transition-all relative overflow-hidden"
+                           className="h-1 bg-[#061026] border border-[#00f3ff] rounded-full my-1 z-30 transition-all relative overflow-hidden"
                            style={{ marginLeft: `${1 + (depth > 0 ? depth - 1 : 0) * 1.2}rem`, marginRight: '1rem' }}
                         >
                            <div className="absolute inset-0 w-full h-full bg-[#00f3ff] shadow-[0_0_15px_#00f3ff] animate-pulse opacity-70" />
@@ -424,7 +427,7 @@ export default function Sidebar({
         {appMode === 'calendar' && (
            <>
               <div className="h-px bg-[#00f3ff]/20 mx-4 !mt-7 !mb-7 relative shrink-0">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0f172a] px-3 text-[10px] text-[#00f3ff]/50 font-bold tracking-[0.1em] uppercase whitespace-nowrap">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#061026] px-3 text-[10px] text-[#00f3ff]/50 font-bold tracking-[0.1em] uppercase whitespace-nowrap">
                   Speciální kalendáře
                 </div>
               </div>
@@ -442,7 +445,7 @@ export default function Sidebar({
                       }}
                       className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
                         isActive
-                          ? 'bg-gradient-to-r from-[#00f3ff]/15 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#f800ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
+                          ? 'bg-gradient-to-r from-[#00f3ff]/15 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#f72585,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
                           : 'hover:bg-[#00f3ff]/5 border border-[#00f3ff]/10 text-[#00f3ff]/60 hover:text-[#00f3ff]'
                         } group`}
                     >
@@ -463,7 +466,7 @@ export default function Sidebar({
       </nav>
       
       {appVersion && (
-        <div className="px-4 pb-0 pt-3 text-center text-[#00f3ff]/30 text-[10px] tracking-widest uppercase truncate border-t border-[#00f3ff]/20">
+        <div className="relative z-10 px-4 pb-0 pt-3 text-center text-[#00f3ff]/50 text-[10px] tracking-widest uppercase truncate border-t border-[#00f3ff]/20">
           Verze {appVersion}
         </div>
       )}

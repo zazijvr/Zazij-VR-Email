@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, X, AlertTriangle, Paperclip, Save, File, Trash2, FileText, PenTool, ReplyAll } from 'lucide-react';
 import { encodeBase64Url, encodeHeaderName } from '../utils/emailParser';
 import RichTextEditor from './RichTextEditor';
@@ -29,9 +29,27 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     return text;
   };
 
+  // `body` je jen hodnota pro editor (počáteční obsah, šablona, podpis).
+  // Aktuální rozepsaný text je vždy v bodyRef – při psaní se state nemění, aby se okno nepřekreslovalo.
   const [body, setBody] = useState(getInitialBody);
-  // bodyRef drží aktuální HTML obsah bez triggerování re-renderu při psaní
-  const bodyRef = useRef(getInitialBody());
+  const bodyRef = useRef(body);
+  const initialBodyRef = useRef(body);
+  const handleBodyChange = useCallback((html) => { bodyRef.current = html; }, []);
+  /** Nahradí obsah editoru (šablona, podpis) – editor si novou hodnotu převezme */
+  // Klíč editoru – po vložení šablony / podpisu se editor načte znovu i se stejným textem
+  const [bodyVersion, setBodyVersion] = useState(0);
+  const replaceBody = (html) => {
+    bodyRef.current = html;
+    setBody(html);
+    setBodyVersion((v) => v + 1);
+  };
+
+  // Pod celoobrazovkovým oknem se aplikace nemusí vykreslovat – na Linuxu (WebKitGTK)
+  // jinak každé písmeno překresluje i seznam mailů, pozadí a efekty pod oknem.
+  useEffect(() => {
+    document.documentElement.classList.add('composer-open');
+    return () => document.documentElement.classList.remove('composer-open');
+  }, []);
   const [templateTitle, setTemplateTitle] = useState(config?.templateData?.title || '');
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -130,15 +148,17 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
         return stripped === '';
     };
 
+    const currentBody = bodyRef.current;
     if (config?.type === 'template') {
-       isDirty = !!(templateTitle || subject || !isEditorEmpty(body));
+       isDirty = !!(templateTitle || subject || !isEditorEmpty(currentBody));
     } else {
        const initTo = config?.initialTo || '';
        const initBody = config?.initialBody || '';
        const initSubject = config?.initialSubject || '';
        const initAtt = config?.initialAttachments?.length || 0;
        
-       const isBodyDirty = initBody ? (body !== initBody) : !isEditorEmpty(body);
+       // Porovnává se s obsahem, se kterým okno začalo (včetně podpisu / citace)
+       const isBodyDirty = initBody ? (currentBody !== initBody) : (currentBody !== initialBodyRef.current && !isEditorEmpty(currentBody));
 
        if (to === initTo && !isBodyDirty && subject === initSubject && attachments.length === initAtt && !cc) {
            isDirty = false;
@@ -166,7 +186,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [to, cc, subject, body, attachments, showCloseWarning, config, isSending, isSaving, templateTitle]);
+  }, [to, cc, subject, attachments, showCloseWarning, config, isSending, isSaving, templateTitle]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -243,7 +263,12 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       return match.replace(/src="data:image\/[^;]+;base64,[^"]+"/, `src="cid:${cid}"`);
     });
 
-    const strippedBody = body.replace(/<br\s*\/?>/gi, '\n').replace(/<\/?div>/gi, '\n').replace(/<p>/gi, '\n').replace(/<[^>]+>/g, ' ').trim();
+    // Textová verze pro klienty bez HTML – z aktuálního obsahu editoru (bez citace původní zprávy)
+    const htmlForText = bodyRef.current
+      .replace(/<div class="gmail_quote"[\s\S]*$/i, '')
+      .replace(/<br\s*\/?>/gi, '\n').replace(/<\/(div|p|li|h[1-6])>/gi, '\n');
+    const strippedBody = (new DOMParser().parseFromString(htmlForText, 'text/html').body.textContent || '')
+      .replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
     const plainTextBody = strippedBody + (config?.htmlBody ? '\n\n[Původní zpráva je níže]' : '');
 
     const hasAttachments = attachments.length > 0;
@@ -462,28 +487,28 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   };
 
   return (
-    <div ref={modalRef} className="fixed inset-0 bg-black/85 z-[99999] flex items-center justify-center p-0 pt-[env(safe-area-inset-top)] sm:p-6 lg:p-10">
-      <div className="bg-[#02040a] sm:border-[2px] border-[#00f3ff]/40 sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
+    <div ref={modalRef} className="fixed inset-0 bg-[#061026] z-[99999] flex items-center justify-center p-0 pt-[env(safe-area-inset-top)] sm:p-6 lg:p-10">
+      <div className="bg-[#061026] sm:border-[2px] border-[#00f3ff]/40 sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
         
         {/* Dekorační linky nahoře */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00f3ff] to-transparent opacity-50"></div>
         <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1/4 h-0.5 bg-[#00f3ff] shadow-[0_0_10px_#00f3ff]"></div>
 
-        <div className="flex justify-between items-center p-6 border-b border-[#00f3ff]/10 bg-black/30">
+        <div className="flex justify-between items-center p-6 border-b border-[#00f3ff]/10 bg-[#0a1630]">
           <h2 className="text-2xl font-black tracking-[0.2em] text-white flex items-center gap-3">
-            <img src="/vr_drafts_trans.png" className="w-8 h-8 object-contain drop-shadow-[0_0_10px_#00f3ff]" alt="VR Mascot" draggable="false" />
+            <img src="/vr_drafts.svg" className="w-8 h-8 object-contain" alt="VR Mascot" draggable="false" />
             {config?.type === 'template' ? 'EDITOR ŠABLONY' : config?.type === 'reply' || config?.type === 'replyAll' ? 'ODPOVĚĎ' : config?.type === 'forward' ? 'PŘEPOSLÁNÍ' : 'NOVÁ ZPRÁVA'}
           </h2>
           <button
             onClick={handleAttemptClose}
-            className="p-2 bg-white/5 hover:bg-[#ef4444]/20 text-gray-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
+            className="p-2 bg-white/5 hover:bg-[#ef4444]/20 text-slate-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
           >
             <X size={22} strokeWidth={2} />
           </button>
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden border-b border-[#00f3ff]/10">
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 flex flex-col gap-4 bg-[#02040a]">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 flex flex-col gap-4 bg-[#061026]">
             {errorMsg && (
               <div className="p-4 bg-[#ef4444]/10 border border-[#ef4444]/40 rounded-xl text-[#ef4444] flex items-center gap-3 font-semibold">
                 <AlertTriangle className="shrink-0" />
@@ -499,7 +524,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                   value={templateTitle} 
                   onChange={e => setTemplateTitle(e.target.value)}
                   placeholder="Např. Formální pozvánka"
-                  className="w-full bg-[#0f172a]/50 border border-[#f800ff]/60 shadow-[0_0_10px_rgba(248,0,255,0.1)] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#f800ff] focus:shadow-[0_0_15px_rgba(248,0,255,0.3)] focus:bg-[#0f172a] transition-all font-bold"
+                  className="w-full bg-[#061026]/50 border border-[#f72585]/60 shadow-[0_0_10px_rgba(247,37,133,0.1)] rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#f72585] focus:shadow-[0_0_15px_rgba(247,37,133,0.3)] focus:bg-[#061026] transition-all font-bold"
                 />
               </div>
             )}
@@ -512,7 +537,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                     value={to} 
                     onChange={e => setTo(e.target.value)}
                     userEmail={userEmail}
-                    className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
+                    className="w-full bg-[#061026]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#061026] font-mono"
                     headerRight={
                       <>
                         {config?.type === 'reply' && !hasUpgradedToReplyAll && (config?.originalCc || config?.originalTo) && (
@@ -527,7 +552,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                         {!showCc && (
                           <button 
                             onClick={(e) => { e.preventDefault(); setShowCc(true); }}
-                            className="text-[9px] sm:text-[10px] uppercase font-bold text-[#00f3ff]/60 hover:text-[#00f3ff] px-1.5 py-0.5 bg-[#0f172a]/80 border border-[#00f3ff]/20 rounded transition-colors tracking-widest"
+                            className="text-[9px] sm:text-[10px] uppercase font-bold text-[#00f3ff]/60 hover:text-[#00f3ff] px-1.5 py-0.5 bg-[#061026]/80 border border-[#00f3ff]/20 rounded transition-colors tracking-widest"
                             title="Přidat Kopii (CC)"
                           >
                             + CC
@@ -544,7 +569,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                     value={cc} 
                     onChange={e => setCc(e.target.value)}
                     userEmail={userEmail}
-                    className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a] font-mono"
+                    className="w-full bg-[#061026]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#061026] font-mono"
                   />
                 )}
               </div>
@@ -556,7 +581,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 type="text" 
                 value={subject} 
                 onChange={e => setSubject(e.target.value)}
-                className="w-full bg-[#0f172a]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#0f172a]  transition-all font-bold tracking-wide"
+                className="w-full bg-[#061026]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#061026]  transition-all font-bold tracking-wide"
               />
             </div>
   
@@ -564,10 +589,11 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
               <label className="text-[10px] text-[#00f3ff] uppercase tracking-widest font-bold ml-1 opacity-70">Zpráva</label>
               <div className="relative w-full h-full flex-1 flex flex-col">
                 <RichTextEditor
+                   key={bodyVersion}
                    value={body}
-                   onChange={(html) => { bodyRef.current = html; }}
+                   onChange={handleBodyChange}
                    placeholder="Napište svou zprávu..."
-                   className="flex-1 w-full absolute inset-0 bg-[#0f172a]/50 border-[#00f3ff]/20 "
+                   className="flex-1 w-full absolute inset-0 bg-[#061026]/50 border-[#00f3ff]/20 "
                 />
               </div>
             </div>
@@ -576,7 +602,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 bg-black/30 flex flex-col gap-4 shrink-0 border-t border-[#00f3ff]/10 z-10 relative">
+        <div className="p-4 sm:p-6 bg-[#0a1630] flex flex-col gap-4 shrink-0 border-t border-[#00f3ff]/10 z-10 relative">
           
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-2 w-full">
@@ -596,7 +622,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto relative">
             <button
                onClick={() => fileInputRef.current?.click()}
-               className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-gray-600 hover:border-[#00f3ff]/80 rounded-xl text-gray-400 hover:text-[#00f3ff] transition-all"
+               className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-[#00f3ff]/80 rounded-xl text-slate-400 hover:text-[#00f3ff] transition-all"
                title="Příloha"
             >
                <Paperclip size={18} className="group-hover:scale-110 transition-transform" />
@@ -613,14 +639,14 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             <div className="relative" ref={templateMenuRef}>
               <button
                  onClick={() => {setShowTemplateMenu(!showTemplateMenu); setShowSignatureMenu(false);}}
-                 className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-gray-600 hover:border-[#00f3ff]/80 rounded-xl text-gray-400 hover:text-[#00f3ff] transition-all"
+                 className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-[#00f3ff]/80 rounded-xl text-slate-400 hover:text-[#00f3ff] transition-all"
                  title="Šablony"
               >
                  <FileText size={18} className="group-hover:scale-110 transition-transform" />
               </button>
               {showTemplateMenu && (
-                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-black/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
-                   <div className="p-2 border-b border-white/10 text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vybrat Šablonu</div>
+                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-[#020817]/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
+                   <div className="p-2 border-b border-[#00f3ff]/[0.15] text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vybrat Šablonu</div>
                    <button 
                      onClick={(e) => { e.preventDefault(); handleSaveCurrentAsTemplate(); }}
                      className="w-full px-3 py-2.5 bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 text-[#00f3ff] font-bold text-xs flex items-center justify-center gap-2 border-b border-[#00f3ff]/20 transition-colors"
@@ -628,7 +654,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                      <Save size={14} /> ULOŽIT JAKO ŠABLONU
                    </button>
                    {savedTemplates.length === 0 ? (
-                     <div className="p-4 text-xs text-gray-500 text-center font-semibold">Zatím nemáte žádné šablony.</div>
+                     <div className="p-4 text-xs text-slate-500 text-center font-semibold">Zatím nemáte žádné šablony.</div>
                    ) : (
                      <div className="max-h-48 overflow-y-auto custom-scrollbar">
                        {savedTemplates.map(t => (
@@ -636,11 +662,10 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                            key={t.id} 
                            onClick={() => {
                              if (t.subject) setSubject(t.subject);
-                             setBody(t.body);
-                             bodyRef.current = t.body;
+                             replaceBody(t.body);
                              setShowTemplateMenu(false);
                            }}
-                           className="p-3 hover:bg-[#00f3ff]/20 text-gray-300 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 truncate text-sm"
+                           className="p-3 hover:bg-[#00f3ff]/20 text-slate-300 hover:text-white cursor-pointer transition-colors border-b border-[#00f3ff]/10 last:border-0 truncate text-sm"
                          >
                            {t.title}
                          </div>
@@ -654,33 +679,31 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             <div className="relative" ref={signatureMenuRef}>
               <button
                  onClick={() => {setShowSignatureMenu(!showSignatureMenu); setShowTemplateMenu(false);}}
-                 className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-gray-600 hover:border-[#00f3ff]/80 rounded-xl text-gray-400 hover:text-[#00f3ff] transition-all"
+                 className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-[#00f3ff]/80 rounded-xl text-slate-400 hover:text-[#00f3ff] transition-all"
                  title="Podpisy"
               >
                  <PenTool size={18} className="group-hover:scale-110 transition-transform" />
               </button>
               {showSignatureMenu && (
-                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-black/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
-                   <div className="p-2 border-b border-white/10 text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vložit Podpis</div>
+                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-[#020817]/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
+                   <div className="p-2 border-b border-[#00f3ff]/[0.15] text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vložit Podpis</div>
                    {savedSignatures.length === 0 ? (
-                     <div className="p-4 text-xs text-gray-500 text-center font-semibold">Zatím nemáte žádné podpisy.</div>
+                     <div className="p-4 text-xs text-slate-500 text-center font-semibold">Zatím nemáte žádné podpisy.</div>
                    ) : (
                      <div className="max-h-48 overflow-y-auto custom-scrollbar">
                        {savedSignatures.map(s => (
                          <div 
                            key={s.id} 
                            onClick={() => {
-                             setBody(prev => {
-                                const newBody = prev + (prev ? '<br><br>' : '') + s.body;
-                                bodyRef.current = newBody;
-                                return newBody;
-                             });
+                             // Podpis se přidá k tomu, co je teď v editoru (ne k počátečnímu obsahu)
+                             const prev = bodyRef.current || '';
+                             replaceBody(prev + (prev ? '<br><br>' : '') + s.body);
                              setShowSignatureMenu(false);
                            }}
-                           className="p-3 hover:bg-[#00f3ff]/20 text-gray-300 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 text-sm"
+                           className="p-3 hover:bg-[#00f3ff]/20 text-slate-300 hover:text-white cursor-pointer transition-colors border-b border-[#00f3ff]/10 last:border-0 text-sm"
                          >
                            <div className="font-bold truncate">{s.title}</div>
-                           <div className="text-[10px] text-gray-500 truncate mt-0.5">{s.body.replace(/<[^>]+>/g, '').substring(0, 30)}...</div>
+                           <div className="text-[10px] text-slate-500 truncate mt-0.5">{s.body.replace(/<[^>]+>/g, '').substring(0, 30)}...</div>
                          </div>
                        ))}
                      </div>
@@ -698,7 +721,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-[#00f3ff]/50 hover:border-[#00f3ff]/80 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#00f3ff]/10 group-hover:from-[#00f3ff]/30 group-hover:to-[#00f3ff]/30 transition-all duration-300"></div>
-                <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all">
+                <div className="relative z-10 w-full h-full bg-[#061026] rounded-lg py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all">
                    <Save size={18} className="text-[#00f3ff] group-hover:scale-110 transition-transform" />
                    <span className="font-black tracking-[0.1em] text-[#00f3ff] text-xs sm:text-sm group-hover:text-white transition-colors">ULOŽIT ŠABLONU</span>
                 </div>
@@ -708,16 +731,16 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 <button 
                   onClick={handleSaveDraft}
                   disabled={isSaving || isSending}
-                  className="group flex-1 sm:w-48 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-white/10 hover:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group flex-1 sm:w-48 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-[#00f3ff]/[0.15] hover:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="absolute inset-0 bg-transparent group-hover:bg-white/5 transition-all duration-300"></div>
-                  <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-3 px-2 flex items-center justify-center gap-2 transition-all">
+                  <div className="relative z-10 w-full h-full bg-[#061026] rounded-lg py-3 px-2 flex items-center justify-center gap-2 transition-all">
                      {isSaving ? (
-                        <div className="w-5 h-5 rounded-full border-[2px] border-gray-500 border-t-gray-300 animate-spin"></div>
+                        <div className="w-5 h-5 rounded-full border-[2px] border-slate-500 border-t-gray-300 animate-spin"></div>
                      ) : (
-                        <Save size={18} className="text-gray-500 group-hover:scale-110 transition-transform" />
+                        <Save size={18} className="text-slate-500 group-hover:scale-110 transition-transform" />
                      )}
-                     <span className="font-black tracking-widest text-gray-500 text-xs sm:text-sm group-hover:text-gray-300 transition-colors">
+                     <span className="font-black tracking-widest text-slate-500 text-xs sm:text-sm group-hover:text-slate-300 transition-colors">
                        {isSaving ? 'UKLÁDÁM' : 'ULOŽIT'}
                      </span>
                   </div>
@@ -729,7 +752,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                   className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-[#00f3ff]/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#00f3ff]/10 group-hover:from-[#00f3ff]/30 group-hover:to-[#00f3ff]/30 transition-all duration-300"></div>
-                  <div className="relative z-10 w-full h-full bg-[#02040a] rounded-lg py-3 px-2 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,243,255,0.2)] group-hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all">
+                  <div className="relative z-10 w-full h-full bg-[#061026] rounded-lg py-3 px-2 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,243,255,0.2)] group-hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all">
                      {isSending ? (
                         <div className="w-5 h-5 rounded-full border-[2px] border-[#00f3ff]/30 border-t-[#00f3ff] animate-spin"></div>
                      ) : (
@@ -748,14 +771,14 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       
       </div>
         {showCloseWarning && (
-        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#0f172a] border border-[#00f3ff]/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in duration-200">
+        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-[#020817]/60 backdrop-blur-sm p-4">
+          <div className="bg-[#061026] border border-[#00f3ff]/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in duration-200">
             <h3 className="text-xl font-bold text-white tracking-wide mb-2">Zahodit rozepsanou zprávu?</h3>
-            <p className="text-gray-400 text-sm mb-6">Máte neuložené změny. Opravdu chcete okno zavřít a změny zahodit?</p>
+            <p className="text-slate-400 text-sm mb-6">Máte neuložené změny. Opravdu chcete okno zavřít a změny zahodit?</p>
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setShowCloseWarning(false)}
-                className="px-4 py-2 bg-transparent text-gray-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-white/10"
+                className="px-4 py-2 bg-transparent text-slate-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-[#00f3ff]/[0.15]"
               >
                 Zpět k úpravám
               </button>
@@ -771,10 +794,10 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       )}
 
       {showTemplateNamePrompt && (
-        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#0f172a] border border-[#00f3ff]/50 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in duration-200">
+        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-[#020817]/60 backdrop-blur-sm p-4">
+          <div className="bg-[#061026] border border-[#00f3ff]/50 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in duration-200">
             <h3 className="text-xl font-bold text-white tracking-wide mb-2">Nová Šablona</h3>
-            <p className="text-gray-400 text-sm mb-4">Zadejte název, pod kterým se má tento e-mail uložit do rychlých šablon.</p>
+            <p className="text-slate-400 text-sm mb-4">Zadejte název, pod kterým se má tento e-mail uložit do rychlých šablon.</p>
             <input 
               type="text" 
               autoFocus
@@ -785,12 +808,12 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 if (e.key === 'Escape') setShowTemplateNamePrompt(false);
               }}
               placeholder="Např. Reakce na projekt..."
-              className="w-full bg-[#02040a] border border-[#00f3ff]/40 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#00f3ff] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all mb-6 font-bold"
+              className="w-full bg-[#061026] border border-[#00f3ff]/40 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-[#00f3ff] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all mb-6 font-bold"
             />
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setShowTemplateNamePrompt(false)}
-                className="px-4 py-2 bg-transparent text-gray-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-white/10"
+                className="px-4 py-2 bg-transparent text-slate-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-[#00f3ff]/[0.15]"
               >
                 Zrušit
               </button>

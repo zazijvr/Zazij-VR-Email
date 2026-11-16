@@ -90,7 +90,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
     <div className={`relative ${className}`}>
       {label && <label className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest mb-1.5 block select-none">{label}</label>}
       
-      <div className="w-full bg-black/50 border border-[#00f3ff]/40 rounded-xl px-4 py-3 shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] transition-all flex items-center justify-between focus-within:border-[#00f3ff] focus-within:shadow-[0_0_15px_rgba(0,243,255,0.2)_inset]">
+      <div className="w-full bg-[#020817]/50 border border-[#00f3ff]/40 rounded-xl px-4 py-3 shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] transition-all flex items-center justify-between focus-within:border-[#00f3ff] focus-within:shadow-[0_0_15px_rgba(0,243,255,0.2)_inset]">
         <input  
           type="text"
           value={inputValue}
@@ -112,7 +112,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
         <button 
            type="button" 
            onClick={toggleOpen}
-           className="pl-2 border-l border-white/10 ml-2 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-colors"
+           className="pl-2 border-l border-[#00f3ff]/[0.15] ml-2 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-colors"
         >
           <Clock size={16} />
         </button>
@@ -125,7 +125,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
              onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
              onMouseDown={(e) => e.stopPropagation()}
           />
-          <div className={`absolute top-full mt-2 p-4 bg-[#0f172a] border border-[#00f3ff]/40 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-2xl z-[700] w-[340px] select-none animate-in fade-in-0 zoom-in-95 pointer-events-auto flex flex-col gap-3 overflow-hidden ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          <div className={`absolute top-full mt-2 p-4 bg-[#061026] border border-[#00f3ff]/40 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-2xl z-[700] w-[340px] select-none animate-in fade-in-0 zoom-in-95 pointer-events-auto flex flex-col gap-3 overflow-hidden ${align === 'right' ? 'right-0' : 'left-0'}`}>
             
             {/* Dekorativní záře */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#00f3ff]/20 blur-[40px] rounded-full pointer-events-none" />
@@ -142,7 +142,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
                       className={`py-1.5 text-center rounded-md cursor-pointer text-sm font-mono transition-all font-bold ${
                          internalHour === i 
                            ? 'bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff]/50 shadow-[0_0_8px_rgba(0,243,255,0.3)]' 
-                           : 'text-gray-400 hover:bg-white/10 border border-transparent hover:text-white'
+                           : 'text-slate-400 hover:bg-white/10 border border-transparent hover:text-white'
                       }`}
                     >
                        {i.toString().padStart(2, '0')}
@@ -164,7 +164,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
                       className={`py-1.5 text-center rounded-md cursor-pointer text-sm font-mono transition-all font-bold ${
                          internalMinute === m 
                            ? 'bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff]/50 shadow-[0_0_8px_rgba(0,243,255,0.3)]' 
-                           : 'text-gray-400 hover:bg-white/10 border border-transparent hover:text-white'
+                           : 'text-slate-400 hover:bg-white/10 border border-transparent hover:text-white'
                       }`}
                     >
                        {m.toString().padStart(2, '0')}
@@ -174,11 +174,11 @@ export default function TimePicker({ value, onChange, label, className = "", ali
             </div>
             </div>
 
-            <div className="flex justify-between items-center pt-3 mt-1 border-t border-white/10 w-full gap-3 relative z-10">
+            <div className="flex justify-between items-center pt-3 mt-1 border-t border-[#00f3ff]/[0.15] w-full gap-3 relative z-10">
                <button 
                  type="button" 
                  onClick={handleCancel} 
-                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-gray-400 hover:text-[#f800ff] hover:bg-[#f800ff]/10 hover:border-[#f800ff]/50 border border-transparent transition-all font-bold text-xs tracking-widest uppercase"
+                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-slate-400 hover:text-[#f72585] hover:bg-[#f72585]/10 hover:border-[#f72585]/50 border border-transparent transition-all font-bold text-xs tracking-widest uppercase"
                >
                  <X size={14} /> Zrušit
                </button>

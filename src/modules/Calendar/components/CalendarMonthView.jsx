@@ -22,12 +22,12 @@ export default function CalendarMonthView({
     const colors = {
       '1': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50',
       '2': 'bg-teal-500/20 text-teal-400 border-teal-500/50',
-      '3': 'bg-[#f800ff]/20 text-[#f800ff] border-[#f800ff]/50', // purple
+      '3': 'bg-[#f72585]/20 text-[#f72585] border-[#f72585]/50', // purple
       '4': 'bg-pink-500/20 text-pink-400 border-pink-500/50',
       '5': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
       '6': 'bg-orange-500/20 text-orange-400 border-orange-500/50',
       '7': 'bg-[#00f3ff]/20 text-[#00f3ff] border-[#00f3ff]/50', // blue/cyan
-      '8': 'bg-gray-500/20 text-gray-400 border-gray-500/50',
+      '8': 'bg-slate-500/20 text-slate-400 border-slate-500/50',
       '9': 'bg-blue-600/20 text-blue-400 border-blue-600/50',
       '10': 'bg-green-500/20 text-green-400 border-green-500/50',
       '11': 'bg-red-500/20 text-red-400 border-red-500/50'
@@ -39,12 +39,12 @@ export default function CalendarMonthView({
     const colors = {
       '1': 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]',
       '2': 'bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)]',
-      '3': 'bg-[#f800ff] shadow-[0_0_10px_rgba(248,0,255,0.5)]',
+      '3': 'bg-[#f72585] shadow-[0_0_10px_rgba(247,37,133,0.5)]',
       '4': 'bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]',
       '5': 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]',
       '6': 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]',
       '7': 'bg-[#00f3ff] shadow-[0_0_10px_rgba(0,243,255,0.5)]',
-      '8': 'bg-gray-500 shadow-[0_0_10px_rgba(107,114,128,0.5)]',
+      '8': 'bg-slate-500 shadow-[0_0_10px_rgba(107,114,128,0.5)]',
       '9': 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]',
       '10': 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]',
       '11': 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]'
@@ -63,44 +63,23 @@ export default function CalendarMonthView({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
-      <div className="flex flex-shrink-0 items-center justify-between gap-2 md:gap-4 p-4 md:p-8 border-b border-[#f800ff]/20 bg-black/30 backdrop-blur-md relative z-[100] overflow-visible">
+      <div className="flex flex-shrink-0 items-center justify-between gap-2 md:gap-4 p-4 md:p-8 border-b border-[#f72585]/20 bg-[#0a1630] backdrop-blur-md relative z-[100] overflow-visible">
         
         {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
-        <div className="hidden md:block absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
-             <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <defs>
-                 <filter id="headerRightGlowSVGC" x="-20%" y="-20%" width="140%" height="140%">
-                   <feGaussianBlur stdDeviation="3" result="blur1" />
-                   <feGaussianBlur stdDeviation="6" result="blur2" />
-                   <feMerge>
-                       <feMergeNode in="blur2" />
-                       <feMergeNode in="blur1" />
-                       <feMergeNode in="SourceGraphic" />
-                   </feMerge>
-                 </filter>
-               </defs>
-               <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#f800ff" strokeWidth="2" filter="url(#headerRightGlowSVGC)" />
-               <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVGC)" />
-               <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#00f3ff" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#headerRightGlowSVGC)" />
-               <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#f800ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#headerRightGlowSVGC)" />
-               <circle cx="80" cy="40" r="4" fill="#0f172a" stroke="#f800ff" strokeWidth="1.5" filter="url(#headerRightGlowSVGC)" />
-               <circle cx="200" cy="80" r="3" fill="#f800ff" filter="url(#headerRightGlowSVGC)" />
-               <circle cx="35" cy="15" r="3" fill="#00f3ff" filter="url(#headerRightGlowSVGC)" />
-               <circle cx="220" cy="50" r="5" fill="#0f172a" stroke="#00f3ff" strokeWidth="1.5" filter="url(#headerRightGlowSVGC)" />
-               <circle cx="130" cy="100" r="2" fill="#f800ff" filter="url(#headerRightGlowSVGC)" />
-             </svg>
+        <div className="hidden md:block absolute right-0 top-0 h-[150px] w-[300px] overflow-hidden pointer-events-none opacity-70 z-[5]">
+             <img src="/neon_corner.png" alt="" draggable="false" className="absolute right-0 bottom-0 h-[170px] w-auto max-w-none" />
         </div>
 
         <div className="flex items-center gap-6 relative z-10 w-full">
           <div className="flex items-center gap-2 md:gap-6">
-            <div className="p-1 md:p-3 rounded-2xl bg-[#f800ff]/10 border-2 border-[#f800ff]/40 shadow-[0_0_25px_rgba(248,0,255,0.4)] transition-all flex items-center justify-center min-w-[48px] md:min-w-[72px] min-h-[48px] md:min-h-[72px]">
-              <img src="/vr_calendar_trans.png" className="w-8 h-8 md:w-16 md:h-16 object-contain filter drop-shadow-[0_0_15px_rgba(248,0,255,0.8)]" alt="Kalendář" draggable="false" />
+            <div className="p-1 md:p-3 rounded-2xl bg-[#f72585]/10 border-2 border-[#f72585]/40 shadow-[0_0_25px_rgba(247,37,133,0.4)] transition-all flex items-center justify-center min-w-[48px] md:min-w-[72px] min-h-[48px] md:min-h-[72px]">
+              <img src="/vr_calendar.svg" className="w-8 h-8 md:w-16 md:h-16 object-contain" alt="Kalendář" draggable="false" />
             </div>
             
             <div className="flex flex-col justify-center relative mt-1 select-none">
               <div className="flex items-center gap-3 ml-2 mb-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_rgba(0,243,255,0.8)]"></div>
-                <span className="text-[#f800ff] text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
+                <span className="text-[#f72585] text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
                   System // Timeline // {activeCalendarView}
                 </span>
               </div>
@@ -118,9 +97,9 @@ export default function CalendarMonthView({
       </div>
 
       {/* Zde přidáváme backdrop wrapper ala EmailList */}
-      <div className="flex-1 relative bg-[#0f172a]/80 backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className="flex-1 relative bg-[#061026]/80 backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)] overflow-hidden">
         {/* Kontrolní panel: Výpis, Hledání, Navigace DNES - vytaženo VEN z grid wrapperu aby lícoval z EmailListem */}
-        <div className="flex items-center pl-2 md:pl-7 py-2 pr-2 md:pr-[38px] bg-black/40 border-b border-[#00f3ff]/10 z-20 shrink-0 w-full">
+        <div className="flex items-center pl-2 md:pl-7 py-2 pr-2 md:pr-[38px] bg-[#0a1630] border-b border-[#00f3ff]/10 z-20 shrink-0 w-full">
           
           {/* Placeholder šířky pro sloupec s Checkboxy (odpovídá EmailListu) */}
           <div className="hidden md:block w-[40px] pr-2" />
@@ -128,7 +107,7 @@ export default function CalendarMonthView({
 
         {/* Šířka pro sloupec Odesílatel */}
         <div className="hidden md:flex w-[20%] pr-4 items-center">
-          <span className="text-gray-400 text-[10px] sm:text-xs tracking-widest uppercase truncate" title={`Zobrazeno ${events.length} událostí v API poolu`}>
+          <span className="text-slate-400 text-[10px] sm:text-xs tracking-widest uppercase truncate" title={`Zobrazeno ${events.length} událostí v API poolu`}>
             Výpis {events.length} záznamů
           </span>
         </div>
@@ -156,14 +135,14 @@ export default function CalendarMonthView({
 
         {/* Pravý blok s tlačítky - flex rozvržení upraveno pro čistotu */}
         <div className="shrink-0 z-20 pl-4 flex items-center gap-2">
-          <button onClick={handleToday} className="px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all rounded-md flex items-center gap-2 bg-[#f800ff]/5 text-[#f800ff] border border-[#f800ff]/40 shadow-[0_0_10px_rgba(248,0,255,0.15)] hover:bg-[#f800ff]/20 hover:shadow-[0_0_20px_rgba(248,0,255,0.4)]">
+          <button onClick={handleToday} className="px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all rounded-md flex items-center gap-2 bg-[#f72585]/5 text-[#f72585] border border-[#f72585]/40 shadow-[0_0_10px_rgba(247,37,133,0.15)] hover:bg-[#f72585]/20 hover:shadow-[0_0_20px_rgba(247,37,133,0.4)]">
             DNES
           </button>
           <div className="flex items-center gap-1">
-             <button onClick={handlePrevMonth} className="px-2 py-1.5 rounded-md border border-[#00f3ff]/20 hover:border-[#00f3ff]/40 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-all bg-black/50 shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:bg-[#00f3ff]/10">
+             <button onClick={handlePrevMonth} className="px-2 py-1.5 rounded-md border border-[#00f3ff]/20 hover:border-[#00f3ff]/40 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-all bg-[#020817]/50 shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:bg-[#00f3ff]/10">
                <ChevronLeft size={16} />
              </button>
-             <button onClick={handleNextMonth} className="px-2 py-1.5 rounded-md border border-[#00f3ff]/20 hover:border-[#00f3ff]/40 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-all bg-black/50 shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:bg-[#00f3ff]/10">
+             <button onClick={handleNextMonth} className="px-2 py-1.5 rounded-md border border-[#00f3ff]/20 hover:border-[#00f3ff]/40 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-all bg-[#020817]/50 shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:bg-[#00f3ff]/10">
                <ChevronRight size={16} />
              </button>
           </div>
@@ -171,11 +150,11 @@ export default function CalendarMonthView({
       </div>
 
       <div className="flex-1 flex flex-col pt-2 md:pt-4 px-1 md:px-8 pb-4 relative z-10 w-full overflow-hidden">
-       <div className="absolute top-[-20%] left-[20%] w-[50%] h-[50%] bg-[#f800ff]/5 rounded-[100%] blur-[120px] pointer-events-none z-[-1]" />
+       <div className="absolute top-[-20%] left-[20%] w-[50%] h-[50%] bg-[#f72585]/5 rounded-[100%] blur-[120px] pointer-events-none z-[-1]" />
 
        <div className="grid grid-cols-7 mb-2">
          {['PO', 'ÚT', 'ST', 'ČT', 'PÁ', 'SO', 'NE'].map(day => (
-           <div key={day} className="text-center font-black tracking-widest text-sm text-gray-400 bg-white/5 mx-1 py-1 rounded-md border border-white/5">{day}</div>
+           <div key={day} className="text-center font-black tracking-widest text-sm text-slate-400 bg-white/5 mx-1 py-1 rounded-md border border-[#00f3ff]/10">{day}</div>
          ))}
        </div>
 
@@ -199,21 +178,21 @@ export default function CalendarMonthView({
                key={`bg-${i}`}
                onClick={() => isCurrentMonth && setSelectedCalDay(isSelected ? null : cellDate)}
                className={`col-start-${(i % 7) + 1} row-start-${Math.floor(i / 7) + 1} relative p-2.5 rounded-xl flex flex-col transition-all duration-200 overflow-visible ${
-                 !isCurrentMonth ? 'bg-black/10 border border-white/5 opacity-40 z-0 cursor-default' :
+                 !isCurrentMonth ? 'bg-black/10 border border-[#00f3ff]/10 opacity-40 z-0 cursor-default' :
                  isSelected ? 'bg-[#00f3ff]/10 border border-[#00f3ff]/60 shadow-[inset_0_0_20px_rgba(0,243,255,0.1),0_0_20px_rgba(0,243,255,0.2)] z-10 ring-1 ring-[#00f3ff]/50 cursor-pointer' :
-                 isToday ? 'bg-[#f800ff]/10 border border-[#f800ff]/40 shadow-[inset_0_0_20px_rgba(248,0,255,0.1),0_0_15px_rgba(248,0,255,0.1)] z-10 ring-1 ring-[#f800ff]/30 cursor-pointer' :
-                 'bg-black/40 border border-white/10 z-0 hover:border-[#00f3ff]/20 hover:bg-[#00f3ff]/5 cursor-pointer'
+                 isToday ? 'bg-[#f72585]/10 border border-[#f72585]/40 shadow-[inset_0_0_20px_rgba(247,37,133,0.1),0_0_15px_rgba(247,37,133,0.1)] z-10 ring-1 ring-[#f72585]/30 cursor-pointer' :
+                 'bg-[#0a1630] border border-[#00f3ff]/[0.15] z-0 hover:border-[#00f3ff]/20 hover:bg-[#00f3ff]/5 cursor-pointer'
                }`}
              >
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full">
                    {isSelected ? (
                      <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse shadow-[0_0_8px_#00f3ff] mt-0.5 md:mt-2 ml-0.5 md:ml-1" />
                    ) : isToday ? (
-                     <div className="w-1.5 h-1.5 rounded-full bg-[#f800ff] animate-pulse shadow-[0_0_5px_#f800ff] mt-0.5 md:mt-2 ml-0.5 md:ml-1" />
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#f72585] animate-pulse shadow-[0_0_5px_#f72585] mt-0.5 md:mt-2 ml-0.5 md:ml-1" />
                    ) : <div className="hidden md:block"/>}
                    <span className={`text-sm md:text-xl font-black ${
                      isSelected ? 'text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.9)]' :
-                     isToday ? 'text-[#f800ff] drop-shadow-[0_0_5px_rgba(248,0,255,0.8)]' : 'text-gray-500'
+                     isToday ? 'text-[#f72585] drop-shadow-[0_0_5px_rgba(247,37,133,0.8)]' : 'text-slate-500'
                    }`}>
                      {dayNum}
                    </span>
@@ -221,7 +200,7 @@ export default function CalendarMonthView({
                 {isSelected && (
                    <button
                      onClick={(e) => { e.stopPropagation(); openCreateForDay(cellDate); }}
-                     className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-[#00f3ff] text-[#0f172a] font-black text-lg flex items-center justify-center shadow-[0_0_15px_rgba(0,243,255,0.8)] hover:scale-110 transition-transform z-30 leading-none"
+                     className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-[#00f3ff] text-[#061026] font-black text-lg flex items-center justify-center shadow-[0_0_15px_rgba(0,243,255,0.8)] hover:scale-110 transition-transform z-30 leading-none"
                      title="Přidat událost"
                    >+</button>
                 )}
@@ -331,7 +310,7 @@ export default function CalendarMonthView({
                          onClick={() => setSelectedEvent(ev.rawEvent)}
                          className={`${colStartMap[ev.colStart]} ${colSpanMap[ev.colSpan]} ${rowStartMap[ev.rowStart]} self-start h-6 z-20 flex justify-center items-center shadow-[0_2px_5px_rgba(0,0,0,0.3)] border transition-all overflow-hidden pointer-events-auto cursor-pointer ${
                            ev.isPast 
-                             ? 'bg-transparent border-dashed border-white/10 text-white/30 opacity-40 grayscale line-through hover:opacity-100 hover:decoration-transparent hover:z-30 hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]' 
+                             ? 'bg-transparent border-dashed border-[#00f3ff]/[0.15] text-white/30 opacity-40 grayscale line-through hover:opacity-100 hover:decoration-transparent hover:z-30 hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]' 
                              : `${ev.colorClass} hover:z-30 hover:brightness-125 hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]`
                          } ${ev.edgeClasses}`}
                          style={{ marginTop: `${35 + ev.slotIndex * 26}px` }}
