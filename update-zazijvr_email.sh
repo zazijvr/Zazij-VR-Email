@@ -9,7 +9,26 @@ echo "------------------------------------------------"
 
 # 1. Stáhnutí vytvořeného balíčku z Cloudu (GitHub Releases) s Privátním Tokenem
 echo "🔒 Přihlašuji se do privátního repozitáře..."
-TOKEN="ghp_eAK7"$"tFqxaCjFd8qNzOoPi4Ska2ZAGr0ZOpaT"
+# Token se do skriptu nepíše – načte se z proměnné ZAZIJVR_GITHUB_TOKEN
+# nebo ze souboru ~/.config/zazijvr/github-token (stačí uložit jednou)
+TOKEN_FILE="$HOME/.config/zazijvr/github-token"
+TOKEN="${ZAZIJVR_GITHUB_TOKEN:-}"
+if [ -z "$TOKEN" ] && [ -f "$TOKEN_FILE" ]; then
+    TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
+fi
+if [ -z "$TOKEN" ]; then
+    read -r -s -p "🔑 Zadejte GitHub token pro stažení aplikace: " TOKEN < /dev/tty
+    echo
+    if [ -n "$TOKEN" ]; then
+        mkdir -p "$(dirname "$TOKEN_FILE")"
+        ( umask 077; printf '%s' "$TOKEN" > "$TOKEN_FILE" )
+        echo "💾 Token uložen do $TOKEN_FILE (příště se už nebude ptát)"
+    fi
+fi
+if [ -z "$TOKEN" ]; then
+    echo "❌ Chybí GitHub token."
+    exit 1
+fi
 
 # Získáme ID konkrétně .deb souboru (ne APK nebo .exe)
 ASSET_ID=$(curl -sL -H "Authorization: Bearer $TOKEN" \

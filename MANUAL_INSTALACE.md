@@ -16,10 +16,18 @@ sudo debtap -u
 
 ## Následná Instalace a Update aplikace
 
-Aplikace sídlí v zabezpečené Private repositáři na GitHubu. Uživatelské jméno a heslo nejsou potřeba. Ke stahování je přidělen exkluzivní "VIP Token". Celá instalace nebo povýšení aplikace probíhá POUZE jedním jediným příkazem do jakékoliv složky:
+Aplikace sídlí v privátním repozitáři na GitHubu. Ke stažení je potřeba GitHub token pouze pro čtení (fine-grained token, přístup jen k repozitáři `zazijvr/Zazij-VR-Email`, oprávnění *Contents: Read-only*). Token **nikdy nevkládejte do souborů v repozitáři** – předá vám ho správce.
+
+Token se na PC uloží jednou (soubor čte jen přihlášený uživatel):
 
 ```bash
-curl -sL -H "Authorization: token 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" https://raw.githubusercontent.com/zazijvr/Zazij-VR-Email/main/update-zazijvr_email.sh | bash
+mkdir -p ~/.config/zazijvr && (umask 077; read -r -s -p "Token: " T && printf '%s' "$T" > ~/.config/zazijvr/github-token); echo
+```
+
+Instalace nebo aktualizace aplikace je pak jediný příkaz do jakékoliv složky:
+
+```bash
+curl -sL -H "Authorization: token $(cat ~/.config/zazijvr/github-token)" https://raw.githubusercontent.com/zazijvr/Zazij-VR-Email/main/update-zazijvr_email.sh | bash
 ```
 
 **Co tento příkaz vytvoří?**

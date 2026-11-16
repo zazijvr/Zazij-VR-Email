@@ -42,9 +42,11 @@ export default function SettingsModal({
       const vLocal = await getVersion();
       setLocalVersion(vLocal);
 
+      // Token jen pro čtení se doplní při sestavení z .env / GitHub Secrets – v kódu ani v gitu není
+      const updateToken = import.meta.env.VITE_GITHUB_UPDATE_TOKEN;
       const response = await fetch('https://raw.githubusercontent.com/zazijvr/Zazij-VR-Email/main/package.json', {
         headers: {
-          'Authorization': 'token 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',
+          ...(updateToken ? { Authorization: `token ${updateToken}` } : {}),
           'Accept': 'application/vnd.github.v3.raw'
         }
       });
