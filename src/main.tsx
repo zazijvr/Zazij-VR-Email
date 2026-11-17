@@ -23,3 +23,17 @@ ReactDOM.createRoot(root).render(
     </QueryClientProvider>
   </React.StrictMode>,
 );
+
+/** Úvodní animace z index.html: zmizí, až je aplikace vykreslená – nejdřív ale po dohrání (min. 1,5 s) */
+const SPLASH_MIN_MS = 1500;
+const hideSplash = () => {
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  const wait = Math.max(0, SPLASH_MIN_MS - performance.now());
+  setTimeout(() => {
+    splash.classList.add('out');
+    setTimeout(() => splash.remove(), 500);
+  }, wait);
+};
+// Dva snímky po prvním vykreslení – React už má obsah na obrazovce
+requestAnimationFrame(() => requestAnimationFrame(hideSplash));
