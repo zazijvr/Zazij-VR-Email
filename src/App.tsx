@@ -848,6 +848,8 @@ function App() {
                 googleToken={googleToken}
                 triggerCreateEvent={triggerCreateEvent}
                 userEmail={userInfo?.email}
+                imapAccount={activeImap}
+                onSwitchToGoogle={userInfo?.email ? () => switchGoogleAccount(userInfo.email) : undefined}
               />
             </Suspense>
           )}

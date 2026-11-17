@@ -41,6 +41,10 @@ interface CalendarAppProps {
   googleToken: string | null;
   triggerCreateEvent: number;
   userEmail?: string;
+  /** Otevřený je jiný (IMAP) účet – kalendář ale ukazuje Google účet userEmail, je potřeba to říct */
+  imapAccount?: string | null;
+  /** Přepnout poštu zpět na Google účet, jehož kalendář se zobrazuje */
+  onSwitchToGoogle?: () => void;
 }
 
 export default function CalendarApp({
@@ -48,6 +52,8 @@ export default function CalendarApp({
   googleToken,
   triggerCreateEvent,
   userEmail,
+  imapAccount = null,
+  onSwitchToGoogle,
 }: CalendarAppProps) {
   const { showConfirm } = useAlert();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -567,7 +573,23 @@ export default function CalendarApp({
 
   return (
     <div className="w-full h-full flex flex-col relative overflow-hidden">
-      <div className={`w-full h-full ${selectedEvent ? 'hidden md:flex flex-col' : 'flex flex-col'} relative`}>
+      {/* Seznam / vlastní doména kalendář v aplikaci zatím nemají – říct, čí kalendář to je */}
+      {imapAccount && (
+        <div className="shrink-0 mx-3 mt-3 md:mx-6 md:mt-4 flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 rounded-xl border border-neon-amber/30 bg-neon-amber/5 text-xs sm:text-sm text-slate-300 z-20">
+          <span className="min-w-0">
+            {userEmail
+              ? <>Kalendář zatím umí jen Google účty. Zobrazuje se kalendář účtu <b className="text-white">{userEmail}</b>, ne {imapAccount}.</>
+              : <>Kalendář zatím umí jen Google účty – pro účet {imapAccount} není k dispozici.</>}
+          </span>
+          {userEmail && onSwitchToGoogle && (
+            <button onClick={onSwitchToGoogle}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold text-neon-blue border border-neon-blue/40 bg-neon-blue/10 hover:bg-neon-blue/20 transition-colors">
+              Přepnout na {userEmail}
+            </button>
+          )}
+        </div>
+      )}
+      <div className={`w-full flex-1 min-h-0 ${selectedEvent ? 'hidden md:flex flex-col' : 'flex flex-col'} relative`}>
         {currentMainView}
       </div>
 
