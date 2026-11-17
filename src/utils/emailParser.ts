@@ -1,22 +1,46 @@
-export const decodeBase64Url = (str) => {
+import type { GmailHeader, GmailMessagePart } from '../types/gmail';
+
+export interface MessageBody {
+  html: string;
+  text: string;
+  /** Velké tělo zprávy se musí dotáhnout zvlášť jako příloha */
+  attachmentId: string | null;
+}
+
+export interface AttachmentInfo {
+  filename: string;
+  mimeType?: string;
+  attachmentId: string;
+  size: number;
+  /** Doplní se při skládání vlákna – z které zprávy příloha je */
+  messageId?: string;
+}
+
+export interface InlineImage {
+  cid: string;
+  mimeType?: string;
+  attachmentId?: string;
+  data?: string;
+  messageId?: string;
+}
+
+export const decodeBase64Url = (str: string | null | undefined): string => {
   if (!str) return '';
   const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
   try {
     return decodeURIComponent(
-      Array.prototype.map.call(window.atob(base64), function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join('')
+      Array.from(window.atob(base64), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
     );
-  } catch (e) {
+  } catch {
     try {
       return window.atob(base64);
-    } catch (e2) {
+    } catch {
       return '';
     }
   }
 };
 
-const unicodeToCp1252 = {
+const unicodeToCp1252: Record<number, number> = {
   8364: 0x80, 8218: 0x82, 402: 0x83, 8222: 0x84, 8230: 0x85, 8224: 0x86, 8225: 0x87,
   710: 0x88, 8240: 0x89, 352: 0x8A, 8249: 0x8B, 338: 0x8C, 381: 0x8E, 8216: 0x91,
   8217: 0x92, 8220: 0x93, 8221: 0x94, 8226: 0x95, 8211: 0x96, 8212: 0x97, 732: 0x98,
@@ -24,14 +48,14 @@ const unicodeToCp1252 = {
 };
 
 // Odstraní zdvojené UTF-8 kódování u nekonsistentních emailových hlaviček
-export const decodeMojibake = (str) => {
+export const decodeMojibake = (str: string | null | undefined): string => {
   if (!str) return '';
   
-  let cleanedStr = str
+  const cleanedStr = str
     .replace(/Ã„Â[\s\uFFFD\x8D\x8F]*/g, 'č')
     .replace(/Ã„â€º/g, 'ě');
 
-  const mapByte = (charStr) => {
+  const mapByte = (charStr: string): string => {
     let code = charStr.charCodeAt(0);
     if (unicodeToCp1252[code]) code = unicodeToCp1252[code];
     return '%' + code.toString(16).padStart(2, '0');
@@ -41,30 +65,30 @@ export const decodeMojibake = (str) => {
     try {
       let escaped = '';
       for (let i = 0; i < match.length; i++) escaped += mapByte(match[i]);
-      let first = decodeURIComponent(escaped);
+      const first = decodeURIComponent(escaped);
       if (first.includes('Ã') || first.includes('Ä') || first.includes('Å')) {
         let esc2 = '';
         for (let j = 0; j < first.length; j++) esc2 += mapByte(first[j]);
         return decodeURIComponent(esc2);
       }
       return first;
-    } catch(e) {
+    } catch {
       return match;
     }
   });
 };
 
-export const getHeader = (headers, name) => {
+export const getHeader = (headers: GmailHeader[] | undefined, name: string): string => {
   const header = headers?.find(h => h.name.toLowerCase() === name.toLowerCase());
   return header ? decodeMojibake(header.value) : '';
 };
 
-export const getMessageBody = (payload) => {
+export const getMessageBody = (payload: GmailMessagePart): MessageBody => {
   let bodyHTML = '';
   let bodyText = '';
-  let bodyAttachmentId = null;
+  let bodyAttachmentId: string | null = null;
 
-  const findPart = (part, mimeType) => {
+  const findPart = (part: GmailMessagePart, mimeType: string): GmailMessagePart | null => {
     // If we've found the correct mimeType and it's not a standard attachment (or it's the text body we actually want)
     if (part.mimeType === mimeType && (!part.filename || part.filename === '')) {
       return part;
@@ -113,9 +137,9 @@ export const getMessageBody = (payload) => {
   return { html: '<div class="text-[#00f3ff]/50 italic p-4">E-mail neobsahuje čitelné textové tělo, případně je obsaženo pouze v přílohách.</div>', text: '', attachmentId: null };
 };
 
-export const extractAttachments = (payload) => {
+export const extractAttachments = (payload: GmailMessagePart | undefined): AttachmentInfo[] => {
   if (!payload) return [];
-  let attachments = [];
+  let attachments: AttachmentInfo[] = [];
   
   const contentId = getHeader(payload.headers, 'Content-ID');
   const contentDisposition = getHeader(payload.headers, 'Content-Disposition');
@@ -142,9 +166,9 @@ export const extractAttachments = (payload) => {
   return attachments;
 };
 
-export const extractInlineImages = (payload) => {
+export const extractInlineImages = (payload: GmailMessagePart | undefined): InlineImage[] => {
   if (!payload) return [];
-  let inlines = [];
+  let inlines: InlineImage[] = [];
   
   const contentId = getHeader(payload.headers, 'Content-ID');
   
@@ -169,21 +193,21 @@ export const extractInlineImages = (payload) => {
   return inlines;
 };
 
-export const encodeBase64Url = (str) => {
+export const encodeBase64Url = (str: string): string => {
   const bytes = new TextEncoder().encode(str);
   let binStr = '';
   const CHUNK_SIZE = 32000;
   for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
-    binStr += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK_SIZE));
+    binStr += String.fromCharCode(...bytes.subarray(i, i + CHUNK_SIZE));
   }
   const base64 = btoa(binStr);
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
-export const encodeHeaderName = (headerStr) => {
+export const encodeHeaderName = (headerStr: string | null | undefined): string => {
   if (!headerStr) return '';
   
-  const parts = [];
+  const parts: string[] = [];
   let currentGroup = '';
   let inQuotes = false;
   let inBrackets = false;
@@ -220,7 +244,7 @@ export const encodeHeaderName = (headerStr) => {
   }).join(', ');
 };
 
-export const getAvatarInitial = (name) => {
+export const getAvatarInitial = (name: string | null | undefined): string => {
   if (!name) return '?';
   const match = name.match(/\p{L}|\p{N}/u);
   return match ? match[0].toUpperCase() : '?';

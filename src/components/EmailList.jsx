@@ -4,7 +4,8 @@ import DOMPurify from 'dompurify';
 import EmailListItem from './EmailListItem';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import { Paperclip, ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, Flag, Star, CheckSquare, Square, RotateCcw, FileEdit, X } from 'lucide-react';
-import { getHeader, getMessageBody, extractAttachments } from '../utils/emailParser';
+import { listThreads, getThreadsMeta } from '../services/gmail';
+import { formatThreads, mergeAndGroupEmails } from '../services/threads';
 import { saveNewContacts } from '../utils/contactManager';
 import { useAlert } from './AlertProvider';
 
@@ -12,213 +13,12 @@ import { useAlert } from './AlertProvider';
 // abychom absolutně spolehlivě zabránili dvojitým notifikacím (např. při ručním označení "Přečíst")
 const globalNotifiedSet = new Set();
 let globalHighestEmailDate = 0;
-const hasAttachment = (payload) => {
-  if (!payload) return false;
-  // Seznam se stahuje jen s hlavičkami (bez částí) – příloha se pozná podle multipart/mixed
-  if (!payload.parts && payload.mimeType === 'multipart/mixed') return true;
-  if (payload.filename && payload.filename.length > 0) return true;
-  if (payload.parts) {
-    return payload.parts.some(hasAttachment);
-  }
-  return false;
-};
-
-const formatSize = (bytes) => {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
-
-const parseDate = (dateStr) => {
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return { dateText: '', timeText: '', time: 0 };
-  const today = new Date();
-
-  const timeText = d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
-
-  if (d.toDateString() === today.toDateString()) {
-    return {
-      dateText: 'Dnes',
-      timeText,
-      time: d.getTime()
-    };
-  }
-
-  return {
-    dateText: d.toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-    timeText,
-    time: d.getTime()
-  };
-};
-
-/** Pro seznam stačí hlavičky – celé tělo e-mailu se stahuje až v detailu */
-const LIST_HEADERS = ['From', 'To', 'Cc', 'Subject', 'Date'].map(h => `&metadataHeaders=${h}`).join('');
-/** Gmail povolí na účet jen omezený počet dotazů za sekundu (vlákno ≈ 10 jednotek z 250/s).
- *  Proto nejvýš 10 souběžně a při 429 (moc dotazů) krátké počkání a nový pokus. */
-const THREAD_CONCURRENCY = 10;
-const fetchThreadMeta = async (id, token) => {
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}?format=metadata${LIST_HEADERS}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (res.status === 429 || res.status === 503) {
-      await new Promise(r => setTimeout(r, 300 * 2 ** attempt + Math.random() * 200));
-      continue;
-    }
-    return res.ok ? res.json() : null;
-  }
-  return null;
-};
-const fetchThreadsMeta = async (threads, token) => {
-  const results = new Array(threads.length).fill(null);
-  let next = 0;
-  const worker = async () => {
-    while (next < threads.length) {
-      const i = next++;
-      try { results[i] = await fetchThreadMeta(threads[i].id, token); } catch { results[i] = null; }
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(THREAD_CONCURRENCY, threads.length) }, worker));
-  return results.filter(t => t && t.messages && t.messages.length > 0).map(formatThreadMessage);
-};
-
 /** Pevné šířky sloupců seznamu – společné pro hlavičku i řádky */
 const COL_STYLE = { '--col-from': 'clamp(130px, 26%, 230px)', '--col-date': '84px' };
 
 /** Naposledy zobrazený obsah složek v paměti (klíč: složka + filtr) – návrat do složky je okamžitý,
  *  aktuální stav se pak dotáhne na pozadí */
 const folderMemCache = new Map();
-
-const formatThreadMessage = (thread) => {
-  const messages = thread.messages || [];
-  if (messages.length === 0) return null;
-
-  const firstMsg = messages[0];
-  const firstHeaders = firstMsg.payload?.headers || [];
-
-  const repliedMessages = messages.filter((m, i) => i > 0 && (m.labelIds || []).includes('SENT'));
-  const hasCloudRepliedFlag = repliedMessages.length > 0;
-
-  const lastReceivedMsg = messages.slice().reverse().find(m => !(m.labelIds || []).includes('SENT')) || firstMsg;
-  const receivedHeaders = lastReceivedMsg.payload?.headers || [];
-
-  const latestMsg = messages[messages.length - 1];
-  const latestHeaders = latestMsg.payload?.headers || [];
-
-  const fromFull = getHeader(receivedHeaders, 'From');
-  const toFull = getHeader(receivedHeaders, 'To');
-  const ccFull = getHeader(receivedHeaders, 'Cc');
-  const dateData = parseDate(getHeader(latestHeaders, 'Date'));
-
-  // Jméno bez e-mailu a bez uvozovek („"Alza.cz" <info@alza.cz>“ → Alza.cz)
-  const displayName = (full) => (full.split('<')[0].trim().replace(/^["']+|["']+$/g, '').replace(/\\"/g, '').trim() || full);
-  const fromParsed = displayName(fromFull);
-  const toParsed = displayName(toFull);
-
-  const threadId = thread.id;
-  const elementId = latestMsg.id; 
-
-  const isUnread = messages.some(m => (m.labelIds || []).includes('UNREAD'));
-  const isStarred = messages.some(m => (m.labelIds || []).includes('STARRED'));
-
-  let snippet = thread.snippet || latestMsg.snippet || '';
-
-  try {
-    const repliedLocal = JSON.parse(localStorage.getItem('vr-replied-threads') || '[]');
-    const repliedLabelId = localStorage.getItem('vr-replied-label-id');
-    const hasCustomRepliedFlag = repliedLabelId && messages.some(m => (m.labelIds || []).includes(repliedLabelId));
-
-    if ((repliedLocal.includes(threadId) || hasCustomRepliedFlag || hasCloudRepliedFlag) && !snippet.startsWith('↩️ ')) {
-      snippet = '↩️ ' + snippet;
-    }
-  } catch (err) {}
-
-  return {
-    id: elementId,
-    threadId: threadId,
-    messageIds: new Set(messages.map(m => m.id)),
-    messageCount: messages.length,
-    labelIds: latestMsg.labelIds || [],
-    from: fromParsed,
-    to: toParsed,
-    originalFrom: fromParsed,
-    cc: ccFull ? displayName(ccFull) : '',
-    originalFromRaw: fromFull,
-    originalToRaw: toFull,
-    originalCcRaw: ccFull,
-    subject: getHeader(firstHeaders, 'Subject') || '(Bez předmětu)',
-    snippet: snippet,
-    isUnread,
-    isStarred,
-    dateText: dateData.dateText,
-    timeText: dateData.timeText,
-    rawDate: dateData.time,
-    sizeText: formatSize(latestMsg.sizeEstimate),
-    rawSize: latestMsg.sizeEstimate || 0,
-    hasAttachment: messages.some(m => hasAttachment(m.payload)),
-    html: '', 
-    text: '', 
-    attachments: [] 
-  };
-};
-
-const mergeAndGroupEmails = (oldList, newlyFetchedList, isSilentFetch = false) => {
-  const threadMap = new Map();
-
-  const processOld = (email) => {
-    const tId = email.threadId || email.id;
-    // Opustíme staré _newArrival, aby animace nehrála znovu při dalším fetchi
-    const { _newArrival, ...rest } = email;
-    if (!rest.messageIds) rest.messageIds = new Set([email.id]);
-    threadMap.set(tId, { ...rest });
-  };
-
-  const processNew = (email) => {
-    const tId = email.threadId || email.id;
-
-    if (!threadMap.has(tId)) {
-      threadMap.set(tId, { ...email, messageIds: new Set([email.id]), _newArrival: isSilentFetch });
-    } else {
-      const existing = threadMap.get(tId);
-
-      // Zabráníme duplikátnímu načítání stejného ID v rámci tichého refreshe
-      if (!existing.messageIds.has(email.id)) {
-        existing.messageIds.add(email.id);
-        existing.rawSize += email.rawSize;
-        existing.sizeText = formatSize(existing.rawSize);
-        if (isSilentFetch) existing._newArrival = true;
-      }
-
-      existing.isUnread = existing.isUnread || email.isUnread;
-      existing.isStarred = existing.isStarred || email.isStarred;
-      existing.hasAttachment = existing.hasAttachment || email.hasAttachment;
-
-      if (email.rawDate > existing.rawDate) {
-        existing.rawDate = email.rawDate;
-        existing.dateText = email.dateText;
-        existing.timeText = email.timeText;
-        existing.snippet = email.snippet;
-        existing.id = email.id;
-        existing.originalFrom = email.originalFrom || email.from;
-      }
-    }
-  };
-
-  oldList.forEach(processOld);
-  newlyFetchedList.forEach(processNew);
-
-  const finalEmails = Array.from(threadMap.values());
-  finalEmails.forEach(e => {
-    e.messageCount = e.messageIds.size;
-    // Nebudeme vizuálně přiznávat, kolik e-mailů dané vlákno obsahuje,
-    // na oko se to tváří jako jedna zpráva (ta nejnovější).
-    e.from = e.originalFrom;
-  });
-
-  return finalEmails;
-};
 
 export default function EmailList({ googleToken, activeFolder, selectedEmailId, setSelectedEmailId, onExpand, onDraftClick, trashedEmails = [], spamEmails = [], hiddenEmailIds = [], optimisticMoves = [], onTrash, onRestore, onSpam, setUnreadCounts, unreadCounts, loginWithGoogle, customLabels = [], userEmail, refreshTriggerList }) {
   const getLabelId = (folderName) => {
@@ -494,17 +294,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       // 2) Stažení ze serveru
       if (!hasData) setLoading(true);
       try {
-        const labelId = getLabelId(activeFolder);
-        let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=40`;
-        let queryParts = [];
-        if (showOnlyUnread) queryParts.push('is:unread');
-        if (searchQuery.trim()) queryParts.push(searchQuery.trim());
-        if (queryParts.length > 0) url += '&q=' + encodeURIComponent(queryParts.join(' '));
-
-        const listRes = await fetch(url, {
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-        const listData = await listRes.json();
+        const listData = await listThreads(googleToken, { labelId: getLabelId(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 40 });
         if (!isCurrent()) return;
 
         if (!listData.threads) {
@@ -516,7 +306,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           return;
         }
 
-        const formattedEmails = await fetchThreadsMeta(listData.threads, googleToken);
+        const formattedEmails = formatThreads(await getThreadsMeta(googleToken, listData.threads.map(t => t.id)));
         if (!isCurrent()) return;
 
         formattedEmails.forEach(e => {
@@ -593,18 +383,11 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     if (shouldFetch && googleToken) {
       const silentFetch = async () => {
         try {
-          const labelId = getLabelId(activeFolder);
-          let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=15`; // nová pošta je vždy nahoře
-          let queryParts = [];
-          if (showOnlyUnread) queryParts.push('is:unread');
-          if (searchQuery.trim()) queryParts.push(searchQuery.trim());
-          if (queryParts.length > 0) url += '&q=' + encodeURIComponent(queryParts.join(' '));
-
-          const listRes = await fetch(url, { headers: { Authorization: `Bearer ${googleToken}` } });
-          const listData = await listRes.json();
+          // nová pošta je vždy nahoře – stačí prvních 15 vláken
+          const listData = await listThreads(googleToken, { labelId: getLabelId(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 15 });
           if (!listData.threads) return;
 
-          const formattedEmails = await fetchThreadsMeta(listData.threads, googleToken);
+          const formattedEmails = formatThreads(await getThreadsMeta(googleToken, listData.threads.map(t => t.id)));
 
           let permissionGranted = await isPermissionGranted();
           if (!permissionGranted) {
@@ -821,17 +604,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     if (!nextPageToken || loadingMore) return;
     setLoadingMore(true);
     try {
-      const labelId = getLabelId(activeFolder);
-      let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads?labelIds=${labelId}&maxResults=40&pageToken=${nextPageToken}`;
-      let queryParts = [];
-      if (showOnlyUnread) queryParts.push('is:unread');
-      if (searchQuery.trim()) queryParts.push(searchQuery.trim());
-      if (queryParts.length > 0) url += '&q=' + encodeURIComponent(queryParts.join(' '));
-
-      const listRes = await fetch(url, {
-        headers: { Authorization: `Bearer ${googleToken}` }
-      });
-      const listData = await listRes.json();
+      const listData = await listThreads(googleToken, { labelId: getLabelId(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 40, pageToken: nextPageToken });
 
       if (!listData.threads) {
         setLoadingMore(false);
@@ -840,7 +613,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
       setNextPageToken(listData.nextPageToken || null);
 
-      const formattedEmails = await fetchThreadsMeta(listData.threads, googleToken);
+      const formattedEmails = formatThreads(await getThreadsMeta(googleToken, listData.threads.map(t => t.id)));
       formattedEmails.forEach(e => {
         globalNotifiedSet.add(e.id);
         globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);

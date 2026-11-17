@@ -1,9 +1,22 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, CheckCircle, XCircle, Info, X } from 'lucide-react';
 
-export default function CustomAlert({ isOpen, title, message, type = 'info', onClose, onConfirm, confirmText, cancelText }) {
-  const modalRef = useRef(null);
+export type AlertType = 'info' | 'success' | 'error' | 'warning';
+
+interface CustomAlertProps {
+  isOpen: boolean;
+  title?: string | null;
+  message: ReactNode;
+  type?: AlertType;
+  onClose: () => void;
+  onConfirm?: () => void;
+  confirmText?: string;
+  cancelText?: string;
+}
+
+export default function CustomAlert({ isOpen, title, message, type = 'info', onClose, onConfirm, confirmText, cancelText }: CustomAlertProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && modalRef.current) {
@@ -12,7 +25,7 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
   }, [isOpen]);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (isOpen && (e.key === 'Escape' || e.key === 'Enter')) {
         e.stopPropagation();
         onClose();

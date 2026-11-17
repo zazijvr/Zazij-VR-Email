@@ -1,17 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, type RefObject } from 'react';
 
-export function useFocusTrap(ref, isOpen) {
+const FOCUSABLE = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+export function useFocusTrap(ref: RefObject<HTMLElement | null>, isOpen: boolean): void {
   useEffect(() => {
     if (!isOpen || !ref.current) return;
 
-    const handleKeyDown = (e) => {
+    const container = ref.current;
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
 
-      const focusableElements = Array.from(
-        ref.current.querySelectorAll(
-          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]'
-        )
-      ).filter(el => {
+      const focusableElements = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(el => {
         // Vyfiltrujeme skryté elementy
         return el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0;
       });
@@ -37,14 +36,12 @@ export function useFocusTrap(ref, isOpen) {
     // Pokud uživatel do modalu neklikl a nemá focus nikde, přiklapneme ho dovnitř
     const timer = setTimeout(() => {
       if (ref.current && !ref.current.contains(document.activeElement)) {
-        const focusable = ref.current.querySelectorAll(
-          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]'
-        );
+        const focusable = ref.current.querySelectorAll<HTMLElement>(FOCUSABLE);
         if (focusable.length > 0) focusable[0].focus();
       }
     }, 100);
 
-    const el = ref.current;
+    const el = container;
     el.addEventListener('keydown', handleKeyDown);
 
     return () => {

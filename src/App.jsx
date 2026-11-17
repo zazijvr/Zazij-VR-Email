@@ -49,7 +49,7 @@ function App() {
 
     const setupNotificationListener = async () => {
       try {
-        if (typeof window.__TAURI_INTERNALS__ !== 'undefined' || typeof window.__TAURI__ !== 'undefined') {
+        if (typeof window.__TAURI_INTERNALS__ !== 'undefined') {
           await registerActionTypes([{
             id: 'new_email',
             actions: [{

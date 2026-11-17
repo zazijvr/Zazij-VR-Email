@@ -1,5 +1,5 @@
 // Nástroje pro lokální ukládání a získávání e-mailových kontaktů z historie
-export const getStoredContacts = (userEmail) => {
+export const getStoredContacts = (userEmail: string | null | undefined): string[] => {
   if (!userEmail) return [];
   try {
     const raw = localStorage.getItem(`email_contacts_${userEmail}`);
@@ -11,18 +11,17 @@ export const getStoredContacts = (userEmail) => {
   }
 };
 
-export const saveNewContacts = (userEmail, contactStrings) => {
+export const saveNewContacts = (userEmail: string | null | undefined, contactStrings: (string | null | undefined)[]): void => {
   if (!userEmail || !contactStrings || contactStrings.length === 0) return;
   
   const current = getStoredContacts(userEmail);
-  const contactSet = new Set(current);
   
   let added = false;
   
   // Očekáváme pole řetězců jako: "jmeno příjmení <email@domena.cz>" nebo "email@domena.cz"
   // Rozsekáme podle čárek, pokud náhodou dostaneme zřetězený seznam:
-  const rawList = [];
-  contactStrings.forEach(str => {
+  const rawList: string[] = [];
+  contactStrings.forEach((str) => {
     if (!str) return;
     str.split(',').forEach(splitStr => rawList.push(splitStr.trim()));
   });

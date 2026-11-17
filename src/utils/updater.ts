@@ -3,13 +3,21 @@
 // veřejným klíčem z tauri.conf.json, nainstaluje ho a restartuje se.
 // Na mobilu updater není – tam se aktualizuje jinak (APK / obchod).
 
+import type { Update, DownloadEvent } from '@tauri-apps/plugin-updater';
+
+export interface UpdateProgress {
+  downloaded: number;
+  /** null, když server velikost neuvede */
+  total: number | null;
+}
+
 export const isUpdaterSupported = () =>
   typeof window !== 'undefined' &&
   !!window.__TAURI_INTERNALS__ &&
   !/Android|iPhone|iPad/i.test(navigator.userAgent);
 
 /** Vrátí objekt aktualizace (version, body, date…), nebo null když je aplikace aktuální */
-export const checkForUpdate = async () => {
+export const checkForUpdate = async (): Promise<Update | null> => {
   if (!isUpdaterSupported()) return null;
   const { check } = await import('@tauri-apps/plugin-updater');
   return await check({ timeout: 20000 });
@@ -19,10 +27,10 @@ export const checkForUpdate = async () => {
  * Stáhne, ověří a nainstaluje aktualizaci, pak restartuje aplikaci.
  * onProgress({ downloaded, total }) – total může být null, když server velikost neuvede.
  */
-export const installUpdate = async (update, onProgress) => {
+export const installUpdate = async (update: Update, onProgress?: (p: UpdateProgress) => void): Promise<void> => {
   let downloaded = 0;
-  let total = null;
-  await update.downloadAndInstall((event) => {
+  let total: number | null = null;
+  await update.downloadAndInstall((event: DownloadEvent) => {
     if (event.event === 'Started') {
       total = event.data.contentLength ?? null;
       onProgress?.({ downloaded, total });

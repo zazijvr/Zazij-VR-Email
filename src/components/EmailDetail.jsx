@@ -7,6 +7,7 @@ import { downloadDir, join } from '@tauri-apps/api/path';
 import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, Star, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen, FileText } from 'lucide-react';
 import ICAL from 'ical.js';
 import DOMPurify from 'dompurify';
+import { getThread, getMessage, getAttachment } from '../services/gmail';
 import { db } from '../db/db';
 
 import { getHeader, getMessageBody, decodeMojibake, extractAttachments, extractInlineImages, decodeBase64Url } from '../utils/emailParser';
@@ -621,11 +622,7 @@ ${ccLine}
           }
         }
 
-        const authHeaders = { headers: { Authorization: `Bearer ${googleToken}` } };
-        const fetchThread = async (threadId) => {
-          const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadId}?format=full`, authHeaders);
-          return r.ok ? r.json() : null;
-        };
+        const fetchThread = (threadId) => getThread(googleToken, threadId).catch(() => null);
 
         // Id vlákna známe ze seznamu (lokální keš) – vlákno se stáhne hned, bez mezikroku přes zprávu
         let threadData = null;
@@ -634,8 +631,7 @@ ${ccLine}
           try { threadData = await fetchThread(knownThreadId); } catch (te) { console.warn('Vlákno z keše nešlo načíst', te); }
         }
         if (!threadData?.messages?.length) {
-          const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${selectedEmailId}?format=full`, authHeaders);
-          data = await res.json();
+          data = await getMessage(googleToken, selectedEmailId, 'full');
           if (data.threadId) {
             try { threadData = await fetchThread(data.threadId); } catch (te) { console.error("Vlákno se nepodařilo nalistovat, padám na base zprávu", te); }
           }
@@ -701,10 +697,7 @@ ${ccLine}
         // Zpracování extrémně velkých emailových těl z attachmentId
         if (bodyExtract.attachmentId) {
           try {
-            const attachRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${data.id || selectedEmailId}/attachments/${bodyExtract.attachmentId}`, {
-              headers: { Authorization: `Bearer ${googleToken}` }
-            });
-            const attachData = await attachRes.json();
+            const attachData = await getAttachment(googleToken, data.id || selectedEmailId, bodyExtract.attachmentId);
             if (attachData.data) {
               bodyExtract.html = decodeMojibake(decodeBase64Url(attachData.data));
             } else {
@@ -736,8 +729,7 @@ ${ccLine}
             let raw = inline.data;
             if (!raw && inline.attachmentId) {
               const sourceMsgId = inline.messageId || data.id;
-              const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${sourceMsgId}/attachments/${inline.attachmentId}`, authHeaders);
-              raw = (await res.json()).data;
+              raw = (await getAttachment(googleToken, sourceMsgId, inline.attachmentId)).data;
             }
             if (!raw) return null;
             return [inline.cid, `data:${inline.mimeType || 'image/png'};base64,${raw.replace(/-/g, '+').replace(/_/g, '/')}`];
