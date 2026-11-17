@@ -1,38 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import EventModal from './components/EventModal';
 import AgendaView from './components/AgendaView';
 import MonthView from './components/MonthView';
 import EventDetailView from './components/EventDetailView';
-import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Loader2, Search, X, Edit2, Trash2, Bell, AlertTriangle, Repeat, ArrowLeft } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
-import RichTextEditor from '../../components/RichTextEditor';
-import DatePicker from '../../components/DatePicker';
-import TimePicker from '../../components/TimePicker';
+import { useAlert } from '../../components/AlertProvider';
+import {
+  deleteEvent, describeRecurrence, getEvent, listEvents, parseRRule, saveEvent, toCalendarEvent,
+  type GoogleCalendarEvent, type GoogleEventInput,
+} from '../../services/calendar';
+import type { CalendarEvent, EventForm, RecurrenceFreq, RecurrenceRule } from '../../types/calendar';
+
+const HOLIDAY_CALENDAR = 'cs.czech#holiday@group.v.calendar.google.com';
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+/** Datum v místním čase jako RRRR-MM-DD (toISOString by po půlnoci vrátil včerejšek) */
+const localDateStr = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+const emptyEventForm = (dateStr: string = localDateStr(new Date())): EventForm => ({
+  title: '',
+  startDate: dateStr,
+  endDate: dateStr,
+  startTime: '10:00',
+  endTime: '11:00',
+  allDay: false,
+  description: '',
+  alertMinutes: 'default',
+  recurrenceRule: 'NONE',
+  recurrenceInterval: 1,
+  customFreq: 'WEEKLY',
+  recurrenceUntil: '',
+  attendees: '',
+});
+
+interface CalendarAppProps {
+  activeCalendarView: string;
+  googleToken: string | null;
+  triggerCreateEvent: number;
+  userEmail?: string;
+}
 
 export default function CalendarApp({
   activeCalendarView,
   googleToken,
   triggerCreateEvent,
-  userEmail
-}) {
+  userEmail,
+}: CalendarAppProps) {
+  const { showConfirm } = useAlert();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [previewRecurrenceText, setPreviewRecurrenceText] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [previewRecurrenceText, setPreviewRecurrenceText] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [displayedAgendaCount, setDisplayedAgendaCount] = useState(7);
   const [agendaSearch, setAgendaSearch] = useState('');
-  const [appError, setAppError] = useState(null);
+  const [appError, setAppError] = useState<string | null>(null);
   const [specialCalsTrigger, setSpecialCalsTrigger] = useState(0);
-  const [selectedCalDay, setSelectedCalDay] = useState(null); // Date object
+  /** Vybraný den „RRRR-MM-DD“ (mobil) */
+  const [selectedCalDay, setSelectedCalDay] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleMobileSearch = (e) => {
-       setSearchQuery(e.detail);
-       setAgendaSearch(e.detail);
+    const handleMobileSearch = (e: Event) => {
+       const q = (e as CustomEvent<string>).detail;
+       setSearchQuery(q);
+       setAgendaSearch(q);
     };
     window.addEventListener('vr-mobile-search-query-change', handleMobileSearch);
     return () => window.removeEventListener('vr-mobile-search-query-change', handleMobileSearch);
@@ -47,24 +82,10 @@ export default function CalendarApp({
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [editEventId, setEditEventId] = useState(null);
+  const [editEventId, setEditEventId] = useState<string | null>(null);
   const [showEventCloseWarning, setShowEventCloseWarning] = useState(false);
-  const [initialEventFormStr, setInitialEventFormStr] = useState(null);
-  const [newEventForm, setNewEventForm] = useState({
-    title: '',
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
-    startTime: '10:00',
-    endTime: '11:00',
-    allDay: false,
-    description: '',
-    alertMinutes: 'default',
-    recurrenceRule: 'NONE', // NONE, DAILY, WEEKLY, MONTHLY, YEARLY, CUSTOM
-    recurrenceInterval: 1,
-    customFreq: 'WEEKLY',
-    recurrenceUntil: '', // YYYY-MM-DD
-    attendees: ''
-  });
+  const [initialEventFormStr, setInitialEventFormStr] = useState<string | null>(null);
+  const [newEventForm, setNewEventForm] = useState<EventForm>(() => emptyEventForm());
 
   const monthNames = ["LEDEN", "ÚNOR", "BŘEZEN", "DUBEN", "KVĚTEN", "ČERVEN", "ČERVENEC", "SRPEN", "ZÁŘÍ", "ŘÍJEN", "LISTOPAD", "PROSINEC"];
   const currentMonthName = monthNames[currentDate.getMonth()];
@@ -74,7 +95,7 @@ export default function CalendarApp({
     let isDirty = false;
     
     // Pomocná funkce s normováním textu z RichTextEditoru
-    const normalizeDesc = (html) => {
+    const normalizeDesc = (html: string) => {
         if (!html) return '';
         const stripped = html.replace(/<[^>]*>?/gm, '').trim();
         return stripped === '' ? '' : html;
@@ -97,24 +118,9 @@ export default function CalendarApp({
     }
   };
 
-  const openCreateForDay = (dateObj) => {
-    const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
+  const openCreateForDay = (dateObj: Date) => {
     setEditEventId(null);
-    const baseForm = {
-      title: '',
-      startDate: dateStr,
-      endDate: dateStr,
-      startTime: '10:00',
-      endTime: '11:00',
-      allDay: false,
-      description: '',
-      alertMinutes: 'default',
-      recurrenceRule: 'NONE',
-      recurrenceInterval: 1,
-      customFreq: 'WEEKLY',
-      recurrenceUntil: '',
-      attendees: ''
-    };
+    const baseForm = emptyEventForm(localDateStr(dateObj));
     setNewEventForm(baseForm);
     setInitialEventFormStr(JSON.stringify(baseForm));
     setSelectedCalDay(null);
@@ -123,7 +129,7 @@ export default function CalendarApp({
 
   // Uzavírání modálů přes klávesu Escape
   useEffect(() => {
-    const handleEsc = (e) => {
+    const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showEventCloseWarning) {
            setShowEventCloseWarning(false);
@@ -146,7 +152,7 @@ export default function CalendarApp({
     }
     
     // Ohraničení pro dotaz dle aktivního okna
-    let timeMin, timeMax;
+    let timeMin: string, timeMax: string;
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
@@ -172,112 +178,41 @@ export default function CalendarApp({
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        const primaryUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=250`;
-        const fetches = [
-           fetch(primaryUrl, { headers: { Authorization: `Bearer ${googleToken}` } })
-        ];
-
         let specialCals = { cz_holidays: false };
-        try { specialCals = JSON.parse(localStorage.getItem('zazijvr_special_calendars')) || {}; } catch(e) {}
-        
-        if (specialCals.cz_holidays) {
-           const holidayUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent('cs.czech#holiday@group.v.calendar.google.com')}/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=50`;
-           fetches.push(fetch(holidayUrl, { headers: { Authorization: `Bearer ${googleToken}` } }));
+        try { specialCals = JSON.parse(localStorage.getItem('zazijvr_special_calendars') || 'null') || specialCals; } catch { /* výchozí bez svátků */ }
+
+        const requests: Promise<GoogleCalendarEvent[]>[] = [listEvents(googleToken, 'primary', timeMin, timeMax, 250)];
+        if (specialCals.cz_holidays) requests.push(listEvents(googleToken, HOLIDAY_CALENDAR, timeMin, timeMax, 50));
+
+        const results = await Promise.allSettled(requests);
+        const allItems: GoogleCalendarEvent[] = [];
+        let lastError: unknown = null;
+        for (const r of results) {
+          if (r.status === 'fulfilled') {
+            r.value.forEach((item) => {
+              // Svátky zeleně
+              if (item.organizer?.email?.includes('holiday')) item.colorId = '10';
+              allItems.push(item);
+            });
+          } else {
+            lastError = r.reason;
+          }
         }
 
-        const responses = await Promise.all(fetches);
-        
-        let allItems = [];
-        let hasError = false;
-        let lastErrorStatus = 200;
-
-        for (const res of responses) {
-           if (res.ok) {
-              const data = await res.json();
-              if (data.items) {
-                 data.items.forEach(item => {
-                    if (item.organizer && item.organizer.email.includes('holiday')) {
-                       item.colorId = '10'; // Basil (Dovolenkové zelené)
-                       item.isHoliday = true;
-                    }
-                    allItems.push(item);
-                 });
-              }
-           } else {
-              hasError = true;
-              lastErrorStatus = res.status;
-           }
-        }
-        
-        if (!hasError || allItems.length > 0) {
-          let parsed = allItems.map(item => {
-             const isAllDay = !!item.start.date;
-             const startStr = item.start.dateTime || item.start.date;
-             const endStr = item.end?.dateTime || item.end?.date || startStr;
-             
-             let startDateObj;
-             let endDateObj;
-
-             if (isAllDay) {
-                // Fix pro celodenní události: parsovat lokalně, nikoliv UTC!
-                const [sY, sM, sD] = startStr.split('T')[0].split('-');
-                startDateObj = new Date(parseInt(sY), parseInt(sM) - 1, parseInt(sD), 0, 0, 0);
-                
-                if (item.end?.date) {
-                   const [eY, eM, eD] = item.end.date.split('-');
-                   // Google API vrací "exkluzivní" další den, např konec na 16. pokud je to 15.
-                   endDateObj = new Date(parseInt(eY), parseInt(eM) - 1, parseInt(eD), 0, 0, 0);
-                   endDateObj = new Date(endDateObj.getTime() - 1); // ustřihne milisekundu, vrátí ho do 23:59:59 dne předtím
-                } else {
-                   endDateObj = new Date(startDateObj.getTime() + 86399999);
-                }
-             } else {
-                startDateObj = new Date(startStr);
-                endDateObj = new Date(endStr);
-             }
-             let alertMins = 'default';
-             if (item.reminders && typeof item.reminders.useDefault !== 'undefined') {
-                if (item.reminders.useDefault === false) {
-                   if (item.reminders.overrides && item.reminders.overrides.length > 0) {
-                      const popup = item.reminders.overrides.find(r => r.method === 'popup');
-                      if (popup) alertMins = popup.minutes;
-                      else alertMins = null;
-                   } else {
-                      alertMins = null;
-                   }
-                }
-             }
-
-             return {
-                id: item.id,
-                recurringEventId: item.recurringEventId || null,
-                title: item.summary || 'Bez názvu',
-                fullDate: startDateObj,
-                endDate: endDateObj,
-                colorId: item.colorId,
-                description: item.description || '',
-                location: item.location || '',
-                isAllDay: isAllDay,
-                alertMinutes: alertMins,
-                attendees: item.attendees || []
-             };
-          });
-
-          // Deduplikace: odstraň eventy se stejným jménem a naprosto steným start časem (bug v API fetch, nebo duplikátní kontakty v Google)
-          const seen = new Set();
-          parsed = parsed.filter(ev => {
-             const key = `${ev.title}_${ev.fullDate.getTime()}`;
-             if (seen.has(key)) return false;
-             seen.add(key);
-             return true;
-          });
-
-          setEvents(parsed);
+        if (!lastError || allItems.length > 0) {
+          // Deduplikace: stejné jméno a začátek (duplicitní pozvánky v Googlu)
+          const seen = new Set<string>();
+          setEvents(allItems.map(toCalendarEvent).filter((ev) => {
+            const key = `${ev.title}_${ev.fullDate.getTime()}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          }));
         } else {
-           setAppError("API error: " + lastErrorStatus);
+          setAppError('Chyba kalendáře: ' + (lastError instanceof Error ? lastError.message : String(lastError)));
         }
       } catch (err) {
-        setAppError("Calendar fetch error: " + err.message);
+        setAppError('Calendar fetch error: ' + (err instanceof Error ? err.message : String(err)));
       } finally {
         setIsLoading(false);
       }
@@ -286,28 +221,16 @@ export default function CalendarApp({
     fetchEvents();
   }, [currentDate, googleToken, refreshTrigger, activeCalendarView, specialCalsTrigger]);
 
-  const lastTriggerRef = React.useRef(triggerCreateEvent);
+  const lastTriggerRef = useRef(triggerCreateEvent);
 
   useEffect(() => {
     if (triggerCreateEvent > lastTriggerRef.current) {
       setEditEventId(null);
-      const todayStr = new Date().toISOString().split('T')[0];
-      const baseForm = {
-         title: '',
-         startDate: todayStr,
-         endDate: todayStr,
-         startTime: '10:00',
-         endTime: '11:00',
-         allDay: false,
-         description: '',
-         alertMinutes: 'default',
-         recurrenceRule: 'NONE',
-         recurrenceInterval: 1,
-         customFreq: 'WEEKLY',
-         recurrenceUntil: '',
-         attendees: ''
-      };
+      const baseForm = emptyEventForm();
       setNewEventForm(baseForm);
+      setInitialEventFormStr(JSON.stringify(baseForm));
+      setIsCreateModalOpen(true);
+      lastTriggerRef.current = triggerCreateEvent;      setNewEventForm(baseForm);
       setInitialEventFormStr(JSON.stringify(baseForm));
       setIsCreateModalOpen(true);
       lastTriggerRef.current = triggerCreateEvent;
@@ -315,8 +238,8 @@ export default function CalendarApp({
   }, [triggerCreateEvent]);
 
   // Sledování notifikací na pozadí
-  const notifiedEventsRef = React.useRef(new Set());
-  const startedEventsRef = React.useRef(new Set());
+  const notifiedEventsRef = useRef(new Set<string>());
+  const startedEventsRef = useRef(new Set<string>());
   
   useEffect(() => {
      if (!events || events.length === 0) return;
@@ -388,46 +311,10 @@ export default function CalendarApp({
     }
     
     setPreviewRecurrenceText('Načítání...');
-    
-    fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${selectedEvent.recurringEventId}`, {
-       headers: { Authorization: `Bearer ${googleToken}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-       if (data.recurrence && data.recurrence.length > 0) {
-          const rruleStr = data.recurrence[0];
-          const paramMap = {};
-          rruleStr.replace('RRULE:', '').split(';').forEach(p => {
-              const [k, v] = p.split('=');
-              paramMap[k] = v;
-          });
-          
-          let text = '';
-          const intv = paramMap['INTERVAL'] ? parseInt(paramMap['INTERVAL']) : 1;
-          const mapFreq = {
-             'DAILY': intv > 1 ? `Každých ${intv} dní` : 'Denně',
-             'WEEKLY': intv > 1 ? `Každé ${intv} týdny` : 'Týdně',
-             'MONTHLY': intv > 1 ? `Každé ${intv} měsíce` : 'Měsíčně',
-             'YEARLY': intv > 1 ? `Každé ${intv} roky` : 'Ročně'
-          };
-          if (paramMap['FREQ'] && mapFreq[paramMap['FREQ']]) {
-             text = mapFreq[paramMap['FREQ']];
-          } else {
-             text = 'Vlastní opakování';
-          }
-          if (paramMap['UNTIL']) {
-             const u = paramMap['UNTIL'];
-             const edTxt = `${parseInt(u.substring(6,8))}. ${parseInt(u.substring(4,6))}. ${u.substring(0,4)}`;
-             text += ` (Konec: ${edTxt})`;
-          }
-          setPreviewRecurrenceText(text);
-       } else {
-          setPreviewRecurrenceText('Neznámé cyklování');
-       }
-    })
-    .catch(() => setPreviewRecurrenceText('Aktivní (součást série)'));
-    
-  }, [selectedEvent, googleToken]);
+    getEvent(googleToken, selectedEvent.recurringEventId)
+      .then((data) => setPreviewRecurrenceText(data.recurrence?.length ? describeRecurrence(data.recurrence[0]) : 'Neznámé cyklování'))
+      .catch(() => setPreviewRecurrenceText('Aktivní (součást série)'));
+ }, [selectedEvent, googleToken]);
 
   const handleCreateEvent = async () => {
     if (!googleToken) {
@@ -440,7 +327,7 @@ export default function CalendarApp({
     }
     
     setIsCreatingEvent(true);
-    const eventBody = { 
+    const eventBody: Omit<GoogleEventInput, 'start' | 'end'> & Partial<Pick<GoogleEventInput, 'start' | 'end'>> = {
        summary: newEventForm.title,
        description: newEventForm.description
     };
@@ -467,7 +354,7 @@ export default function CalendarApp({
       const d = parseInt(newEventForm.endDate.split('-')[2]);
       const endD = new Date(y, m, d);
       endD.setDate(endD.getDate() + 1);
-      const pad = (n) => n.toString().padStart(2, '0');
+      const pad = pad2;
       eventBody.end = { date: `${endD.getFullYear()}-${pad(endD.getMonth()+1)}-${pad(endD.getDate())}` };
     } else {
       const startDateTime = new Date(`${newEventForm.startDate}T${newEventForm.startTime}:00`).toISOString();
@@ -477,7 +364,7 @@ export default function CalendarApp({
     }
     
     if (newEventForm.recurrenceRule && newEventForm.recurrenceRule !== 'NONE') {
-      let freq = newEventForm.recurrenceRule;
+      let freq: RecurrenceRule | RecurrenceFreq = newEventForm.recurrenceRule;
       let interval = 1;
 
       if (freq === 'CUSTOM') {
@@ -492,7 +379,7 @@ export default function CalendarApp({
       if (newEventForm.recurrenceUntil) {
          const uDate = new Date(newEventForm.recurrenceUntil);
          uDate.setUTCHours(23, 59, 59);
-         const pad = (n) => n.toString().padStart(2, '0');
+         const pad = pad2;
          const dateString = `${uDate.getUTCFullYear()}${pad(uDate.getUTCMonth()+1)}${pad(uDate.getUTCDate())}T${pad(uDate.getUTCHours())}${pad(uDate.getUTCMinutes())}${pad(uDate.getUTCSeconds())}Z`;
          rrule += `;UNTIL=${dateString}`;
       }
@@ -500,39 +387,12 @@ export default function CalendarApp({
     }
 
     try {
-      const url = editEventId 
-        ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${editEventId}?sendUpdates=all`
-        : "https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all";
-      const method = editEventId ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method: method,
-        headers: {
-          "Authorization": `Bearer ${googleToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(eventBody)
-      });
-      
-      if (res.ok) {
-        setRefreshTrigger(prev => prev + 1);
-        setIsCreateModalOpen(false);
-        setEditEventId(null);
-        const todayStr = new Date().toISOString().split('T')[0];
-        setNewEventForm({
-           title: '',
-           startDate: todayStr,
-           endDate: todayStr,
-           startTime: '10:00',
-           endTime: '11:00',
-           allDay: false,
-           description: '',
-           alertMinutes: 'default',
-           attendees: ''
-        });
-      } else {
-        setAppError("Něco se pokazilo při komunikaci s Google API.");
-      }
+      if (!eventBody.start || !eventBody.end) throw new Error('Chybí začátek nebo konec události');
+      await saveEvent(googleToken, { ...eventBody, start: eventBody.start, end: eventBody.end }, editEventId);
+      setRefreshTrigger(prev => prev + 1);
+      setIsCreateModalOpen(false);
+      setEditEventId(null);
+      setNewEventForm(emptyEventForm());
     } catch (err) {
       setAppError("Naše komunikace narazila na technickou chybu sítě.");
     } finally {
@@ -541,44 +401,33 @@ export default function CalendarApp({
   };
 
   const handleEditSelectedEvent = async () => {
+     if (!selectedEvent || !googleToken) return;
      let rootEventId = selectedEvent.id;
-     let rr = 'NONE';
-     let freq = 'WEEKLY';
+     let rr: RecurrenceRule = 'NONE';
+     let freq: RecurrenceFreq = 'WEEKLY';
      let inv = 1;
      let untilVal = '';
 
      if (selectedEvent.recurringEventId) {
        rootEventId = selectedEvent.recurringEventId;
        try {
-          const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${rootEventId}`, {
-             headers: { Authorization: `Bearer ${googleToken}` }
-          });
-          if (res.ok) {
-             const data = await res.json();
-             if (data.recurrence && data.recurrence.length > 0) {
-                const rruleStr = data.recurrence[0];
-                const parts = rruleStr.replace('RRULE:', '').split(';');
-                const paramMap = {};
-                parts.forEach(p => {
-                    const [k, v] = p.split('=');
-                    paramMap[k] = v;
-                });
-                
-                if (paramMap['FREQ']) {
-                    const f = paramMap['FREQ'];
-                    if (['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(f) && (!paramMap['INTERVAL'] || paramMap['INTERVAL'] === '1')) {
-                       rr = f;
-                    } else {
-                       rr = 'CUSTOM';
-                       freq = f;
-                       inv = paramMap['INTERVAL'] ? parseInt(paramMap['INTERVAL']) : 1;
-                    }
+          const data = await getEvent(googleToken, rootEventId);
+          if (data.recurrence && data.recurrence.length > 0) {
+             const paramMap = parseRRule(data.recurrence[0]);
+             const f = paramMap['FREQ'] as RecurrenceFreq | undefined;
+             if (f) {
+                if (['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(f) && (!paramMap['INTERVAL'] || paramMap['INTERVAL'] === '1')) {
+                   rr = f;
+                } else {
+                   rr = 'CUSTOM';
+                   freq = f;
+                   inv = paramMap['INTERVAL'] ? parseInt(paramMap['INTERVAL']) : 1;
                 }
-                if (paramMap['UNTIL']) {
-                    const u = paramMap['UNTIL'];
-                    // 20260425T100000Z -> 2026-04-25
-                    untilVal = `${u.substring(0,4)}-${u.substring(4,6)}-${u.substring(6,8)}`;
-                }
+             }
+             if (paramMap['UNTIL']) {
+                const u = paramMap['UNTIL'];
+                // 20260425T100000Z -> 2026-04-25
+                untilVal = `${u.substring(0,4)}-${u.substring(4,6)}-${u.substring(6,8)}`;
              }
           }
        } catch (err) {
@@ -598,7 +447,7 @@ export default function CalendarApp({
      const ed = selectedEvent.endDate.getDate().toString().padStart(2, '0');
      const et = selectedEvent.endDate.toTimeString().substring(0, 5);
 
-     const baseForm = {
+     const baseForm: EventForm = {
         title: selectedEvent.title,
         startDate: `${sy}-${sm}-${sd}`,
         endDate: `${ey}-${em}-${ed}`,
@@ -611,7 +460,7 @@ export default function CalendarApp({
         customFreq: freq,
         recurrenceInterval: inv,
         recurrenceUntil: untilVal,
-        attendees: selectedEvent.attendees ? selectedEvent.attendees.map(a => a.email).join(', ') : ''
+        attendees: selectedEvent.attendees ? selectedEvent.attendees.map(a => a.email).filter(Boolean).join(', ') : ''
      };
      setNewEventForm(baseForm);
      setInitialEventFormStr(JSON.stringify(baseForm));
@@ -620,29 +469,29 @@ export default function CalendarApp({
      setIsCreateModalOpen(true);
   };
 
-  const handleDeleteSelectedEvent = async () => {
-    if (!window.confirm("Opravdu chcete tuto událost smazat?")) return;
-    setIsDeleting(true);
-    try {
-      const targetId = selectedEvent.recurringEventId || selectedEvent.id;
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${targetId}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${googleToken}` }
-      });
-      if (res.ok) {
-        setRefreshTrigger(p => p+1);
-        setSelectedEvent(null);
-      } else {
-        setAppError("Došlo k chybě při mazání záznamu z platformy Google.");
-      }
-    } catch (err) {
-      setAppError("Nepodařilo se připojit k internetové komunikaci při mazání.");
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleDeleteSelectedEvent = () => {
+    if (!selectedEvent || !googleToken) return;
+    const target = selectedEvent;
+    showConfirm(
+      target.recurringEventId ? 'Opravdu chcete smazat celou opakovanou událost (všechny výskyty)?' : 'Opravdu chcete tuto událost smazat?',
+      'Smazání události',
+      async () => {
+        setIsDeleting(true);
+        try {
+          await deleteEvent(googleToken, target.recurringEventId || target.id);
+          setRefreshTrigger(p => p + 1);
+          setSelectedEvent(null);
+        } catch {
+          setAppError('Došlo k chybě při mazání záznamu z platformy Google.');
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+      { confirmText: 'Smazat', type: 'error' }
+    );
   };
 
-  const handleDateChange = (action) => {
+  const handleDateChange = (action: 'prev' | 'next' | 'today') => {
     if (action === 'prev') setCurrentDate(new Date(currentYear, currentDate.getMonth() - 1, 1));
     else if (action === 'next') setCurrentDate(new Date(currentYear, currentDate.getMonth() + 1, 1));
     else if (action === 'today') setCurrentDate(new Date());
@@ -681,11 +530,6 @@ export default function CalendarApp({
   const startingDay = (firstDayOfMonth + 6) % 7; 
   const totalCells = 42; // Máme 6 řádků po 7 dnech
 
-  // Filtr událostí podle fulltextového search okna
-  const filteredEventsForGrid = events.filter(e => {
-    if (!searchQuery) return true;
-    return e.title.toLowerCase().includes(searchQuery.toLowerCase());
-  });
 
   currentMainView = (
     <MonthView
@@ -695,7 +539,6 @@ export default function CalendarApp({
       handleDateChange={handleDateChange}
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
-      firstDayOfMonth={firstDayOfMonth}
       daysInMonth={daysInMonth}
       startingDay={startingDay}
       totalCells={totalCells}
