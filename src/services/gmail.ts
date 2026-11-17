@@ -193,3 +193,14 @@ export const deleteDraft = (token: string, draftId: string) =>
 
 export const listDrafts = async (token: string) =>
   (await gmailRequest<{ drafts?: GmailDraft[] }>(token, '/drafts')).drafts ?? [];
+
+/** Příloha jako bajty (+ standardní base64 pro data URL); null, když Gmail nevrátí data */
+export const getAttachmentBytes = async (token: string, messageId: string, attachmentId: string) => {
+  const att = await getAttachment(token, messageId, attachmentId);
+  if (!att.data) return null;
+  const base64 = att.data.replace(/-/g, '+').replace(/_/g, '/');
+  const binary = window.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return { bytes, base64, binary };
+};

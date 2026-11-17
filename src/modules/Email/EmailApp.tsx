@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, type ComponentType, type CSSProperties, type Dispatch, type MouseEvent, type SetStateAction } from 'react';
+import { useState, useEffect, useRef, type CSSProperties, type Dispatch, type MouseEvent, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
 import EmailList from '../../components/EmailList';
-import EmailDetailJs from '../../components/EmailDetail';
+import EmailDetail from '../../components/EmailDetail';
 import EmailComposer from '../../components/EmailComposer';
 import { useAlert } from '../../components/AlertProvider';
 import { deleteThread, getMessage, modifyThread, trashThread, untrashThread } from '../../services/gmail';
@@ -9,11 +9,6 @@ import type { EmailRef, MoveRequest } from '../../types/email';
 import type { GmailLabel } from '../../types/gmail';
 import type { UnreadCounts } from '../../types/account';
 import type { ComposerConfig, ComposerSuccess } from '../../types/composer';
-
-// DOČASNÉ: tyto komponenty jsou zatím v JavaScriptu – po jejich převodu na TSX se obal odstraní
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const EmailDetail = EmailDetailJs as ComponentType<any>;
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const SYSTEM_FOLDERS: Record<string, string> = {
   'Doručené': 'INBOX',
@@ -349,7 +344,6 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                 selectedEmailId={selectedEmailId}
                 onExpand={selectedEmailId ? () => setModalEmailId(selectedEmailId) : undefined}
                 onTrash={selectedEmailId ? () => handleGlobalTrash(selectedEmailId) : undefined}
-                onRestore={selectedEmailId ? () => handleGlobalRestore(selectedEmailId) : undefined}
                 onSpam={selectedEmailId ? () => handleGlobalSpam(selectedEmailId) : undefined}
                 onMobileBack={() => setSelectedEmailId(null)}
                 onActionReply={(config: ComposerConfig) => setComposerConfig(config)}
