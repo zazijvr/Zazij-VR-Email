@@ -150,6 +150,20 @@ body.email-detail-active #mobile-user {
 .anim-email-slide-right { animation: emailSlideRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .anim-ui-fade-in { animation: uiFadeIn 0.3s ease-out forwards; }
 .anim-spin-in-arrow { animation: spinInArrow 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+/* Náhled e-mailu: na desktopu jen krátké prolnutí (vysouvání celého panelu s iframem
+   a neonovými stíny se ve WebKitGTK trhalo a e-mail byl celý vidět až po 0,6 s);
+   na mobilu, kde detail překryje celou obrazovku, krátké vysunutí zprava */
+@keyframes detailFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.anim-detail-in { animation: detailFadeIn 0.14s ease-out both; }
+@media (max-width: 767px) {
+  .anim-detail-in { animation: emailSlideRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-detail-in { animation: none; }
+}
 .anim-slide-in-right-overlay { animation: slideInFromRightOverlay 0.5s var(--delay, 0ms) cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
 
 

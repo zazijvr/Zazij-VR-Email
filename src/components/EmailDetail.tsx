@@ -23,7 +23,6 @@ interface PreviewBlob {
 
 export interface EmailDetailProps {
   googleToken: string | null;
-  isVerticalLayout?: boolean;
   selectedEmailId: string | null;
   onExpand?: () => void;
   onTrash?: () => void;
@@ -48,7 +47,7 @@ const subjectSizeClass = (subject?: string) => {
   return 'text-lg md:text-xl';
 };
 
-export default function EmailDetail({ googleToken, isVerticalLayout, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed, userEmail }: EmailDetailProps) {
+export default function EmailDetail({ googleToken, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed, userEmail }: EmailDetailProps) {
   const queryClient = useQueryClient();
   const provider = useMailProvider();
   const detailKey = ['emailDetail', userEmail ?? '', selectedEmailId ?? ''] as const;
@@ -644,12 +643,8 @@ ${ccLine}
     }
   };
 
-  // V okně přes celou obrazovku (má onClose) jen prolnutí – vysouvání patří k panelu vedle seznamu
-  const slideAnimationClass = onClose
-    ? 'anim-ui-fade-in'
-    : isVerticalLayout
-      ? 'anim-email-slide-down'
-      : 'anim-email-slide-right';
+  // V okně přes celou obrazovku (má onClose) prolnutí s oknem; v panelu krátké prolnutí (mobil: vysunutí)
+  const slideAnimationClass = onClose ? 'anim-ui-fade-in' : 'anim-detail-in';
 
   // Samotný E-mail čtecí panel
   return (

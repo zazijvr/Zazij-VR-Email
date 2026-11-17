@@ -344,7 +344,6 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
             <div className={`flex-1 overflow-hidden relative bg-navy z-10 ${selectedEmailId ? 'flex' : 'hidden md:flex'} flex-col ${isVerticalLayout ? 'md:min-h-0' : 'md:min-w-0'}`}>
               <EmailDetail
                 googleToken={googleToken}
-                isVerticalLayout={isVerticalLayout}
                 selectedEmailId={selectedEmailId}
                 onExpand={selectedEmailId ? () => setModalEmailId(selectedEmailId) : undefined}
                 onTrash={selectedEmailId ? () => handleGlobalTrash(selectedEmailId) : undefined}
