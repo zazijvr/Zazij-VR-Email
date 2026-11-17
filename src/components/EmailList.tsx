@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { db } from '../db/db';
 import EmailListItem from './EmailListItem';
@@ -37,21 +38,20 @@ interface EmailListProps {
   refreshTriggerList?: number;
 }
 
-interface FolderCacheEntry {
+/** Jedna stránka seznamu vláken (40 vláken + token další stránky) */
+interface ThreadPage {
   emails: ListEmail[];
   nextPageToken: string | null;
 }
+type ThreadPages = InfiniteData<ThreadPage, string | undefined>;
 
 // Globální set pro sledování všech ID zpráv, které už aplikace někdy viděla v tomto spuštění,
 // abychom absolutně spolehlivě zabránili dvojitým notifikacím (např. při ručním označení "Přečíst")
 const globalNotifiedSet = new Set<string>();
 let globalHighestEmailDate = 0;
+
 /** Pevné šířky sloupců seznamu – společné pro hlavičku i řádky */
 const COL_STYLE = { '--col-from': 'clamp(130px, 26%, 230px)', '--col-date': '84px' } as CSSProperties;
-
-/** Naposledy zobrazený obsah složek v paměti (klíč: složka + filtr) – návrat do složky je okamžitý,
- *  aktuální stav se pak dotáhne na pozadí */
-const folderMemCache = new Map<string, FolderCacheEntry>();
 
 export default function EmailList({ googleToken, activeFolder = 'Doručené', selectedEmailId, setSelectedEmailId, onExpand, onDraftClick, trashedEmails = [], spamEmails = [], hiddenEmailIds = [], optimisticMoves = [], onTrash, onRestore, setUnreadCounts, unreadCounts, loginWithGoogle, customLabels = [], userEmail, refreshTriggerList }: EmailListProps) {
   const getLabelId = (folderName: string) => {
@@ -68,9 +68,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
   getLabelIdRef.current = getLabelId;
 
 
-  const [emails, setEmails] = useState<ShownEmail[]>([]);
 
-  const [loading, setLoading] = useState(false);
   const [displayedEmailLimit, setDisplayedEmailLimit] = useState(10);
   const [sortField, setSortField] = useState<'date' | 'from' | 'subject' | 'size' | 'attachment'>('date');
   const [sortAscending, setSortAscending] = useState(false);
@@ -85,6 +83,117 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
   const [keyboardIndex, setKeyboardIndex] = useState(-1);
   const visibleEmailsRef = useRef<ShownEmail[]>([]);
   const lastClickRef = useRef<{ id: string | null; time: number }>({ id: null, time: 0 });
+
+  const lastAutoSelectedFolderRef = useRef<string | null>(null);
+
+  // ───────────── Načítání složky (TanStack Query) ─────────────
+  // Klíč: účet + složka + filtr. Mezipaměť, souběh při rychlém přepínání a stránkování řeší knihovna.
+  const queryClient = useQueryClient();
+  const searchTerm = [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ');
+  const threadsKey = useMemo(
+    () => ['threads', userEmail ?? '', activeFolder, showOnlyUnread, searchQuery.trim()] as const,
+    [userEmail, activeFolder, showOnlyUnread, searchQuery],
+  );
+
+  /** Offline / první zobrazení: e-maily složky z lokální databáze */
+  const readLocalCache = useCallback(async (): Promise<ListEmail[]> => {
+    if (!userEmail) return [];
+    let cached = await db.emails.where('folderLabel').equals(activeFolder).filter(e => e.account === userEmail).toArray();
+    if (showOnlyUnread) cached = cached.filter(e => e.isUnread);
+    const lowQ = searchQuery.trim().toLowerCase();
+    if (lowQ) {
+      cached = cached.filter(e =>
+        e.subject?.toLowerCase().includes(lowQ) || e.from?.toLowerCase().includes(lowQ) || e.snippet?.toLowerCase().includes(lowQ));
+    }
+    cached.sort((a, b) => (b.rawDate || 0) - (a.rawDate || 0));
+    return mergeAndGroupEmails([], cached);
+  }, [userEmail, activeFolder, showOnlyUnread, searchQuery]);
+
+  const threadsQuery = useInfiniteQuery({
+    queryKey: threadsKey,
+    // Účet se zjistí chvilku po přihlášení/přepnutí – do té doby se nic nestahuje (pošta se nesmí míchat)
+    enabled: !!googleToken && !!userEmail,
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last: ThreadPage) => last.nextPageToken ?? undefined,
+    // Při návratu do složky se hned ukáže uložený stav a na pozadí se stáhne aktuální
+    staleTime: 0,
+    queryFn: async ({ pageParam }): Promise<ThreadPage> => {
+      if (!navigator.onLine && !pageParam) {
+        return { emails: await readLocalCache(), nextPageToken: null };
+      }
+      const listData = await listThreads(googleToken as string, {
+        labelId: getLabelIdRef.current(activeFolder), q: searchTerm || undefined, maxResults: 40, pageToken: pageParam,
+      });
+      if (!listData.threads) return { emails: [], nextPageToken: null };
+      const formatted = formatThreads(await getThreadsMeta(googleToken as string, listData.threads.map(t => t.id)));
+      formatted.forEach(e => {
+        e.folderLabel = activeFolder; // Nutné pro DB Index
+        e.account = userEmail;
+        globalNotifiedSet.add(e.id);
+        globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
+      });
+      db.emails.bulkPut(formatted).catch(e => console.warn('Chyba při cachování:', e));
+      return { emails: mergeAndGroupEmails([], formatted), nextPageToken: listData.nextPageToken || null };
+    },
+  });
+
+  // Po startu (prázdná mezipaměť) hned ukázat poštu z lokální databáze, než doběhne stahování
+  useEffect(() => {
+    if (!userEmail || queryClient.getQueryData(threadsKey)) return;
+    let alive = true;
+    readLocalCache().then(local => {
+      if (!alive || local.length === 0 || queryClient.getQueryData(threadsKey)) return;
+      queryClient.setQueryData<ThreadPages>(threadsKey, { pages: [{ emails: local, nextPageToken: null }], pageParams: [undefined] });
+    }).catch(() => { /* bez lokální databáze se jen počká na síť */ });
+    return () => { alive = false; };
+  }, [threadsKey, userEmail, queryClient, readLocalCache]);
+
+  const pages = threadsQuery.data?.pages;
+  const emails: ShownEmail[] = useMemo(() => {
+    if (!pages) return [];
+    // Jedna stránka je už seskupená; další stránky („načíst další“) se k ní přiloží
+    return pages.slice(1).reduce((acc, p) => mergeAndGroupEmails(acc, p.emails), pages[0]?.emails ?? []);
+  }, [pages]);
+  const nextPageToken = pages?.[pages.length - 1]?.nextPageToken ?? null;
+  const loadingMore = threadsQuery.isFetchingNextPage;
+  const folderLoaded = !!threadsQuery.data;
+  const loading = !folderLoaded && (threadsQuery.isLoading || !userEmail);
+
+  /** Úprava zobrazeného seznamu (přečteno, hvězdička, smazání, nová pošta) – zapisuje se rovnou do mezipaměti */
+  const setEmails = useCallback((update: ListEmail[] | ((prev: ListEmail[]) => ListEmail[])) => {
+    queryClient.setQueryData<ThreadPages>(threadsKey, (old) => {
+      const prevPages = old?.pages ?? [];
+      const prev = prevPages.slice(1).reduce((acc, p) => mergeAndGroupEmails(acc, p.emails), prevPages[0]?.emails ?? []);
+      const next = typeof update === 'function' ? update(prev) : update;
+      const token = prevPages[prevPages.length - 1]?.nextPageToken ?? null;
+      return { pages: [{ emails: next, nextPageToken: token }], pageParams: [undefined] };
+    });
+  }, [queryClient, threadsKey]);
+
+  // Ruční obnovení seznamu (např. po odeslání)
+  const firstRefreshRef = useRef(true);
+  useEffect(() => {
+    if (firstRefreshRef.current) { firstRefreshRef.current = false; return; }
+    queryClient.invalidateQueries({ queryKey: ['threads'] });
+  }, [refreshTriggerList, queryClient]);
+
+  // Nová složka / filtr → zase jen prvních 10 řádků
+  useEffect(() => { setDisplayedEmailLimit(10); }, [threadsKey]);
+
+  // Přepnutí / přidání účtu – výběr patří předchozímu účtu
+  useEffect(() => {
+    const clear = () => {
+      lastAutoSelectedFolderRef.current = null; // po načtení se vybere první e-mail nového účtu
+      setSelectedEmailId?.(null); // náhled nesmí ukazovat e-mail předchozího účtu
+    };
+    window.addEventListener('vr-account-switched', clear);
+    return () => window.removeEventListener('vr-account-switched', clear);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- registruje se jednou
+  }, []);
+
+  const emailsRef = useRef(emails);
+  useEffect(() => { emailsRef.current = emails; }, [emails]);
+
 
   useEffect(() => {
     if (userEmail && emails.length > 0) {
@@ -125,7 +234,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     };
     window.addEventListener('vr-email-sent-reply', handleReplySent);
     return () => window.removeEventListener('vr-email-sent-reply', handleReplySent);
-  }, []);
+  }, [setEmails]);
 
   useEffect(() => {
     const handleStarToggle = (e: Event) => {
@@ -149,7 +258,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       window.removeEventListener('vr-email-read-toggle', handleReadToggle);
       window.removeEventListener('vr-mobile-search-query-change', handleMobileSearch);
     };
-  }, []);
+  }, [setEmails]);
 
   const toggleSelectAll = () => {
     if (visibleEmails.length === 0) return;
@@ -193,8 +302,6 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
 
   // Pagination State
-  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
 
   const performTrash = (email: ListEmail) => {
     if (email.isUnread && setUnreadCounts) {
@@ -252,143 +359,6 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedEmailId, emails]);
 
-  const fetchedFolderRef = useRef<string | null>(null);
-  const lastAutoSelectedFolderRef = useRef<string | null>(null);
-  const fetchSeqRef = useRef(0);
-  useEffect(() => {
-    if (!googleToken) {
-      setEmails([]);
-      return;
-    }
-
-    // Účet se zjistí chvilku po přihlášení/přepnutí – do té doby se nic nestahuje,
-    // aby se pošta nemíchala mezi účty (a zbytečně se nestahovalo dvakrát)
-    if (!userEmail) {
-      setEmails([]);
-      setLoading(true);
-      return;
-    }
-
-    // Každé načtení má pořadové číslo – výsledek staršího požadavku (jiná složka) se zahodí
-    const seq = ++fetchSeqRef.current;
-    const isCurrent = () => fetchSeqRef.current === seq;
-    const account = userEmail;
-    const cacheKey = `${account}|${activeFolder}|${showOnlyUnread ? 1 : 0}|${searchQuery.trim()}`;
-
-    const fetchEmails = async () => {
-      setDisplayedEmailLimit(10);
-      let hasData = false;
-
-      // 0) Paměť – okamžité zobrazení, při čerstvých datech se nic nestahuje
-      const mem = folderMemCache.get(cacheKey);
-      if (mem) {
-        setEmails(mem.emails);
-        setNextPageToken(mem.nextPageToken);
-        setLoading(false);
-        hasData = true;
-      } else {
-        // 1) Offline keš v databázi
-        try {
-          const cached = await db.emails.where('folderLabel').equals(activeFolder).filter(e => e.account === account).toArray();
-          if (!isCurrent()) return;
-          let filteredCache = cached || [];
-          if (showOnlyUnread) filteredCache = filteredCache.filter(e => e.isUnread);
-          if (searchQuery.trim()) {
-            const lowQ = searchQuery.toLowerCase();
-            filteredCache = filteredCache.filter(e =>
-              (e.subject && e.subject.toLowerCase().includes(lowQ)) ||
-              (e.from && e.from.toLowerCase().includes(lowQ)) ||
-              (e.snippet && e.snippet.toLowerCase().includes(lowQ))
-            );
-          }
-          if (filteredCache.length > 0) {
-            filteredCache.sort((a, b) => (b.rawDate || 0) - (a.rawDate || 0));
-            setEmails(mergeAndGroupEmails([], filteredCache));
-            setLoading(false);
-            hasData = true;
-          }
-        } catch (cacheErr) {
-          console.warn("Nepodařilo se natáhnout offline data:", cacheErr);
-        }
-        if (!hasData) {
-          // Nic v keši – neukazovat obsah předchozí složky
-          setEmails([]);
-        }
-      }
-
-      if (!navigator.onLine) {
-         setLoading(false);
-         fetchedFolderRef.current = activeFolder;
-         return; // Zastavit network request, pokud jsme offline
-      }
-
-      // 2) Stažení ze serveru
-      if (!hasData) setLoading(true);
-      try {
-        const listData = await listThreads(googleToken, { labelId: getLabelIdRef.current(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 40 });
-        if (!isCurrent()) return;
-
-        if (!listData.threads) {
-          setEmails([]);
-          setNextPageToken(null);
-          folderMemCache.set(cacheKey, { emails: [], nextPageToken: null });
-          fetchedFolderRef.current = activeFolder;
-          setLoading(false);
-          return;
-        }
-
-        const formattedEmails = formatThreads(await getThreadsMeta(googleToken, listData.threads.map(t => t.id)));
-        if (!isCurrent()) return;
-
-        formattedEmails.forEach(e => {
-          e.folderLabel = activeFolder; // Nutné pro DB Index
-          e.account = account;
-          globalNotifiedSet.add(e.id);
-          globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
-        });
-
-        // Asynchronní zápis/update do lokální databáze
-        db.emails.bulkPut(formattedEmails).catch(e => console.warn('Chyba při cachování:', e));
-
-        const grouped = mergeAndGroupEmails([], formattedEmails);
-        setNextPageToken(listData.nextPageToken || null);
-        setEmails(grouped);
-        folderMemCache.set(cacheKey, { emails: grouped, nextPageToken: listData.nextPageToken || null });
-      } catch (err) {
-        console.error("Chyba načítání pošty:", err);
-      }
-      if (!isCurrent()) return;
-      fetchedFolderRef.current = activeFolder;
-      setLoading(false);
-    };
-
-    fetchEmails();
-  }, [googleToken, userEmail, activeFolder, showOnlyUnread, searchQuery, refreshTriggerList]);
-
-  // Přepnutí / přidání účtu – paměť složek patří předchozímu účtu
-  useEffect(() => {
-    const clear = () => {
-      folderMemCache.clear();
-      fetchedFolderRef.current = null; // tiché dotahování nové pošty počká na první načtení
-      lastAutoSelectedFolderRef.current = null; // po načtení se vybere první e-mail nového účtu
-      setSelectedEmailId?.(null); // náhled nesmí ukazovat e-mail předchozího účtu
-    };
-    window.addEventListener('vr-account-switched', clear);
-    return () => window.removeEventListener('vr-account-switched', clear);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- výběr se ruší jen při změně složky
-  }, []);
-
-  const emailsRef = useRef(emails);
-  useEffect(() => { emailsRef.current = emails; }, [emails]);
-
-  // Změny v seznamu (přečtení, smazání, hvězdička…) se propíšou i do paměti složky
-  useEffect(() => {
-    if (fetchedFolderRef.current !== activeFolder) return;
-    const key = `${userEmail}|${activeFolder}|${showOnlyUnread ? 1 : 0}|${searchQuery.trim()}`;
-    const mem = folderMemCache.get(key);
-    if (mem && mem.emails !== emails) folderMemCache.set(key, { ...mem, emails, nextPageToken });
-  }, [emails, nextPageToken, activeFolder, showOnlyUnread, searchQuery, userEmail]);
-
   // Auto-refresh vybraného vlákna: pokud přijde novější zpráva do již otevřeného vlákna
   useEffect(() => {
     if (selectedEmailId && setSelectedEmailId) {
@@ -409,7 +379,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
     // Ignorujeme přepnutí složky a spoléháme jen na inkrementální růst.
     // …a až když je složka načtená (po přepnutí účtu se počty změní, ale není to nová pošta)
-    const shouldFetch = !isFolderSwitch && fetchedFolderRef.current === activeFolder && (currentUnread > prevUnreadRef.current);
+    const shouldFetch = !isFolderSwitch && folderLoaded && (currentUnread > prevUnreadRef.current);
 
     prevUnreadRef.current = currentUnread;
     prevFolderRef.current = activeFolder;
@@ -459,7 +429,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       };
       silentFetch();
     }
-  }, [unreadCounts, activeFolder, showOnlyUnread, googleToken, searchQuery]);
+  }, [unreadCounts, activeFolder, showOnlyUnread, googleToken, searchQuery, folderLoaded, setEmails]);
 
   const handleEmailClick = async (email: ListEmail) => {
     const now = Date.now();
@@ -610,29 +580,9 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
   };
 
   // Load More Functionality
-  const loadMoreEmails = async () => {
-    if (!nextPageToken || loadingMore || !googleToken) return;
-    setLoadingMore(true);
-    try {
-      const listData = await listThreads(googleToken, { labelId: getLabelId(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 40, pageToken: nextPageToken });
-
-      if (!listData.threads) {
-        setLoadingMore(false);
-        return;
-      }
-
-      setNextPageToken(listData.nextPageToken || null);
-
-      const formattedEmails = formatThreads(await getThreadsMeta(googleToken, listData.threads.map(t => t.id)));
-      formattedEmails.forEach(e => {
-        globalNotifiedSet.add(e.id);
-        globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
-      });
-      setEmails(prev => mergeAndGroupEmails(prev, formattedEmails));
-    } catch (err) {
-      console.error("Chyba načítání starší pošty:", err);
-    }
-    setLoadingMore(false);
+  const loadMoreEmails = () => {
+    if (!nextPageToken || loadingMore) return;
+    threadsQuery.fetchNextPage().catch(err => console.error("Chyba načítání starší pošty:", err));
   };
 
   useEffect(() => {
@@ -757,7 +707,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
   useEffect(() => {
     if (
       !loading &&
-      fetchedFolderRef.current === activeFolder &&
+      folderLoaded &&
       lastAutoSelectedFolderRef.current !== activeFolder &&
       firstVisibleId !== null
     ) {
@@ -767,7 +717,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
         setSelectedEmailId(firstVisibleId);
       }
     }
-  }, [loading, firstVisibleId, activeFolder, setSelectedEmailId]);
+  }, [loading, folderLoaded, firstVisibleId, activeFolder, setSelectedEmailId]);
 
   type SortField = typeof sortField;
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -991,7 +941,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
       <div className="flex-1 w-full overflow-y-auto custom-scrollbar flex flex-col relative pt-2">
 
-        {(loading || activeFolder !== fetchedFolderRef.current) ? (
+        {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-neon-blue/60 min-h-64">
             <span className="w-8 h-8 rounded-full border-4 border-neon-blue/20 border-t-neon-blue animate-spin"></span>
             <span className="font-semibold tracking-wide">Stahování pošty...</span>
