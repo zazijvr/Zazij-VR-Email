@@ -41,6 +41,13 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : String
 
 import { useAlert } from './AlertProvider';
 
+/** Velikost písma předmětu podle délky – co nejvíc textu se vejde do dvou řádků bez zkracování */
+const subjectSizeClass = (subject?: string) => {
+  const len = subject?.length ?? 0;
+  if (len <= 60) return 'text-xl md:text-2xl';
+  return 'text-lg md:text-xl';
+};
+
 export default function EmailDetail({ googleToken, isVerticalLayout, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed, userEmail }: EmailDetailProps) {
   const queryClient = useQueryClient();
   const provider = useMailProvider();
@@ -705,8 +712,8 @@ ${ccLine}
           {/* Laserová linka dole (Z návrhu 1, žádané uživatelem, pouze mobil) */}
           <div className="md:hidden absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
 
-          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6 relative z-10 w-full pl-2 md:pl-0">
-            <div className="flex-1 min-w-0 w-full">
+          <div className="relative z-10 w-full pl-2 md:pl-0">
+            <div className="min-w-0 w-full">
               {emailData?.isDraft && (
                 <div className="mb-4">
                   <button
@@ -721,8 +728,10 @@ ${ccLine}
                 </div>
               )}
 
+              {/* Horní řádek: štítky vlevo, akce vpravo – předmět pod ním má celou šířku */}
+              <div className="flex items-center justify-between gap-3 mb-3 md:mb-2.5">
               {/* STATUS BOARD BADGES */}
-              <div className="flex flex-wrap items-center gap-2 mb-3">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
 
                 {/* Odesilatel / Star status */}
                 <button
@@ -744,16 +753,93 @@ ${ccLine}
                     <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-neon-purple">Datacore_{emailData.attachments.length}</span>
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
 
+                {/* ---------------- DESKTOP ACTIONS ---------------- */}
+                <div className="hidden md:flex items-center gap-2">
 
+                  {onActionReply && !emailData?.isDraft && (
+                    <>
+                      <button
+                        onClick={handleReply}
+                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                        title="Odpovědět (Reply)"
+                      >
+                        <Reply size={22} />
+                      </button>
+                      <button
+                        onClick={handleReplyAll}
+                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                        title="Odpovědět všem (Reply All)"
+                      >
+                        <ReplyAll size={22} />
+                      </button>
+                      <button
+                        onClick={handleForward}
+                        disabled={isPreparingForward}
+                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-purple hover:bg-neon-purple/15 hover:border-neon-purple/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(247,37,133,0.4)] disabled:opacity-50"
+                        title="Přeposlat (Forward)"
+                      >
+                        {isPreparingForward ? (
+                          <div className="w-[22px] h-[22px] rounded-full border-[2px] border-neon-purple/20 border-t-neon-purple animate-spin m-[0.5px]"></div>
+                        ) : (
+                          <Forward size={22} />
+                        )}
+                      </button>
+                      <div className="w-px h-6 bg-neon-blue/20 mx-1"></div>
+                    </>
+                  )}
 
+                  {onSpam && (
+                    <button
+                      onClick={onSpam}
+                      className="p-2 rounded-xl text-danger/70 bg-danger/5 border border-danger/20 hover:text-danger hover:bg-danger/15 hover:border-danger/50 transition-all shadow-[0_0_5px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
+                      title="Označit jako Spam"
+                    >
+                      <AlertOctagon size={22} />
+                    </button>
+                  )}
+
+                  {onTrash && (
+                    <button
+                      onClick={handleTrashClick}
+                      className="p-2 rounded-xl text-danger/70 bg-danger/5 border border-danger/20 hover:text-danger hover:bg-danger/15 hover:border-danger/50 transition-all shadow-[0_0_5px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
+                      title="Smazat (Delete)"
+                    >
+                      <Trash2 size={22} />
+                    </button>
+                  )}
+                  {onExpand && (
+                    <button
+                      onClick={onExpand}
+                      className="hidden md:block p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                      title="Otevřít v plné velikosti"
+                    >
+                      <Maximize2 size={22} />
+                    </button>
+                  )}
+                  {onClose && (
+                    <>
+                      <div className="hidden md:block w-px h-6 bg-white/20 mx-1"></div>
+                      <button
+                        onClick={onClose}
+                        className="hidden md:flex p-2 bg-white/5 hover:bg-danger/20 text-slate-400 hover:text-danger rounded-full transition-all border border-transparent hover:border-danger/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
+                        title="Zavřít"
+                      >
+                        <X size={22} strokeWidth={2} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
               </div>
 
-              {/* Předmět: zabírá celou šířku řádku (flex-1), delší menším písmem; na desktopu max. 2 řádky
+              {/* Předmět: celá šířka hlavičky pod akcemi, delší menším písmem; na desktopu max. 2 řádky
                   (tělo zprávy začíná na pevné pozici) – celý je v bublině a jde zkopírovat */}
               <div className="flex items-start gap-2 group w-full min-w-0">
                 <h1
-                  className={`flex-1 min-w-0 font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-snug break-words md:line-clamp-2 ${(emailData?.subject?.length ?? 0) > 60 ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}`}
+                  className={`flex-1 min-w-0 font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-snug break-words md:line-clamp-2 ${subjectSizeClass(emailData?.subject)}`}
                   title={emailData?.subject}
                 >
                   {emailData?.subject}
@@ -770,85 +856,6 @@ ${ccLine}
               </div>
             </div>
 
-            <div className="flex items-center flex-wrap gap-2 shrink-0 md:w-auto mt-2 md:mt-0">
-
-              {/* ---------------- DESKTOP ACTIONS ---------------- */}
-              <div className="hidden md:flex items-center gap-2">
-
-                {onActionReply && !emailData?.isDraft && (
-                  <>
-                    <button
-                      onClick={handleReply}
-                      className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
-                      title="Odpovědět (Reply)"
-                    >
-                      <Reply size={22} />
-                    </button>
-                    <button
-                      onClick={handleReplyAll}
-                      className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
-                      title="Odpovědět všem (Reply All)"
-                    >
-                      <ReplyAll size={22} />
-                    </button>
-                    <button
-                      onClick={handleForward}
-                      disabled={isPreparingForward}
-                      className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-purple hover:bg-neon-purple/15 hover:border-neon-purple/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(247,37,133,0.4)] disabled:opacity-50"
-                      title="Přeposlat (Forward)"
-                    >
-                      {isPreparingForward ? (
-                        <div className="w-[22px] h-[22px] rounded-full border-[2px] border-neon-purple/20 border-t-neon-purple animate-spin m-[0.5px]"></div>
-                      ) : (
-                        <Forward size={22} />
-                      )}
-                    </button>
-                    <div className="w-px h-6 bg-neon-blue/20 mx-1"></div>
-                  </>
-                )}
-
-                {onSpam && (
-                  <button
-                    onClick={onSpam}
-                    className="p-2 rounded-xl text-danger/70 bg-danger/5 border border-danger/20 hover:text-danger hover:bg-danger/15 hover:border-danger/50 transition-all shadow-[0_0_5px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
-                    title="Označit jako Spam"
-                  >
-                    <AlertOctagon size={22} />
-                  </button>
-                )}
-
-                {onTrash && (
-                  <button
-                    onClick={handleTrashClick}
-                    className="p-2 rounded-xl text-danger/70 bg-danger/5 border border-danger/20 hover:text-danger hover:bg-danger/15 hover:border-danger/50 transition-all shadow-[0_0_5px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
-                    title="Smazat (Delete)"
-                  >
-                    <Trash2 size={22} />
-                  </button>
-                )}
-                {onExpand && (
-                  <button
-                    onClick={onExpand}
-                    className="hidden md:block p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
-                    title="Otevřít v plné velikosti"
-                  >
-                    <Maximize2 size={22} />
-                  </button>
-                )}
-                {onClose && (
-                  <>
-                    <div className="hidden md:block w-px h-6 bg-white/20 mx-1"></div>
-                    <button
-                      onClick={onClose}
-                      className="hidden md:flex p-2 bg-white/5 hover:bg-danger/20 text-slate-400 hover:text-danger rounded-full transition-all border border-transparent hover:border-danger/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
-                      title="Zavřít"
-                    >
-                      <X size={22} strokeWidth={2} />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
           </div>
 
         </div>
