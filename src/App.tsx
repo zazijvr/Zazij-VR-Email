@@ -10,6 +10,7 @@ const apiFetch: typeof fetch = (...args) => fetch(...args);
 import { useAlert } from './components/AlertProvider';
 import { checkForUpdate } from './utils/updater';
 import Sidebar from './components/Sidebar';
+import AccountSwitcher, { type SwitcherAccount } from './components/AccountSwitcher';
 import SettingsModal from './components/SettingsModal';
 import MobileHeader from './components/MobileHeader';
 import EmailApp from './modules/Email/EmailApp';
@@ -19,7 +20,7 @@ import type { AppMode } from './components/Sidebar';
 import type { UnreadCounts, UserInfo } from './types/account';
 import type { GmailLabel } from './types/gmail';
 import type { MoveRequest } from './types/email';
-import { imapListFolders } from './services/imap';
+import { imapListAccounts, imapListFolders } from './services/imap';
 import {
   MailProviderProvider, createGmailProvider, createImapProvider, imapCustomFolders, imapUnreadCounts,
 } from './services/mailProvider';
@@ -637,6 +638,14 @@ function App() {
     refetchIntervalInBackground: false,
   });
   const imapFolders = imapFoldersQuery.data;
+
+  /** Přidané IMAP účty (Seznam, vlastní doména) – pro přepínač v levém panelu */
+  const imapAccountsQuery = useQuery({
+    queryKey: ['imapAccounts'],
+    queryFn: () => imapListAccounts().catch(() => []),
+    enabled: typeof window.__TAURI_INTERNALS__ !== 'undefined',
+    staleTime: Infinity,
+  });
   const imapLabels = useMemo(() => imapCustomFolders(imapFolders ?? []), [imapFolders]);
 
   useEffect(() => {
@@ -658,6 +667,26 @@ function App() {
     return null;
   }, [activeImap, imapFolders, googleToken, userInfo?.email, customLabels]);
   const mailAccountEmail = activeImap ?? userInfo?.email;
+
+  /** Všechny účty pro přepínač v levém panelu: Google účty a pak ostatní (IMAP) */
+  const switcherAccounts = useMemo<SwitcherAccount[]>(() => {
+    const google = [...savedAccounts];
+    if (userInfo?.email && !google.includes(userInfo.email)) google.unshift(userInfo.email);
+    return [
+      ...google.map((email) => ({ email, kind: 'google' as const })),
+      ...(imapAccountsQuery.data ?? []).map((a) => ({
+        email: a.email,
+        kind: 'imap' as const,
+        provider: /seznam\.cz$/i.test(a.imapHost) ? 'Seznam' : /wedos\.net$/i.test(a.imapHost) ? 'WEDOS' : a.imapHost,
+      })),
+    ];
+  }, [savedAccounts, userInfo?.email, imapAccountsQuery.data]);
+
+  const selectAccount = (acc: SwitcherAccount) => {
+    setIsMobileMenuOpen(false);
+    if (acc.kind === 'imap') switchToImap(acc.email);
+    else switchGoogleAccount(acc.email);
+  };
   const sidebarLabels = activeImap ? imapLabels : customLabels;
 
   useEffect(() => {
@@ -715,6 +744,7 @@ function App() {
             onMoveCustomFolder={activeImap ? undefined : handleMoveCustomFolder}
             customLabels={sidebarLabels}
             onMobileClose={() => setIsMobileMenuOpen(false)}
+            accountSwitcher={<AccountSwitcher accounts={switcherAccounts} activeEmail={mailAccountEmail} onSelect={selectAccount} />}
           />
         </div>
 
@@ -763,7 +793,7 @@ function App() {
           setCustomLabels={setCustomLabels}
           activeImap={activeImap}
           onSwitchImap={switchToImap}
-          onImapAccountsChanged={() => imapFoldersQuery.refetch()}
+          onImapAccountsChanged={() => { imapFoldersQuery.refetch(); imapAccountsQuery.refetch(); }}
           onImapAccountRemoved={(email) => { if (email === activeImap) setActiveImap(null); }}
         />
       </div>

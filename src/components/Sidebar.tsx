@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState, useEffect, type DragEvent, type MouseEvent } from 'react';
+import { Fragment, useRef, useState, useEffect, type DragEvent, type MouseEvent, type ReactNode } from 'react';
 import { Mail, Calendar, Settings, ChevronRight, ChevronDown } from 'lucide-react';
 import { getVersion } from '@tauri-apps/api/app';
 import type { GmailLabel } from '../types/gmail';
@@ -28,6 +28,8 @@ interface SidebarProps {
   onMoveCustomFolder?: (id: string, name: string, targetParent: string | null) => void;
   customLabels?: GmailLabel[];
   onMobileClose?: () => void;
+  /** Přepínač e-mailových účtů (zobrazí se v režimu pošty) */
+  accountSwitcher?: ReactNode;
 }
 
 export default function Sidebar({
@@ -45,6 +47,7 @@ export default function Sidebar({
   onMoveCustomFolder,
   customLabels = [],
   onMobileClose,
+  accountSwitcher,
 }: SidebarProps) {
   const [folders, setFolders] = useState<SidebarFolder[]>([
     { id: 'inbox', label: 'Doručené' },
@@ -210,6 +213,8 @@ export default function Sidebar({
           <Settings size={22} strokeWidth={2.5} />
         </div>
       </div>
+
+      {appMode === 'email' && accountSwitcher}
 
       <div className="px-4 mb-4 md:mb-8">
         {appMode === 'email' ? (
