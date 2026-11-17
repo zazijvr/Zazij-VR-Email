@@ -1,16 +1,27 @@
-import React from 'react';
+import { Fragment, type Dispatch, type SetStateAction } from 'react';
+import type { CalendarEvent } from '../../../types/calendar';
 import { Search, Clock, ChevronRight } from 'lucide-react';
 import { getEventSolidColor } from '../utils/eventColors';
 
-export default function AgendaView({ 
-   events, 
-   agendaSearch, 
-   setAgendaSearch, 
-   displayedAgendaCount, 
-   setDisplayedAgendaCount, 
-   setSelectedEvent, 
-   activeCalendarView 
-}) {
+interface AgendaViewProps {
+  events: CalendarEvent[];
+  agendaSearch: string;
+  setAgendaSearch: (value: string) => void;
+  displayedAgendaCount: number;
+  setDisplayedAgendaCount: Dispatch<SetStateAction<number>>;
+  setSelectedEvent: (event: CalendarEvent | null) => void;
+  activeCalendarView: string;
+}
+
+export default function AgendaView({
+   events,
+   agendaSearch,
+   setAgendaSearch,
+   displayedAgendaCount,
+   setDisplayedAgendaCount,
+   setSelectedEvent,
+   activeCalendarView,
+}: AgendaViewProps) {
     const today = new Date();
     today.setHours(0,0,0,0);
     
@@ -21,11 +32,10 @@ export default function AgendaView({
           const q = agendaSearch.toLowerCase();
           return (
             ev.title?.toLowerCase().includes(q) ||
-            ev.description?.replace(/<[^>]*>?/gm,'').toLowerCase().includes(q) ||
-            ev.location?.toLowerCase().includes(q)
+            ev.description?.replace(/<[^>]*>?/gm,'').toLowerCase().includes(q)
           );
         })
-        .sort((a, b) => a.fullDate - b.fullDate);
+        .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime());
 
     const monthNames = ["LEDEN", "ÚNOR", "BŘEZEN", "DUBEN", "KVĚTEN", "ČERVEN", "ČERVENEC", "SRPEN", "ZÁŘÍ", "ŘÍJEN", "LISTOPAD", "PROSINEC"];
 
@@ -144,7 +154,7 @@ export default function AgendaView({
                      const isToday = currentObj.toDateString() === new Date().toDateString();
 
                      return (
-                        <React.Fragment key={ev.id}>
+                        <Fragment key={ev.id}>
                           {isFirstOfDay && (
                              <div className="mt-3 md:mt-4 mb-2 first:mt-0 pt-1 border-b border-[#00f3ff]/10">
                                <h3 className={`text-[13px] md:text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 md:gap-3 ${isToday ? 'text-[#f72585]' : 'text-[#00f3ff]'}`}>
@@ -184,7 +194,7 @@ export default function AgendaView({
                                 <ChevronRight size={18} className="md:w-5 md:h-5" />
                              </div>
                           </div>
-                        </React.Fragment>
+                        </Fragment>
                      )
                   })}
                   

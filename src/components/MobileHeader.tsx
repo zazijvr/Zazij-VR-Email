@@ -1,17 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { Menu, LogOut, Search, X } from 'lucide-react';
 import { getAvatarInitial } from '../utils/emailParser';
 
-export default function MobileHeader({ 
-  toggleSidebar, 
-  userEmail, 
-  logoutGoogleAccount 
-}) {
+interface MobileHeaderProps {
+  toggleSidebar: () => void;
+  userEmail?: string;
+  logoutGoogleAccount: (email: string) => void;
+}
+
+export default function MobileHeader({
+  toggleSidebar,
+  userEmail,
+  logoutGoogleAccount,
+}: MobileHeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const dropdownRef = useRef(null);
-  const searchInputRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleSearchToggle = () => {
@@ -30,7 +36,7 @@ export default function MobileHeader({
     return () => window.removeEventListener('vr-mobile-search-toggle', handleSearchToggle);
   }, []);
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value;
     setSearchQuery(q);
     window.dispatchEvent(new CustomEvent('vr-mobile-search-query-change', { detail: q }));
@@ -43,9 +49,9 @@ export default function MobileHeader({
   };
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       // Check if the click was outside the dropdown container
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         event.stopPropagation();
         event.preventDefault();
         setIsDropdownOpen(false);
@@ -124,7 +130,7 @@ export default function MobileHeader({
             <button
               onClick={() => {
                 setIsDropdownOpen(false);
-                logoutGoogleAccount(userEmail);
+                if (userEmail) logoutGoogleAccount(userEmail);
               }}
               className="w-full text-left px-4 py-4 flex items-center justify-center gap-3 text-[#ff3366] hover:bg-[#ff3366]/10 transition-colors"
             >

@@ -1,7 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, type ReactNode, type MouseEvent } from 'react';
 import { Clock, Check, X } from 'lucide-react';
 
-export default function TimePicker({ value, onChange, label, className = "", align = "left" }) {
+interface TimePickerProps {
+  value: string;
+  onChange: (value: string) => void;
+  label?: ReactNode;
+  className?: string;
+  align?: 'left' | 'right';
+}
+
+export default function TimePicker({ value, onChange, label, className = "", align = "left" }: TimePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
   const [flash, setFlash] = useState(false);
@@ -21,7 +29,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
   const [internalHour, setInternalHour] = useState(valHour);
   const [internalMinute, setInternalMinute] = useState(valMinute);
 
-  const toggleOpen = (e) => {
+  const toggleOpen = (e: MouseEvent) => {
     e.preventDefault();
     if (!isOpen) {
        setInternalHour(value ? parseInt(value.split(':')[0], 10) : 10);
@@ -30,17 +38,17 @@ export default function TimePicker({ value, onChange, label, className = "", ali
     setIsOpen(!isOpen);
   };
 
-  const handleHourClick = (e, h) => {
+  const handleHourClick = (e: MouseEvent, h: number) => {
     e.stopPropagation();
     setInternalHour(h);
   };
 
-  const handleMinuteClick = (e, m) => {
+  const handleMinuteClick = (e: MouseEvent, m: number) => {
     e.stopPropagation();
     setInternalMinute(m);
   };
   
-  const handleConfirm = (e) => {
+  const handleConfirm = (e: MouseEvent) => {
     if (e) e.stopPropagation();
     const hh = internalHour.toString().padStart(2, '0');
     const mm = internalMinute.toString().padStart(2, '0');
@@ -51,7 +59,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
     setIsOpen(false);
   };
   
-  const handleCancel = (e) => {
+  const handleCancel = (e: MouseEvent) => {
     if (e) e.stopPropagation();
     setIsOpen(false);
   };
@@ -100,11 +108,11 @@ export default function TimePicker({ value, onChange, label, className = "", ali
           onMouseDown={(e) => {
              if (document.activeElement !== e.target) {
                 e.preventDefault();
-                e.target.focus();
+                e.currentTarget.focus();
              }
           }}
           onKeyDown={(e) => {
-             if (e.key === 'Enter') e.target.blur();
+             if (e.key === 'Enter') e.currentTarget.blur();
           }}
           placeholder="--:--"
           className={`bg-transparent font-mono text-sm font-bold focus:outline-none w-full transition-all duration-300 ${flash ? 'text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.8)] scale-105' : 'text-white'}`}

@@ -1,97 +1,63 @@
-import React, { useState } from 'react';
+import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { Plus, Trash2, Loader2, Folder, Edit2, Check, X } from 'lucide-react';
 
-export default function FolderSettings({ googleToken, customLabels, setCustomLabels }) {
+import { createLabel, deleteLabel, renameLabel } from '../services/gmail';
+import type { GmailLabel } from '../types/gmail';
+
+interface FolderSettingsProps {
+  googleToken: string;
+  customLabels: GmailLabel[];
+  setCustomLabels: Dispatch<SetStateAction<GmailLabel[]>>;
+}
+
+export default function FolderSettings({ googleToken, customLabels, setCustomLabels }: FolderSettingsProps) {
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
-  const [editingId, setEditingId] = useState(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleCreateFolder = async (e) => {
+  const handleCreateFolder = async (e: FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim() || !googleToken) return;
-
     setIsCreating(true);
     try {
-      const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: newFolderName.trim(),
-          labelListVisibility: 'labelShow',
-          messageListVisibility: 'show'
-        })
-      });
-
-      if (res.ok) {
-        const newLabel = await res.json();
-        setCustomLabels(prev => [...(prev || []), newLabel]);
-        setNewFolderName('');
-      } else {
-        console.error("Chyba při tvorbě složky", await res.text());
-      }
+      const newLabel = await createLabel(googleToken, newFolderName.trim());
+      setCustomLabels((prev) => [...(prev || []), newLabel]);
+      setNewFolderName('');
     } catch (err) {
-      console.error(err);
+      console.error('Chyba při tvorbě složky', err);
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleDeleteFolder = async (id) => {
+  const handleDeleteFolder = async (id: string) => {
     if (!googleToken) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${googleToken}`
-        }
-      });
-      if (res.ok) {
-        setCustomLabels(prev => prev.filter(l => l.id !== id));
-      }
+      await deleteLabel(googleToken, id);
+      setCustomLabels((prev) => prev.filter((l) => l.id !== id));
     } catch (err) {
-      console.error(err);
+      console.error('Chyba při mazání složky', err);
     } finally {
       setDeletingId(null);
     }
   };
 
-  const handleRenameFolder = async (id, oldName) => {
+  const handleRenameFolder = async (id: string, oldName: string) => {
     if (!editName.trim() || editName === oldName || !googleToken) {
       setEditingId(null);
       return;
     }
     setIsUpdating(true);
     try {
-      const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id: id,
-          name: editName.trim(),
-          labelListVisibility: 'labelShow',
-          messageListVisibility: 'show'
-        })
-      });
-
-      if (res.ok) {
-        const updatedLabel = await res.json();
-        setCustomLabels(prev => prev.map(l => l.id === id ? updatedLabel : l));
-        setEditingId(null);
-      } else {
-        console.error("Chyba při přejmenování složky", await res.text());
-      }
+      const updatedLabel = await renameLabel(googleToken, id, editName.trim());
+      setCustomLabels((prev) => prev.map((l) => (l.id === id ? updatedLabel : l)));
+      setEditingId(null);
     } catch (err) {
-      console.error(err);
+      console.error('Chyba při přejmenování složky', err);
     } finally {
       setIsUpdating(false);
     }

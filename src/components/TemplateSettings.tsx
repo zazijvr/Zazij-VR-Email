@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, type MouseEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2, Edit3, X, Save, FileText } from 'lucide-react';
+import { Plus, Trash2, Edit3, FileText } from 'lucide-react';
 import EmailComposer from './EmailComposer';
+import type { ComposerConfig, EmailTemplate } from '../types/composer';
 
-export default function TemplateSettings({ googleToken }) {
-  const [templates, setTemplates] = useState([]);
-  const [composerConfig, setComposerConfig] = useState(null);
+export default function TemplateSettings({ googleToken }: { googleToken: string }) {
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [composerConfig, setComposerConfig] = useState<ComposerConfig | null>(null);
   
   useEffect(() => {
     const saved = localStorage.getItem('zazijvr_templates');
     if (saved) {
-      try { setTemplates(JSON.parse(saved)); } catch (e) {}
+      try { setTemplates(JSON.parse(saved)); } catch { /* poškozené uložené šablony – začne se s prázdným seznamem */ }
     }
   }, []);
 
-  const saveToDisk = (newTemplates) => {
+  const saveToDisk = (newTemplates: EmailTemplate[]) => {
     setTemplates(newTemplates);
     localStorage.setItem('zazijvr_templates', JSON.stringify(newTemplates));
   };
@@ -31,7 +32,7 @@ export default function TemplateSettings({ googleToken }) {
     });
   };
 
-  const handleSaveTemplate = (action, meta) => {
+  const handleSaveTemplate = (action: string, meta: EmailTemplate) => {
     if (action === 'save_template') {
        let newTemplates;
        const exists = templates.find(t => t.id === meta.id);
@@ -44,7 +45,7 @@ export default function TemplateSettings({ googleToken }) {
     }
   };
 
-  const handleDelete = (id, e) => {
+  const handleDelete = (id: string, e: MouseEvent) => {
     e.stopPropagation();
     const newTemplates = templates.filter(t => t.id !== id);
     saveToDisk(newTemplates);
@@ -110,6 +111,7 @@ export default function TemplateSettings({ googleToken }) {
       {composerConfig && createPortal(
         <EmailComposer
            googleToken={googleToken}
+           userEmail={undefined}
            config={composerConfig}
            onClose={() => setComposerConfig(null)}
            onSuccessAction={handleSaveTemplate}

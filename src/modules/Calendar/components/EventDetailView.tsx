@@ -1,6 +1,16 @@
-import React from 'react';
+import type { CSSProperties } from 'react';
+import type { CalendarEvent } from '../../../types/calendar';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Edit2, Trash2, Loader2, X, Clock, Bell, Repeat } from 'lucide-react';
+
+interface EventDetailViewProps {
+  selectedEvent: CalendarEvent | null;
+  setSelectedEvent: (event: CalendarEvent | null) => void;
+  handleEditSelectedEvent: () => void;
+  handleDeleteSelectedEvent: () => void;
+  isDeleting: boolean;
+  previewRecurrenceText?: string | null;
+}
 
 export default function EventDetailView({
   selectedEvent,
@@ -8,8 +18,8 @@ export default function EventDetailView({
   handleEditSelectedEvent,
   handleDeleteSelectedEvent,
   isDeleting,
-  previewRecurrenceText
-}) {
+  previewRecurrenceText,
+}: EventDetailViewProps) {
   if (!selectedEvent) return null;
 
   return (
@@ -23,7 +33,7 @@ export default function EventDetailView({
            >
              <ArrowLeft size={22} strokeWidth={2.5} />
            </button>
-           <div className="flex items-center gap-3 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' }}>
+           <div className="flex items-center gap-3 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' } as CSSProperties}>
              <button onClick={handleEditSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/40 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] shadow-[inset_0_0_15px_rgba(0,243,255,0.2)] transition-all active:scale-95 hover:bg-[#00f3ff]/20"><Edit2 size={18} /></button>
              <button onClick={handleDeleteSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/60 text-[#ef4444] drop-shadow-[0_0_10px_rgba(239,68,68,0.8)] shadow-[inset_0_0_15px_rgba(239,68,68,0.3)] transition-all active:scale-95 hover:bg-red-500/20">{isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}</button>
            </div>

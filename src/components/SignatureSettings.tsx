@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, type MouseEvent } from 'react';
 import { Plus, Trash2, Edit3, X, Save, Star, PenTool } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
+import type { EmailSignature } from '../types/composer';
 
 export default function SignatureSettings() {
-  const [signatures, setSignatures] = useState([]);
-  const [editingSignature, setEditingSignature] = useState(null);
+  const [signatures, setSignatures] = useState<EmailSignature[]>([]);
+  const [editingSignature, setEditingSignature] = useState<EmailSignature | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('zazijvr_signatures');
     if (saved) {
-      try { setSignatures(JSON.parse(saved)); } catch (e) {}
+      try { setSignatures(JSON.parse(saved)); } catch { /* poškozené uložené podpisy – začne se s prázdným seznamem */ }
     }
   }, []);
 
-  const saveToDisk = (newSignatures) => {
+  const saveToDisk = (newSignatures: EmailSignature[]) => {
     setSignatures(newSignatures);
     localStorage.setItem('zazijvr_signatures', JSON.stringify(newSignatures));
   };
@@ -28,7 +29,7 @@ export default function SignatureSettings() {
   };
 
   const handleSave = () => {
-    if (!editingSignature.title.trim()) return;
+    if (!editingSignature || !editingSignature.title.trim()) return;
 
     let newSignatures = [...signatures];
     // Pokud je nastavován jako výchozí, zrušit výchozí u ostatních
@@ -52,16 +53,16 @@ export default function SignatureSettings() {
     setEditingSignature(null);
   };
 
-  const handleDelete = (id, e) => {
+  const handleDelete = (id: string, e: MouseEvent) => {
     e.stopPropagation();
-    let newSignatures = signatures.filter(s => s.id !== id);
+    const newSignatures = signatures.filter(s => s.id !== id);
     if (newSignatures.length > 0 && !newSignatures.some(s => s.isDefault)) {
       newSignatures[0].isDefault = true; // Auto reassign default
     }
     saveToDisk(newSignatures);
   };
 
-  const setAsDefault = (id, e) => {
+  const setAsDefault = (id: string, e: MouseEvent) => {
     e.stopPropagation();
     const newSignatures = signatures.map(s => ({
        ...s,
@@ -150,7 +151,7 @@ export default function SignatureSettings() {
               <input 
                 type="text" 
                 value={editingSignature.title} 
-                onChange={e => setEditingSignature(prev => ({...prev, title: e.target.value}))}
+                onChange={e => setEditingSignature(prev => prev && ({...prev, title: e.target.value}))}
                 placeholder="Např. Formální, Osobní..."
                 className="bg-[#061026]/80 border border-[#f72585]/60 shadow-[0_0_10px_rgba(247,37,133,0.1)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f72585] focus:shadow-[0_0_15px_rgba(247,37,133,0.3)] transition-all w-full"
                 autoFocus
@@ -161,7 +162,7 @@ export default function SignatureSettings() {
               <label className="text-xs uppercase tracking-widest font-bold text-slate-400">Vzhled podpisu (Podporuje i obrázky a textové styly)</label>
               <RichTextEditor
                 value={editingSignature.body}
-                onChange={html => setEditingSignature(prev => ({...prev, body: html}))}
+                onChange={(html: string) => setEditingSignature(prev => prev && ({...prev, body: html}))}
                 placeholder="S pozdravem, Jan Novák"
                 className="flex-1"
               />
@@ -171,7 +172,7 @@ export default function SignatureSettings() {
               <input 
                 type="checkbox" 
                 checked={editingSignature.isDefault}
-                onChange={e => setEditingSignature(prev => ({...prev, isDefault: e.target.checked}))}
+                onChange={e => setEditingSignature(prev => prev && ({...prev, isDefault: e.target.checked}))}
                 className="w-5 h-5 accent-[#00f3ff] bg-black border-[#00f3ff]/25 rounded" 
               />
               <span className="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">Tento podpis používat jako Výchozí</span>

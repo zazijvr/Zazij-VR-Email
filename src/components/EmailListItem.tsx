@@ -1,13 +1,41 @@
-import React, { useState, useRef } from 'react';
-import { CheckSquare, Square, Mail, MailOpen, FileEdit, Star, Trash2, Paperclip, Check, Reply } from 'lucide-react';
+import { useState, useRef, type Dispatch, type SetStateAction, type TouchEvent } from 'react';
+import { CheckSquare, Square, Mail, MailOpen, FileEdit, Trash2, Paperclip, Check, Reply } from 'lucide-react';
 import { getAvatarInitial } from '../utils/emailParser';
+import type { ListEmail } from '../types/email';
 
 /** „15. 11. 2026“ → „15. 11.“ (letos), jinak „15. 11. 25“ */
-const shortDate = (text) => {
+const shortDate = (text: string): string => {
   const m = text.match(/^(.*?)\s*(\d{4})$/);
   if (!m) return text;
   return Number(m[2]) === new Date().getFullYear() ? m[1] : `${m[1]} ${m[2].slice(2)}`;
 };
+
+/** Cokoli, co umí zastavit probublání události (React událost i náhradní objekt) */
+type Stoppable = { stopPropagation: () => void } | null;
+
+interface EmailListItemProps {
+  email: ListEmail;
+  index: number;
+  activeFolder: string;
+  selectedEmailId: string | null;
+  selectedMailIds: Set<string>;
+  keyboardIndex: number;
+  draggableEmailId: string | null;
+  emails: ListEmail[];
+  handlePointerDown: (emailId: string) => void;
+  setKeyboardIndex: (index: number) => void;
+  clearDragTimer: () => void;
+  handleDragEnd: () => void;
+  setSelectedMailIds: Dispatch<SetStateAction<Set<string>>>;
+  handleEmailClick: (email: ListEmail) => void;
+  toggleSelectEmail: (emailId: string, e: Stoppable) => void;
+  handleToggleRead: (emailId: string, isUnread: boolean, e: Stoppable) => void;
+  onDraftClick?: (emailId: string) => void;
+  handleToggleStar: (emailId: string, isStarred: boolean, e: Stoppable) => void;
+  handleTrashEmail: (email: ListEmail, e: Stoppable) => void;
+  /** Mobil: smazání přejetím doleva (s potvrzením v seznamu) */
+  onSwipeDelete?: (email: ListEmail) => void;
+}
 
 export default function EmailListItem({
   email,
@@ -29,16 +57,16 @@ export default function EmailListItem({
   onDraftClick,
   handleToggleStar,
   handleTrashEmail,
-  onSwipeDelete // nový handler z listu
-}) {
+  onSwipeDelete,
+}: EmailListItemProps) {
   const isSelected = selectedEmailId === email.id;
   const isMultiSelected = selectedMailIds.has(email.id);
   const isActiveRow = isSelected || isMultiSelected;
   const isKeyboardFocus = keyboardIndex === index;
 
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const swipeStartRef = useRef(null);
-  const longPressTimerRef = useRef(null);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const SWIPE_THRESHOLD = 80;
 
@@ -49,7 +77,7 @@ export default function EmailListItem({
     }
   };
 
-  const onTouchStart = (e) => {
+  const onTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     if (e.touches.length > 1) return;
     swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     longPressTimerRef.current = setTimeout(() => {
@@ -58,7 +86,7 @@ export default function EmailListItem({
     }, 500);
   };
 
-  const onTouchMove = (e) => {
+  const onTouchMove = (e: TouchEvent<HTMLDivElement>) => {
     if (!swipeStartRef.current) return;
     if (e.touches.length > 1) {
       swipeStartRef.current = null;
@@ -156,7 +184,7 @@ export default function EmailListItem({
             e.dataTransfer.setData('application/json', JSON.stringify({ type: 'EMAIL', id: email.id, sourceLabel: activeFolder, emailData: email }));
           }
         }}
-        onClick={(e) => { 
+        onClick={() => { 
           if (Math.abs(swipeOffset) < 10) { 
             if (selectedMailIds.size > 0) {
               toggleSelectEmail(email.id, { stopPropagation: () => {} });

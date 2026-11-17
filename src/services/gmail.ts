@@ -160,3 +160,15 @@ export const listLabels = async (token: string) =>
   (await gmailRequest<{ labels?: GmailLabel[] }>(token, '/labels')).labels ?? [];
 
 export const getLabel = (token: string, id: string) => gmailRequest<GmailLabel>(token, `/labels/${id}`);
+
+const VISIBLE_LABEL = { labelListVisibility: 'labelShow', messageListVisibility: 'show' } as const;
+
+/** Nová složka (štítek) */
+export const createLabel = (token: string, name: string) =>
+  gmailRequest<GmailLabel>(token, '/labels', { method: 'POST', body: JSON.stringify({ name, ...VISIBLE_LABEL }) });
+
+export const renameLabel = (token: string, id: string, name: string) =>
+  gmailRequest<GmailLabel>(token, `/labels/${id}`, { method: 'PUT', body: JSON.stringify({ id, name, ...VISIBLE_LABEL }) });
+
+export const deleteLabel = (token: string, id: string) =>
+  gmailRequest<void>(token, `/labels/${id}`, { method: 'DELETE' });

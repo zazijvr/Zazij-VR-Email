@@ -1,12 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, type ReactNode, type MouseEvent } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
-export default function DatePicker({ value, onChange, label, className = "", align = "left" }) {
+interface DatePickerProps {
+  value: string;
+  onChange: (value: string) => void;
+  label?: ReactNode;
+  className?: string;
+  align?: 'left' | 'right';
+}
+
+export default function DatePicker({ value, onChange, label, className = "", align = "left" }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentViewDate, setCurrentViewDate] = useState(new Date(value || new Date()));
   
   // Local input value formatted to locale when not editing, but acts as raw string when editing
-  const formatDateToLocal = (dateString) => {
+  const formatDateToLocal = (dateString: string) => {
     if (!dateString) return '';
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return dateString;
@@ -25,7 +33,7 @@ export default function DatePicker({ value, onChange, label, className = "", ali
     setTimeout(() => setFlash(false), 500);
   };
 
-  const toggleOpen = (e) => {
+  const toggleOpen = (e: MouseEvent) => {
     e.preventDefault();
     setIsOpen(!isOpen);
     setCurrentViewDate(new Date(value || new Date()));
@@ -34,12 +42,12 @@ export default function DatePicker({ value, onChange, label, className = "", ali
   const currentYear = currentViewDate.getFullYear();
   const currentMonth = currentViewDate.getMonth();
   
-  const handlePrevMonth = (e) => { 
+  const handlePrevMonth = (e: MouseEvent) => { 
       e.stopPropagation(); 
       setCurrentViewDate(new Date(currentYear, currentMonth - 1, 1)); 
   };
   
-  const handleNextMonth = (e) => { 
+  const handleNextMonth = (e: MouseEvent) => { 
       e.stopPropagation(); 
       setCurrentViewDate(new Date(currentYear, currentMonth + 1, 1)); 
   };
@@ -50,7 +58,7 @@ export default function DatePicker({ value, onChange, label, className = "", ali
   
   const monthNames = ["Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"];
 
-  const handleDayClick = (e, dayNum) => {
+  const handleDayClick = (e: MouseEvent, dayNum: number) => {
     e.stopPropagation();
     const selectedDate = new Date(currentYear, currentMonth, dayNum);
     const y = selectedDate.getFullYear();
@@ -130,11 +138,11 @@ export default function DatePicker({ value, onChange, label, className = "", ali
           onMouseDown={(e) => {
              if (document.activeElement !== e.target) {
                 e.preventDefault();
-                e.target.focus();
+                e.currentTarget.focus();
              }
           }}
           onKeyDown={(e) => {
-             if (e.key === 'Enter') e.target.blur();
+             if (e.key === 'Enter') e.currentTarget.blur();
           }}
           placeholder="DD.MM.RRRR"
           className={`bg-transparent font-mono text-sm font-bold focus:outline-none w-full transition-all duration-300 ${flash ? 'text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.8)] scale-105' : 'text-white'}`}

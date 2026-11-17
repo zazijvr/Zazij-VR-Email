@@ -1,13 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { getStoredContacts } from '../utils/contactManager';
 
-export default function AutofillInput({ userEmail, label, value, onChange, placeholder, className, headerRight }) {
-  const [suggestions, setSuggestions] = useState([]);
+/** Stačí hodnota – při výběru návrhu se posílá náhradní objekt místo skutečné události */
+export type AutofillChange = { target: { value: string } };
+
+interface AutofillInputProps {
+  userEmail?: string;
+  label?: ReactNode;
+  value: string;
+  onChange: (e: AutofillChange) => void;
+  placeholder?: string;
+  className?: string;
+  headerRight?: ReactNode;
+}
+
+export default function AutofillInput({ userEmail, label, value, onChange, placeholder, className, headerRight }: AutofillInputProps) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [knownContacts, setKnownContacts] = useState([]);
-  const wrapperRef = useRef(null);
-  const inputRef = useRef(null);
+  const [knownContacts, setKnownContacts] = useState<string[]>([]);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const justSelectedRef = useRef(false);
 
   useEffect(() => {
@@ -17,8 +30,8 @@ export default function AutofillInput({ userEmail, label, value, onChange, place
   }, [userEmail]);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
     };
@@ -26,7 +39,7 @@ export default function AutofillInput({ userEmail, label, value, onChange, place
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: AutofillChange) => {
     const val = e.target.value;
     onChange(e);
 
@@ -36,7 +49,7 @@ export default function AutofillInput({ userEmail, label, value, onChange, place
 
     if (currentPart.length > 0) {
       setTimeout(() => {
-        const filtered = [];
+        const filtered: string[] = [];
         for (let i = 0; i < knownContacts.length; i++) {
            if (knownContacts[i].toLowerCase().includes(currentPart)) {
               filtered.push(knownContacts[i]);
@@ -73,7 +86,7 @@ export default function AutofillInput({ userEmail, label, value, onChange, place
     }
   };
 
-  const handleSelectSuggestion = (suggestion) => {
+  const handleSelectSuggestion = (suggestion: string) => {
     const parts = value.split(',');
     parts.pop(); // Odebereme nedopsanou část
     
@@ -89,7 +102,7 @@ export default function AutofillInput({ userEmail, label, value, onChange, place
     inputRef.current?.focus();
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!showDropdown) return;
 
     if (e.key === 'ArrowDown') {
