@@ -1,6 +1,6 @@
 [package]
 name = "zazijvr-email"
-version = "1.4.1"
+version = "1.5.0"
 description = "Zazij VR Email Client"
 authors = ["Sefin"]
 license = "MIT"
