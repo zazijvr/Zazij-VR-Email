@@ -13,11 +13,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client"],
-
-    // Postupný převod: .js/.jsx soubory zatím fungují vedle .ts/.tsx, ale nekontrolují se
-    "allowJs": true,
-    "checkJs": false
+    "types": ["vite/client"]
   },
   "include": ["src"]
 }

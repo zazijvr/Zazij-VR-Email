@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onAction, registerActionTypes, isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
-import { message } from '@tauri-apps/plugin-dialog';
 // Vracíme čistý nativní fetch pro přímou podporu WebView Android vrstvy, 
 // jelikož tauriFetch(reqwest) zde občas neověří kořenové certifikáty Googlu z důvodu chybějících Android trust stores.
-const apiFetch = (...args) => fetch(...args);
+const apiFetch: typeof fetch = (...args) => fetch(...args);
 
 
 import { useAlert } from './components/AlertProvider';
@@ -15,12 +13,16 @@ import SettingsModal from './components/SettingsModal';
 import MobileHeader from './components/MobileHeader';
 import EmailApp from './modules/Email/EmailApp';
 import CalendarApp from './modules/Calendar/CalendarApp';
+import type { AppMode } from './components/Sidebar';
+import type { UnreadCounts, UserInfo } from './types/account';
+import type { GmailLabel } from './types/gmail';
+import type { MoveRequest } from './types/email';
 
 function App() {
   const { showAlert, showConfirm } = useAlert();
   const [activeFolder, setActiveFolder] = useState('Doručené');
   const [activeCalendarView, setActiveCalendarView] = useState('Co mě čeká?');
-  const [appMode, setAppMode] = useState('email');
+  const [appMode, setAppMode] = useState<AppMode>('email');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isVerticalLayout, setIsVerticalLayout] = useState(() => {
@@ -31,13 +33,13 @@ function App() {
   useEffect(() => {
     localStorage.setItem('zazijvr_layout_vertical', JSON.stringify(isVerticalLayout));
   }, [isVerticalLayout]);
-  const [googleToken, setGoogleToken] = useState(null);
-  const [userInfo, setUserInfo] = useState(null);
-  const [savedAccounts, setSavedAccounts] = useState([]);
+  const [googleToken, setGoogleToken] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [savedAccounts, setSavedAccounts] = useState<string[]>([]);
 
   const loadSavedAccounts = useCallback(async () => {
     try {
-      const accounts = await invoke('get_saved_accounts');
+      const accounts = await invoke<string[]>('get_saved_accounts');
       setSavedAccounts(accounts);
     } catch (err) {
       console.error(err);
@@ -45,7 +47,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    let unlistenAction;
+    let unlistenAction: { unregister: () => Promise<void> } | undefined;
 
     const setupNotificationListener = async () => {
       try {
@@ -71,7 +73,7 @@ function App() {
     setupNotificationListener();
 
     return () => {
-      if (unlistenAction) unlistenAction();
+      unlistenAction?.unregister().catch(() => {});
     };
   }, []);
 
@@ -101,7 +103,7 @@ function App() {
   }, []);
 
   /** Uložené přihlášení k účtu už u Googlu neplatí – nabídne nové přihlášení */
-  const offerRelogin = (email) => {
+  const offerRelogin = (email: string) => {
     showConfirm(
       `Přihlášení k účtu ${email} už neplatí – Google ho zrušil nebo vypršelo.\n\nPřihlaste se k tomuto účtu znovu (v okně Googlu vyberte ${email}).`,
       'Účet je potřeba znovu přihlásit',
@@ -110,10 +112,10 @@ function App() {
     );
   };
 
-  const switchGoogleAccount = async (email) => {
+  const switchGoogleAccount = async (email: string) => {
     const previous = userInfo?.email;
     try {
-      const refreshToken = await invoke('switch_google_account', { email });
+      const refreshToken = await invoke<string>('switch_google_account', { email });
       if (refreshToken) {
         const res = await apiFetch("https://oauth2.googleapis.com/token", {
            method: "POST",
@@ -143,15 +145,16 @@ function App() {
       if (previous && previous !== email) {
         await invoke('switch_google_account', { email: previous }).catch(() => {});
       }
-      if (String(err?.message || err).includes('invalid_grant') || String(err?.message || err).includes('missing_refresh_token')) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes('invalid_grant') || errMsg.includes('missing_refresh_token')) {
         offerRelogin(email);
       } else {
-        showAlert(`Na účet ${email} se nepodařilo přepnout.\n\n${String(err?.message || err)}`, 'Chyba přepnutí účtu', 'error');
+        showAlert(`Na účet ${email} se nepodařilo přepnout.\n\n${errMsg}`, 'Chyba přepnutí účtu', 'error');
       }
     }
   };
 
-  const logoutGoogleAccount = async (email) => {
+  const logoutGoogleAccount = async (email: string) => {
     try {
       await invoke('logout_google_account', { email });
       loadSavedAccounts();
@@ -196,7 +199,7 @@ function App() {
 
                if (diffMinutes > 0 && diffMinutes <= 15) {
                   let permissionGranted = await isPermissionGranted();
-                  if (!permissionGranted) permissionGranted = await requestPermission();
+                  if (!permissionGranted) permissionGranted = (await requestPermission()) === 'granted';
 
                   if (permissionGranted) {
                      sendNotification({
@@ -218,13 +221,13 @@ function App() {
 
     return () => clearInterval(intervalId);
   }, [googleToken, appMode]);
-  const [unreadCounts, setUnreadCounts] = useState({});
+  const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
   const [triggerCompose, setTriggerCompose] = useState(0);
   const [triggerCreateEvent, setTriggerCreateEvent] = useState(0);
-  const [triggerMove, setTriggerMove] = useState(null);
+  const [triggerMove, setTriggerMove] = useState<{ moves: MoveRequest[]; ts: number } | null>(null);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (isSettingsOpen) {
           setIsSettingsOpen(false);
@@ -239,7 +242,7 @@ function App() {
     try {
       if (!window.__TAURI_INTERNALS__) return; // Vynechá kontrolu tauri, pokud běží v prohlížeči
       console.log("Hledám uložené Google pověření a případně potají žádám o čerstvy Token...");
-      const refreshToken = await invoke('get_active_refresh_token');
+      const refreshToken = await invoke<string>('get_active_refresh_token');
       if (refreshToken) {
         const isMobile = !('__TAURI_INTERNALS__' in window) || 
                          navigator.userAgent.includes('Android') || 
@@ -259,7 +262,7 @@ function App() {
         const res = await apiFetch("https://oauth2.googleapis.com/token", {
            method: "POST",
            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-           body: new URLSearchParams(requestBody).toString()
+           body: new URLSearchParams(requestBody as Record<string, string>).toString()
         });
         const data = await res.json();
         if (data.access_token) {
@@ -267,7 +270,7 @@ function App() {
           console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${data.access_token}`);
           setGoogleToken(data.access_token);
         } else if (data.error === 'invalid_grant') {
-          const email = await invoke('get_active_account').catch(() => '');
+          const email = await invoke<string>('get_active_account').catch(() => '');
           if (email) offerRelogin(email);
         }
       }
@@ -385,10 +388,10 @@ function App() {
         let deepLinkResolver = null;
         
         // Nastavíme listener PŘED otevřením prohlížeče
-        const deepLinkPromise = new Promise((resolve, reject) => {
+        const deepLinkPromise = new Promise<string>((resolve, reject) => {
           const timeout = setTimeout(() => reject(new Error('Přihlášení vypršelo (60s). Zkuste znovu.')), 60000);
           
-          deepLinkResolver = async (urls) => {
+          deepLinkResolver = async (urls: string[] | string) => {
             clearTimeout(timeout);
             const callbackUrl = Array.isArray(urls) ? urls[0] : urls;
             console.log('[OAuth] Deep link přijat:', callbackUrl);
@@ -427,7 +430,7 @@ function App() {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE,
-            code: authCode,
+            code: String(authCode),
             grant_type: 'authorization_code',
             redirect_uri: 'cz.zazijvr.email:/oauth2redirect'
           }).toString()
@@ -462,7 +465,7 @@ function App() {
            body: new URLSearchParams({
              client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
              client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-             code: authCode,
+             code: String(authCode),
              grant_type: "authorization_code",
              redirect_uri: "http://localhost:3456/callback"
            }).toString()
@@ -494,12 +497,12 @@ function App() {
   };
 
 
-  const [customLabels, setCustomLabels] = useState([]);
+  const [customLabels, setCustomLabels] = useState<GmailLabel[]>([]);
 
-  const handleMoveCustomFolder = async (id, sourceName, targetName) => {
+  const handleMoveCustomFolder = async (id: string, sourceName: string, targetName: string | null) => {
     if (!googleToken) return;
 
-    const basename = sourceName.split('/').pop();
+    const basename = sourceName.split('/').pop() || sourceName;
     const newName = targetName ? `${targetName}/${basename}` : basename;
 
     if (newName === sourceName) {
@@ -550,7 +553,7 @@ function App() {
           });
           if (dataRes.ok) {
             const data = await dataRes.json();
-            if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
+            if (data.labels) setCustomLabels((data.labels as GmailLabel[]).filter(l => l.type === 'user'));
           }
         } catch (e) { }
       };
@@ -572,7 +575,7 @@ function App() {
         const dataRes = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', { headers: { Authorization: `Bearer ${googleToken}` } });
         if (dataRes.ok) {
           const data = await dataRes.json();
-          if (data.labels) setCustomLabels(data.labels.filter(l => l.type === 'user'));
+          if (data.labels) setCustomLabels((data.labels as GmailLabel[]).filter(l => l.type === 'user'));
         }
       } catch (e) { }
       if (activeFolder === newName) setActiveFolder(sourceName);
@@ -590,7 +593,7 @@ function App() {
         })
         .catch(err => console.error("Chyba při stahování profilu:", err));
 
-      let loadedUserLabels = [];
+      let loadedUserLabels: GmailLabel[] = [];
 
       const fetchLabels = async () => {
         try {
@@ -601,7 +604,7 @@ function App() {
             const data = await res.json();
             if (data.labels) {
               // Filtrace všech custom lableů vytvořených uživatelem
-              let userLabels = data.labels.filter(l => l.type === 'user');
+              let userLabels = (data.labels as GmailLabel[]).filter(l => l.type === 'user');
               
               // 1. Zjištění/Založení Master synchronizačního štítku VR-Replied
               const syncLabelName = 'VR-Replied';
@@ -623,9 +626,10 @@ function App() {
                      })
                    });
                    if (createRes.ok) {
-                     repliedLabel = await createRes.json();
-                     console.log("Tajný štítek založen:", repliedLabel.id);
-                     userLabels.push(repliedLabel); // dočasně ho přidáme aby ho poznala apka
+                     const created = (await createRes.json()) as GmailLabel;
+                     repliedLabel = created;
+                     console.log("Tajný štítek založen:", created.id);
+                     userLabels.push(created); // dočasně ho přidáme aby ho poznala apka
                    }
                  } catch(e) { console.error("Nelze založit VR-Replied štítek", e); }
               }
@@ -655,7 +659,7 @@ function App() {
           'Koš': 'TRASH'
         };
         try {
-          const counts = {};
+          const counts: UnreadCounts = {};
 
           // Combine system and custom labels for counting
           const targets = Object.entries(folderMapping).map(([name, id]) => ({ name, id }));
@@ -694,7 +698,7 @@ function App() {
   }, [googleToken, activeFolder]);
 
   useEffect(() => {
-    const handleF5 = (e) => {
+    const handleF5 = (e: KeyboardEvent) => {
       if (e.key === 'F5') {
         e.preventDefault();
         window.location.reload();

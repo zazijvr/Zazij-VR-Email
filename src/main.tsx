@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
+import App from './App';
 import { AlertProvider } from './components/AlertProvider';
 import '@fontsource-variable/inter';
 import '@fontsource/rajdhani/latin-600.css';
