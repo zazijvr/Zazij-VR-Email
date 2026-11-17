@@ -171,14 +171,15 @@ export default function Sidebar({
     } catch { /* přetažené něco, co není z aplikace */ }
   };  return (
     <div className="relative min-w-[16rem] w-max max-w-[26rem] bg-navy md:bg-navy-card backdrop-blur-3xl md:backdrop-blur-md border-r border-neon-blue/20 flex flex-col pb-4 pt-[calc(1rem+env(safe-area-inset-top,2rem))] md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
-      <div className="flex justify-center w-full px-4 mb-4 md:mb-8">
-        {/* Logo – probliká jako neon, klik otevře zazijvr.cz */}
+      <div className="flex justify-center w-full px-4 mb-4 md:mb-6">
+        {/* Logo – probliká jako neon, klik otevře zazijvr.cz. Výška 44 px: značka, ne dominanta panelu
+            (obrázek má 150 × 50 px, takže se ani nezvětšuje do rozmazání) */}
         <button type="button" onClick={openZazijvrWeb} title="zazijvr.cz" aria-label="Otevřít web ZažijVR"
-          className="w-[85%] hover:scale-105 active:scale-95 transition-transform">
+          className="hover:scale-105 active:scale-95 transition-transform">
           <img
             src="/cropped-logo-neon-pruhledna-150x50.png"
             alt="ZažijVR"
-            className="vr-neon-logo w-full object-contain"
+            className="vr-neon-logo h-11 w-auto object-contain"
             draggable="false"
           />
         </button>
