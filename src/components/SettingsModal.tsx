@@ -3,6 +3,7 @@ import { X, Settings as SettingsIcon, FileText, PenTool, Folder, Download, Loade
 import TemplateSettings from './TemplateSettings';
 import SignatureSettings from './SignatureSettings';
 import FolderSettings from './FolderSettings';
+import ImapAccountsSection from './ImapAccountsSection';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { getVersion } from '@tauri-apps/api/app';
 import { checkForUpdate, installUpdate, isUpdaterSupported, type UpdateProgress } from '../utils/updater';
@@ -23,6 +24,8 @@ interface SettingsModalProps {
   logoutGoogleAccount: (email: string) => void;
   customLabels: GmailLabel[];
   setCustomLabels: Dispatch<SetStateAction<GmailLabel[]>>;
+  /** Po přidání / odebrání IMAP účtu */
+  onImapAccountsChanged?: () => void;
 }
 
 export default function SettingsModal({
@@ -38,6 +41,7 @@ export default function SettingsModal({
   logoutGoogleAccount,
   customLabels,
   setCustomLabels,
+  onImapAccountsChanged,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState('general');
   const modalRef = useRef<HTMLDivElement>(null);
@@ -288,40 +292,7 @@ export default function SettingsModal({
             </div>
           </div>
 
-          <div className="mt-4 border-t border-neon-blue/[0.15] pt-4 sm:pt-6">
-            <h3 className="text-lg sm:text-xl font-bold text-slate-200 mb-4 border-b border-neon-blue/[0.15] pb-2">Vlastní napojení (IMAP/SMTP)</h3>
-            <div className="bg-navy-card border border-neon-blue/[0.15] p-4 sm:p-6 rounded-2xl flex flex-col gap-4 sm:gap-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs text-slate-400 font-bold tracking-widest uppercase">IMAP Server</label>
-                  <input type="text" placeholder="imap.seznam.cz" className="bg-navy/50 border border-neon-blue/[0.15] rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-neon-blue/50 transition-colors" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs text-slate-400 font-bold tracking-widest uppercase">SMTP Server</label>
-                  <input type="text" placeholder="smtp.seznam.cz" className="bg-navy/50 border border-neon-blue/[0.15] rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-neon-blue/50 transition-colors" />
-                </div>
-                <div className="flex flex-col gap-2 mt-2">
-                  <label className="text-xs text-slate-400 font-bold tracking-widest uppercase">Přihlašovací e-mail</label>
-                  <input type="email" placeholder="vas.email@domena.cz" className="bg-navy/50 border border-neon-blue/[0.15] rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-neon-blue/50 transition-colors" />
-                </div>
-                <div className="flex flex-col gap-2 mt-2">
-                  <label className="text-xs text-slate-400 font-bold tracking-widest uppercase">Heslo</label>
-                  <input type="password" placeholder="••••••••" className="bg-navy/50 border border-neon-blue/[0.15] rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-neon-blue/50 transition-colors" />
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mt-2 pt-4 border-t border-neon-blue/10">
-                <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 sm:w-5 sm:h-5 accent-neon-blue bg-black border-neon-blue/25 rounded" defaultChecked />
-                  <span className="text-xs sm:text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">SSL/TLS</span>
-                </label>
-                <div className="hidden sm:block flex-1"></div>
-                <button className="bg-white/5 hover:bg-neon-blue/20 text-slate-400 hover:text-neon-blue border border-neon-blue/[0.15] hover:border-neon-blue/50 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all w-full sm:w-auto mt-2 sm:mt-0">
-                  ULOŽIT IMAP KONFIGURACI
-                </button>
-              </div>
-            </div>
-          </div>
+          <ImapAccountsSection onAccountsChanged={onImapAccountsChanged} />
 
         </div>
         )}

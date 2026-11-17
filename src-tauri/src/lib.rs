@@ -1,4 +1,6 @@
 mod oauth;
+#[cfg(desktop)]
+mod imap_mail;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -37,7 +39,30 @@ pub fn run() {
         });
     }
 
-    builder.invoke_handler(tauri::generate_handler![
+    // IMAP/SMTP účty (Seznam, vlastní doména…) jen na počítači
+    #[cfg(desktop)]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        oauth::start_google_login,
+        oauth::save_google_account,
+        oauth::get_active_refresh_token,
+        oauth::get_saved_accounts,
+        oauth::get_active_account,
+        oauth::switch_google_account,
+        oauth::logout_google_account,
+        imap_mail::imap_add_account,
+        imap_mail::imap_list_accounts,
+        imap_mail::imap_remove_account,
+        imap_mail::imap_list_folders,
+        imap_mail::imap_list_messages,
+        imap_mail::imap_get_message,
+        imap_mail::imap_get_attachment,
+        imap_mail::imap_set_flag,
+        imap_mail::imap_move,
+        imap_mail::imap_delete,
+        imap_mail::smtp_send
+    ]);
+    #[cfg(mobile)]
+    let builder = builder.invoke_handler(tauri::generate_handler![
         oauth::start_google_login,
         oauth::save_google_account,
         oauth::get_active_refresh_token,
@@ -45,7 +70,9 @@ pub fn run() {
         oauth::get_active_account,
         oauth::switch_google_account,
         oauth::logout_google_account
-    ])
+    ]);
+
+    builder
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
