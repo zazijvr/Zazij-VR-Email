@@ -495,8 +495,11 @@ export default function Sidebar({
       </nav>
       
       {appVersion && (
-        <div className="relative z-10 px-4 pb-0 pt-3 text-center text-neon-blue/50 text-[10px] tracking-widest uppercase truncate border-t border-neon-blue/20">
-          Verze {appVersion}
+        <div className="relative z-10 px-4 pb-0 pt-3 flex justify-center border-t border-neon-blue/20">
+          {/* Tmavý podklad, aby se číslo neztrácelo v neonových čarách za ním */}
+          <span className="px-3 py-1 rounded-md bg-navy/80 border border-neon-blue/25 text-neon-blue text-[11px] font-semibold tracking-widest uppercase truncate drop-shadow-[0_0_6px_rgba(0,243,255,0.5)]">
+            Verze {appVersion}
+          </span>
         </div>
       )}
     </div>
