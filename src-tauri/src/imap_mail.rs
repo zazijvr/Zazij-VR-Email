@@ -149,7 +149,7 @@ fn friendly(e: impl std::fmt::Display) -> String {
     let msg = e.to_string();
     let lower = msg.to_lowercase();
     if lower.contains("authenticationfailed") || lower.contains("authentication failed") || lower.contains("invalid credentials") || lower.contains("login failed") || lower.contains("[auth") {
-        "Přihlášení selhalo – zkontrolujte e-mail a heslo (u Seznamu musí být v nastavení schránky povolený přístup přes IMAP).".into()
+        "Přihlášení selhalo – zkontrolujte e-mail a heslo.".into()
     } else if lower.contains("failed to lookup") || lower.contains("name or service not known") || lower.contains("dns") {
         "Server nebyl nalezen – zkontrolujte adresu serveru.".into()
     } else if lower.contains("connection refused") || lower.contains("timed out") {

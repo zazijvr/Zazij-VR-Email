@@ -143,7 +143,7 @@ export default function ImapAccountsSection({ onAccountsChanged }: Props) {
 
             {provider === 'seznam' && (
               <p className="text-xs text-slate-400 leading-relaxed">
-                Seznam: v nastavení schránky na email.seznam.cz musí být povolený <b>přístup přes IMAP/POP3/SMTP</b>. Máte-li zapnuté dvoufázové ověření, použijte <b>heslo pro aplikace</b>.
+                Seznam: stačí běžné heslo ke schránce, nic se nemusí zapínat. Servery se doplní samy (imap.seznam.cz / smtp.seznam.cz).
               </p>
             )}
             {provider === 'outlook' && (
