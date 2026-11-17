@@ -2,7 +2,7 @@ export const getEventSolidColor = (colorId: string | number | null | undefined):
   const colors: Record<string, string> = {
     '1': 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]',
     '2': 'bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)]',
-    '3': 'bg-[#ff7ab8] shadow-[0_0_10px_rgba(255,122,184,0.5)]',
+    '3': 'bg-[#d9257b] shadow-[0_0_10px_rgba(217,37,123,0.5)]',
     '4': 'bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]',
     '5': 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]',
     '6': 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]',
@@ -19,7 +19,7 @@ export const getEventBgColor = (colorId: string | number | null | undefined): st
   const colors: Record<string, string> = {
     '1': 'bg-indigo-500/10 border-indigo-500/30',
     '2': 'bg-teal-500/10 border-teal-500/30',
-    '3': 'bg-[#ff7ab8]/10 border-[#ff7ab8]/30',
+    '3': 'bg-[#d9257b]/10 border-[#d9257b]/30',
     '4': 'bg-pink-500/10 border-pink-500/30',
     '5': 'bg-yellow-500/10 border-yellow-500/30',
     '6': 'bg-orange-500/10 border-orange-500/30',
@@ -36,7 +36,7 @@ export const getEventColor = (colorId: string | number | null | undefined): stri
   const colors: Record<string, string> = {
     '1': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50',
     '2': 'bg-teal-500/20 text-teal-400 border-teal-500/50',
-    '3': 'bg-[#ff7ab8]/20 text-[#ff7ab8] border-[#ff7ab8]/50', // purple
+    '3': 'bg-[#d9257b]/20 text-[#d9257b] border-[#d9257b]/50', // purple
     '4': 'bg-pink-500/20 text-pink-400 border-pink-500/50',
     '5': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
     '6': 'bg-orange-500/20 text-orange-400 border-orange-500/50',

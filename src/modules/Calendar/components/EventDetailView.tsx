@@ -48,7 +48,7 @@ export default function EventDetailView({
            
            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 md:p-0 relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff]/10 blur-[50px] pointer-events-none rounded-full" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#ff7ab8]/10 blur-[50px] pointer-events-none rounded-full" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#d9257b]/10 blur-[50px] pointer-events-none rounded-full" />
             
             <div className="hidden md:flex absolute top-0 right-0 items-center gap-1 z-20">
                <button onClick={handleEditSelectedEvent} className="p-2 text-[#00f3ff] hover:bg-[#00f3ff]/20 hover:shadow-[0_0_10px_rgba(0,243,255,0.3)] rounded-full transition-all" title="Upravit">

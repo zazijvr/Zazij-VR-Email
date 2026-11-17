@@ -654,8 +654,8 @@ export default function CalendarApp({
   if (activeCalendarView !== 'Měsíční přehled' && activeCalendarView !== 'Co mě čeká?') {
     currentMainView = (
        <div className="flex-1 flex items-center justify-center p-10 relative h-full">
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#ff7ab8] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
-         <p className="text-[#ff7ab8]/60 uppercase tracking-[0.2em] font-bold z-10 text-xl border border-[#ff7ab8]/20 bg-[#ff7ab8]/5 px-8 py-4 rounded-2xl shadow-[0_0_30px_rgba(255,122,184,0.1)] backdrop-blur-md">
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#d9257b] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
+         <p className="text-[#d9257b]/60 uppercase tracking-[0.2em] font-bold z-10 text-xl border border-[#d9257b]/20 bg-[#d9257b]/5 px-8 py-4 rounded-2xl shadow-[0_0_30px_rgba(217,37,123,0.1)] backdrop-blur-md">
            [ {activeCalendarView.toUpperCase()} VE VÝVOJI ]
          </p>
          <img src="/vr_calendar.svg" alt="VR Mascot" className="absolute bottom-10 right-10 w-64 h-auto opacity-70 object-contain pointer-events-none" />
@@ -763,13 +763,13 @@ export default function CalendarApp({
         <div className="fixed inset-0 bg-[#020817]/90 z-[2000] flex items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-200">
           <div className="bg-[#061026] border border-[#00f3ff]/50 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-3xl p-10 max-w-[420px] flex flex-col items-center gap-7 text-center relative overflow-hidden pointer-events-auto">
              
-             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#00f3ff]/20 to-[#ff7ab8]/20 border-2 border-[#00f3ff]/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,243,255,0.4)] z-10 shrink-0">
+             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#00f3ff]/20 to-[#d9257b]/20 border-2 border-[#00f3ff]/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,243,255,0.4)] z-10 shrink-0">
                <AlertTriangle size={36} className="text-[#00f3ff] drop-shadow-[0_0_10px_#00f3ff]" />
              </div>
              
              <div className="z-10 flex flex-col gap-2 relative">
                  <h3 className="text-2xl font-black text-white tracking-widest uppercase drop-shadow-md">Chyba API</h3>
-                 <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-[#ff7ab8] to-transparent mx-auto opacity-50 relative mt-1 mb-2"></div>
+                 <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-[#d9257b] to-transparent mx-auto opacity-50 relative mt-1 mb-2"></div>
                  <p className="text-sm font-mono text-slate-300 leading-relaxed drop-shadow-sm tracking-tight">{appError}</p>
              </div>
              

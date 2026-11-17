@@ -87,7 +87,7 @@ export default function AgendaView({
                 
                 <div className="flex flex-col justify-center relative mt-1 select-none">
                   <div className="flex items-center gap-3 ml-2 mb-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#ff7ab8] shadow-[0_0_8px_rgba(255,122,184,0.8)]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#d9257b] shadow-[0_0_8px_rgba(217,37,123,0.8)]"></div>
                     <span className="text-[#00f3ff] text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
                       System // Timeline // {activeCalendarView}
                     </span>
@@ -130,7 +130,7 @@ export default function AgendaView({
               {agendaSearch && (
                 <button
                   onClick={() => { setAgendaSearch(''); setDisplayedAgendaCount(7); }}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 text-[#00f3ff]/60 hover:text-[#ff7ab8] transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(255,122,184,0.5)] z-10 hover:scale-125"
+                  className="absolute right-6 top-1/2 -translate-y-1/2 text-[#00f3ff]/60 hover:text-[#d9257b] transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(217,37,123,0.5)] z-10 hover:scale-125"
                 >✕</button>
               )}
             </div>
@@ -158,11 +158,11 @@ export default function AgendaView({
                         <Fragment key={ev.id}>
                           {isFirstOfDay && (
                              <div className="mt-3 md:mt-4 mb-2 first:mt-0 pt-1 border-b border-[#00f3ff]/10">
-                               <h3 className={`text-[13px] md:text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 md:gap-3 ${isToday ? 'text-[#ff7ab8]' : 'text-[#00f3ff]'}`}>
-                                 {isToday && <span className="w-2 h-2 rounded-full bg-[#ff7ab8] shadow-[0_0_10px_#ff7ab8] animate-pulse" />}
+                               <h3 className={`text-[13px] md:text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 md:gap-3 ${isToday ? 'text-[#d9257b]' : 'text-[#00f3ff]'}`}>
+                                 {isToday && <span className="w-2 h-2 rounded-full bg-[#d9257b] shadow-[0_0_10px_#d9257b] animate-pulse" />}
                                  {isToday ? "Dnes" : dateKey}
                                </h3>
-                               <div className={`h-px w-full mt-1.5 ${isToday ? 'bg-gradient-to-r from-[#ff7ab8]/60 to-transparent' : 'bg-gradient-to-r from-[#00f3ff]/30 to-transparent'}`} />
+                               <div className={`h-px w-full mt-1.5 ${isToday ? 'bg-gradient-to-r from-[#d9257b]/60 to-transparent' : 'bg-gradient-to-r from-[#00f3ff]/30 to-transparent'}`} />
                              </div>
                           )}
 

@@ -60,7 +60,7 @@ export default function EventModal({
           >
             {/* Ornamenty */}
             <div className="hidden md:block absolute top-0 right-0 w-40 h-40 bg-[#00f3ff]/10 blur-[60px] pointer-events-none rounded-full" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#ff7ab8]/10 blur-[60px] pointer-events-none rounded-full" />
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#d9257b]/10 blur-[60px] pointer-events-none rounded-full" />
             
             <button 
                onClick={handleAttemptCloseCreateModal}
