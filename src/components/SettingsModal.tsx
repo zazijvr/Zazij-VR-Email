@@ -56,6 +56,7 @@ export default function SettingsModal({
     if (isSettingsOpen) {
       checkUpdates();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- kontrola aktualizací jen při otevření Nastavení
   }, [isSettingsOpen]);
 
   const checkUpdates = async () => {

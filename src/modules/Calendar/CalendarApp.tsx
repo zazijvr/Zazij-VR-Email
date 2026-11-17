@@ -142,6 +142,7 @@ export default function CalendarApp({
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- obsluha Esc používá aktuální stav – závislosti jsou vyjmenované ručně
   }, [isCreateModalOpen, selectedEvent, showEventCloseWarning, newEventForm, editEventId]);
 
   // API Synchronizace událostí
@@ -393,7 +394,7 @@ export default function CalendarApp({
       setIsCreateModalOpen(false);
       setEditEventId(null);
       setNewEventForm(emptyEventForm());
-    } catch (err) {
+    } catch {
       setAppError("Naše komunikace narazila na technickou chybu sítě.");
     } finally {
       setIsCreatingEvent(false);

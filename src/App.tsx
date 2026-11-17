@@ -277,6 +277,7 @@ function App() {
     } catch (err) {
       console.log("Uživatel zatím není bezpečně přihlášen k trezoru (nebo token propadl). Chcete-li pokračovat, musíte se přihlásit ručně.", err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- checkSilentLogin se volá jen při startu; offerRelogin jen zobrazuje dialog
   }, []);
 
   // Vyvolat při úplně prvním spuštění aplikace
@@ -404,7 +405,7 @@ function App() {
               if (error) reject(new Error(`Google odmítl přihlášení: ${error}`));
               else if (code) resolve(code);
               else reject(new Error('V callback URL nebyl nalezen kód.'));
-            } catch (e) {
+            } catch {
               reject(new Error('Chybná callback URL: ' + callbackUrl));
             }
           };
@@ -555,7 +556,7 @@ function App() {
             const data = await dataRes.json();
             if (data.labels) setCustomLabels((data.labels as GmailLabel[]).filter(l => l.type === 'user'));
           }
-        } catch (e) { }
+        } catch { /* nepovedlo se obnovit složky – zůstane optimistický stav */ }
       };
 
       if (!res.ok) {
@@ -577,7 +578,7 @@ function App() {
           const data = await dataRes.json();
           if (data.labels) setCustomLabels((data.labels as GmailLabel[]).filter(l => l.type === 'user'));
         }
-      } catch (e) { }
+      } catch { /* nepovedlo se obnovit složky – zůstane optimistický stav */ }
       if (activeFolder === newName) setActiveFolder(sourceName);
     }
   };

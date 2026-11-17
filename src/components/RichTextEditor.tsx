@@ -438,6 +438,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
       editorRef.current.innerHTML = value || '';
       isInitializedRef.current = true;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- obsah se do editoru vloží jen při prvním zobrazení – další změny řeší efekt níže
   }, []);
 
   // Pokud se value změní externě (np. reset formuláře), aktualizuj editor

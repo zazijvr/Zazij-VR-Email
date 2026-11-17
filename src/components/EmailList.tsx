@@ -62,7 +62,10 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     if (folderName === 'Koš') return 'TRASH';
     const custom = customLabels?.find(l => l.name === folderName);
     return custom ? custom.id : 'INBOX';
-  };
+  };  // Efekty volají vždy aktuální verzi (vlastní složky se načítají později) bez nového stahování
+  const getLabelIdRef = useRef(getLabelId);
+  getLabelIdRef.current = getLabelId;
+
 
   const [emails, setEmails] = useState<ShownEmail[]>([]);
 
@@ -227,6 +230,9 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     return () => clearTimeout(timer);
   }, [searchInputValue]);
 
+  // Klávesa Delete volá vždy aktuální mazání (zná aktuální složku), bez nového registrování při každém vykreslení
+  const handleTrashRef = useRef(handleTrashEmail);
+  handleTrashRef.current = handleTrashEmail;
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Zabráníme smazání e-mailu, pokud uživatel zrovna píše text nebo edituje šablonu
@@ -237,13 +243,13 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       if (e.key === 'Delete' && selectedEmailId) {
         const emailToDelete = emails.find(em => em.id === selectedEmailId);
         if (emailToDelete) {
-          handleTrashEmail(emailToDelete);
+          handleTrashRef.current(emailToDelete);
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedEmailId, googleToken, emails]);
+  }, [selectedEmailId, emails]);
 
   const fetchedFolderRef = useRef<string | null>(null);
   const lastAutoSelectedFolderRef = useRef<string | null>(null);
@@ -318,7 +324,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       // 2) Stažení ze serveru
       if (!hasData) setLoading(true);
       try {
-        const listData = await listThreads(googleToken, { labelId: getLabelId(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 40 });
+        const listData = await listThreads(googleToken, { labelId: getLabelIdRef.current(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 40 });
         if (!isCurrent()) return;
 
         if (!listData.threads) {
@@ -368,6 +374,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     };
     window.addEventListener('vr-account-switched', clear);
     return () => window.removeEventListener('vr-account-switched', clear);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- výběr se ruší jen při změně složky
   }, []);
 
   const emailsRef = useRef(emails);
@@ -410,7 +417,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       const silentFetch = async () => {
         try {
           // nová pošta je vždy nahoře – stačí prvních 15 vláken
-          const listData = await listThreads(googleToken, { labelId: getLabelId(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 15 });
+          const listData = await listThreads(googleToken, { labelId: getLabelIdRef.current(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 15 });
           if (!listData.threads) return;
 
           const formattedEmails = formatThreads(await getThreadsMeta(googleToken, listData.threads.map(t => t.id)));
@@ -745,20 +752,21 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
   }, [keyboardIndex, onExpand, setSelectedEmailId]);
 
   // Defaultní chování: Autovýběr prvního e-mailu po úspěšném načtení složky
+  const firstVisibleId = visibleEmails.length > 0 ? visibleEmails[0].id : null;
   useEffect(() => {
     if (
       !loading &&
       fetchedFolderRef.current === activeFolder &&
       lastAutoSelectedFolderRef.current !== activeFolder &&
-      visibleEmails.length > 0
+      firstVisibleId !== null
     ) {
       lastAutoSelectedFolderRef.current = activeFolder;
       const isMobile = window.innerWidth < 768; // Zrušíme autovýběr na telefonech
       if (setSelectedEmailId && !isMobile) {
-        setSelectedEmailId(visibleEmails[0].id);
+        setSelectedEmailId(firstVisibleId);
       }
     }
-  }, [loading, visibleEmails, activeFolder, setSelectedEmailId]);
+  }, [loading, firstVisibleId, activeFolder, setSelectedEmailId]);
 
   type SortField = typeof sortField;
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -792,7 +800,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
           <p className="text-slate-400 text-sm tracking-widest font-mono uppercase opacity-70">Zabezpečená zóna: Vyžaduje se autentizace operátora</p>
 
           <button
-            onClick={(e) => { e.stopPropagation(); loginWithGoogle && loginWithGoogle(); }}
+            onClick={(e) => { e.stopPropagation(); loginWithGoogle?.(); }}
             className="mt-8 px-10 py-4 relative group overflow-hidden bg-transparent border-2 border-[#00f3ff] text-[#00f3ff] font-black uppercase tracking-widest rounded-sm hover:text-black transition-all duration-300 cursor-pointer"
           >
             <div className="absolute inset-0 w-full h-full bg-[#00f3ff] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 pointer-events-none"></div>

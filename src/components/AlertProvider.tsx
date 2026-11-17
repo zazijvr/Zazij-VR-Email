@@ -24,6 +24,7 @@ interface AlertConfig {
 
 const AlertContext = createContext<AlertContextValue | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook patří ke kontextu v tomtéž souboru
 export const useAlert = (): AlertContextValue => {
   const context = useContext(AlertContext);
   if (!context) {

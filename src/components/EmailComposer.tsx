@@ -179,7 +179,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     if (isDirty && !isSending && !isSaving) {
       setShowCloseWarning(true);
     } else {
-      onClose && onClose();
+      onClose?.();
     }
   };
 
@@ -195,6 +195,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- obsluha Esc používá aktuální stav – závislosti jsou vyjmenované ručně
   }, [to, cc, subject, attachments, showCloseWarning, config, isSending, isSaving, templateTitle]);
 
   useEffect(() => {
@@ -409,7 +410,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
         onSuccessAction('send', { draftMessageId: config.draftMessageId });
       }
 
-      onClose && onClose();
+      onClose?.();
     } catch (err) {
       console.error(err);
       setErrorMsg(`Chyba při odesílání: ${errorText(err)}`);
@@ -431,7 +432,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
         body: bodyRef.current
       });
     }
-    onClose && onClose();
+    onClose?.();
   };
 
   return (

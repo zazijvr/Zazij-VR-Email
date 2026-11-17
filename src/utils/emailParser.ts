@@ -237,6 +237,8 @@ export const encodeHeaderName = (headerStr: string | null | undefined): string =
       return `${encodedName} ${match[2]}`;
     }
     // Fallback pokud adresa nesedí na strict regex
+    // Jakýkoli znak mimo ASCII → hlavička se musí zakódovat
+    // eslint-disable-next-line no-control-regex
     if (/[^\x00-\x7F]/.test(part)) {
       return `=?utf-8?B?${btoa(unescape(encodeURIComponent(part)))}?=`;
     }

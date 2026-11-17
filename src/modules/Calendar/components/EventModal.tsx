@@ -286,7 +286,7 @@ export default function EventModal({
                           min="1" 
                           value={newEventForm.recurrenceInterval}
                           onChange={(e) => {
-                             let v = parseInt(e.target.value);
+                             const v = parseInt(e.target.value);
                              if (!isNaN(v) && v > 0) {
                                 setNewEventForm((prev: EventForm) => ({...prev, recurrenceInterval: v}));
                              } else if (e.target.value === '') {

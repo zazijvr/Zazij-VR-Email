@@ -170,7 +170,7 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
               const params = new URLSearchParams(parts[1]);
               subject = params.get('subject') || '';
               body = params.get('body') || '';
-            } catch (err) {
+            } catch {
               console.warn("Invalid mailto URI query");
             }
           }
@@ -203,6 +203,7 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- posluchač zpráv z iframe se registruje jednou; onActionReply jen předává konfiguraci okna
   }, []);
 
   useEffect(() => {

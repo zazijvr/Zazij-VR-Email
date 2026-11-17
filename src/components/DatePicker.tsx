@@ -72,7 +72,7 @@ export default function DatePicker({ value, onChange, label, className = "", ali
   };
 
   const handleBlur = () => {
-    let norm = inputValue.replace(/[\/\-]/g, '.').trim();
+    let norm = inputValue.replace(/[/-]/g, '.').trim();
     
     // Převod pro ucelená čísla jako 27122026 nebo 020526
     if (/^\d{8}$/.test(norm)) {
