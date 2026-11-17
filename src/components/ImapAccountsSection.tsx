@@ -9,7 +9,8 @@ import { useAlert } from './AlertProvider';
 const INPUT = 'bg-navy/50 border border-neon-blue/[0.15] rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-neon-blue/50 transition-colors w-full';
 const LABEL = 'text-xs text-slate-400 font-bold tracking-widest uppercase';
 
-const isDesktopApp = () => !!window.__TAURI_INTERNALS__ && !/Android|iPhone|iPad/i.test(navigator.userAgent);
+/** IMAP účty běží v Rustové části aplikace – na počítači i na Androidu, ne v prohlížeči */
+const isTauriApp = () => !!window.__TAURI_INTERNALS__;
 
 interface Props {
   /** Volá se po přidání / odebrání účtu (rodič si obnoví seznam účtů) */
@@ -39,9 +40,9 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
   const [wedosInput, setWedosInput] = useState('');
 
   const reload = () => imapListAccounts().then(setAccounts).catch(() => setAccounts([]));
-  useEffect(() => { if (isDesktopApp()) reload(); }, []);
+  useEffect(() => { if (isTauriApp()) reload(); }, []);
 
-  if (!isDesktopApp()) return null;
+  if (!isTauriApp()) return null;
 
   const provider = providerOf(email);
 

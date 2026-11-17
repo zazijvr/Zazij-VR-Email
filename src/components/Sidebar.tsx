@@ -2,6 +2,7 @@ import { Fragment, useRef, useState, useEffect, type DragEvent, type MouseEvent,
 import { Mail, Calendar, Settings, ChevronRight, ChevronDown } from 'lucide-react';
 import { getVersion } from '@tauri-apps/api/app';
 import type { GmailLabel } from '../types/gmail';
+import { openZazijvrWeb } from '../utils/zazijvrWeb';
 import type { UnreadCounts } from '../types/account';
 import type { DragPayload, MoveRequest } from '../types/email';
 
@@ -171,12 +172,16 @@ export default function Sidebar({
   };  return (
     <div className="relative min-w-[16rem] w-max max-w-[26rem] bg-navy md:bg-navy-card backdrop-blur-3xl md:backdrop-blur-md border-r border-neon-blue/20 flex flex-col pb-4 pt-[calc(1rem+env(safe-area-inset-top,2rem))] md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
       <div className="flex justify-center w-full px-4 mb-4 md:mb-8">
-        <img
-          src="/cropped-logo-neon-pruhledna-150x50.png"
-          alt="ZažijVR"
-          className="w-[85%] object-contain drop-shadow-[0_0_10px_rgba(0,243,255,0.3)] hover:scale-105 transition-transform cursor-pointer"
-          draggable="false"
-        />
+        {/* Logo – probliká jako neon, klik otevře zazijvr.cz */}
+        <button type="button" onClick={openZazijvrWeb} title="zazijvr.cz" aria-label="Otevřít web ZažijVR"
+          className="w-[85%] hover:scale-105 active:scale-95 transition-transform">
+          <img
+            src="/cropped-logo-neon-pruhledna-150x50.png"
+            alt="ZažijVR"
+            className="vr-neon-logo w-full object-contain"
+            draggable="false"
+          />
+        </button>
       </div>
 
       <div className="flex justify-center gap-4 mb-4 md:mb-10 px-4">

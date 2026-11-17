@@ -13,4 +13,9 @@ interface ImportMeta {
 interface Window {
   /** Přítomné jen uvnitř Tauri aplikace (ne v prohlížeči) */
   __TAURI_INTERNALS__?: unknown;
+  /**
+   * Android: gesto / tlačítko Zpět (volá MainActivity.kt). edge = okraj, od kterého gesto začalo.
+   * Vrací true, když ho aplikace zpracovala; jinak pokračuje systém.
+   */
+  __vrBack?: (edge: 'left' | 'right' | 'none') => boolean;
 }

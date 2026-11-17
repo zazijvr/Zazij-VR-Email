@@ -1,17 +1,25 @@
 //! Jiné e-mailové účty než Gmail (Seznam.cz, vlastní doména…) přes IMAP (čtení) a SMTP (odesílání).
 //!
-//! Nastavení účtu (servery, porty, uživatel) je ve vault.bin, heslo v systémové klíčence.
+//! Nastavení účtu (servery, porty, uživatel) je ve vault.bin, heslo v systémové klíčence
+//! (na Androidu klíčenka není – heslo je ve vault.bin v soukromém úložišti aplikace).
+//! TLS přes rustls s kořenovými certifikáty webpki-roots (funguje stejně na počítači i Androidu).
 //! Každý příkaz se připojí, přihlásí, provede operaci a odhlásí se – běží mimo hlavní vlákno.
 
 use base64::{engine::general_purpose::STANDARD as B64, Engine};
 use mail_parser::{Address, MessageParser, MimeHeaders};
 use serde::{Deserialize, Serialize};
-use std::net::TcpStream;
+use std::io::{BufRead, BufReader, Write};
+use std::net::{TcpStream, ToSocketAddrs};
+use std::sync::{Arc, OnceLock};
+use std::time::Duration;
 use tauri::{command, AppHandle};
 
 const STORE_FILE: &str = "vault.bin";
 const STORE_KEY: &str = "imap_accounts";
+#[cfg(desktop)]
 const KEYRING_SERVICE: &str = "cz.zazijvr.email.imap";
+#[cfg(mobile)]
+const PASSWORDS_KEY: &str = "imap_passwords";
 
 // ───────────── Typy sdílené s frontendem ─────────────
 
@@ -126,10 +134,59 @@ fn save_accounts(app: &AppHandle, accounts: &[ImapAccount]) -> Result<(), String
     store.save().map_err(|e| e.to_string())
 }
 
-fn password_for(email: &str) -> Result<String, String> {
+// Hesla: na počítači systémová klíčenka, na Androidu vault.bin (soukromé úložiště aplikace)
+
+#[cfg(desktop)]
+fn password_get(_app: &AppHandle, email: &str) -> Option<String> {
+    keyring::Entry::new(KEYRING_SERVICE, email).and_then(|e| e.get_password()).ok()
+}
+#[cfg(desktop)]
+fn password_set(_app: &AppHandle, email: &str, password: &str) -> Result<(), String> {
     keyring::Entry::new(KEYRING_SERVICE, email)
-        .and_then(|e| e.get_password())
-        .map_err(|_| format!("Heslo k účtu {email} není uložené – přidejte účet znovu."))
+        .and_then(|e| e.set_password(password))
+        .map_err(|e| format!("Heslo se nepodařilo uložit do klíčenky: {e}"))
+}
+#[cfg(desktop)]
+fn password_delete(_app: &AppHandle, email: &str) {
+    if let Ok(e) = keyring::Entry::new(KEYRING_SERVICE, email) {
+        let _ = e.delete_credential();
+    }
+}
+
+#[cfg(mobile)]
+fn mobile_passwords(app: &AppHandle) -> serde_json::Map<String, serde_json::Value> {
+    use tauri_plugin_store::StoreExt;
+    match app.store(STORE_FILE).ok().and_then(|s| s.get(PASSWORDS_KEY)) {
+        Some(serde_json::Value::Object(m)) => m,
+        _ => serde_json::Map::new(),
+    }
+}
+#[cfg(mobile)]
+fn mobile_passwords_save(app: &AppHandle, map: serde_json::Map<String, serde_json::Value>) -> Result<(), String> {
+    use tauri_plugin_store::StoreExt;
+    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
+    store.set(PASSWORDS_KEY, serde_json::Value::Object(map));
+    store.save().map_err(|e| e.to_string())
+}
+#[cfg(mobile)]
+fn password_get(app: &AppHandle, email: &str) -> Option<String> {
+    mobile_passwords(app).get(&email.to_lowercase()).and_then(|v| v.as_str()).map(str::to_string)
+}
+#[cfg(mobile)]
+fn password_set(app: &AppHandle, email: &str, password: &str) -> Result<(), String> {
+    let mut map = mobile_passwords(app);
+    map.insert(email.to_lowercase(), serde_json::json!(password));
+    mobile_passwords_save(app, map)
+}
+#[cfg(mobile)]
+fn password_delete(app: &AppHandle, email: &str) {
+    let mut map = mobile_passwords(app);
+    map.remove(&email.to_lowercase());
+    let _ = mobile_passwords_save(app, map);
+}
+
+fn password_for(app: &AppHandle, email: &str) -> Result<String, String> {
+    password_get(app, email).ok_or_else(|| format!("Heslo k účtu {email} není uložené – přidejte účet znovu."))
 }
 
 pub(crate) fn account(app: &AppHandle, email: &str) -> Result<(ImapAccount, String), String> {
@@ -137,13 +194,75 @@ pub(crate) fn account(app: &AppHandle, email: &str) -> Result<(ImapAccount, Stri
         .into_iter()
         .find(|a| a.email.eq_ignore_ascii_case(email))
         .ok_or_else(|| format!("Účet {email} nenalezen"))?;
-    let pw = password_for(&acc.email)?;
+    let pw = password_for(app, &acc.email)?;
     Ok((acc, pw))
 }
 
 // ───────────── IMAP připojení ─────────────
 
-type TlsSession = imap::Session<native_tls::TlsStream<TcpStream>>;
+type TlsStream = rustls::StreamOwned<rustls::ClientConnection, TcpStream>;
+type TlsSession = imap::Session<TlsStream>;
+
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
+const IO_TIMEOUT: Duration = Duration::from_secs(90);
+
+fn tls_config() -> Arc<rustls::ClientConfig> {
+    static CONFIG: OnceLock<Arc<rustls::ClientConfig>> = OnceLock::new();
+    CONFIG
+        .get_or_init(|| {
+            let roots = rustls::RootCertStore { roots: webpki_roots::TLS_SERVER_ROOTS.to_vec() };
+            let config = rustls::ClientConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
+                .with_safe_default_protocol_versions()
+                .expect("TLS 1.2/1.3")
+                .with_root_certificates(roots)
+                .with_no_client_auth();
+            Arc::new(config)
+        })
+        .clone()
+}
+
+fn tcp_connect(host: &str, port: u16) -> Result<TcpStream, String> {
+    let addrs: Vec<_> = (host, port).to_socket_addrs().map_err(friendly)?.collect();
+    let mut last_err = String::from("Server nebyl nalezen – zkontrolujte adresu serveru.");
+    for addr in addrs {
+        match TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT) {
+            Ok(tcp) => {
+                let _ = tcp.set_read_timeout(Some(IO_TIMEOUT));
+                let _ = tcp.set_write_timeout(Some(IO_TIMEOUT));
+                return Ok(tcp);
+            }
+            Err(e) => last_err = friendly(e),
+        }
+    }
+    Err(last_err)
+}
+
+fn tls_wrap(tcp: TcpStream, host: &str) -> Result<TlsStream, String> {
+    let name = rustls::pki_types::ServerName::try_from(host.to_string())
+        .map_err(|_| format!("Neplatná adresa serveru: {host}"))?;
+    let conn = rustls::ClientConnection::new(tls_config(), name).map_err(friendly)?;
+    Ok(rustls::StreamOwned::new(conn, tcp))
+}
+
+/// STARTTLS na nešifrovaném spojení: uvítání serveru, příkaz STARTTLS, odpověď OK
+fn starttls(tcp: &TcpStream) -> Result<(), String> {
+    let mut reader = BufReader::new(tcp);
+    let mut line = String::new();
+    reader.read_line(&mut line).map_err(friendly)?;
+    if !line.starts_with("* OK") {
+        return Err(format!("Server neodpověděl jako IMAP: {}", line.trim()));
+    }
+    (&*tcp).write_all(b"a0 STARTTLS\r\n").map_err(friendly)?;
+    loop {
+        line.clear();
+        if reader.read_line(&mut line).map_err(friendly)? == 0 {
+            return Err("Server ukončil spojení při STARTTLS.".into());
+        }
+        if let Some(rest) = line.strip_prefix("a0 ") {
+            return if rest.starts_with("OK") { Ok(()) } else { Err(format!("Server odmítl STARTTLS: {}", rest.trim())) };
+        }
+    }
+}
 
 fn friendly(e: impl std::fmt::Display) -> String {
     let msg = e.to_string();
@@ -160,13 +279,19 @@ fn friendly(e: impl std::fmt::Display) -> String {
 }
 
 pub(crate) fn connect(acc: &ImapAccount, password: &str) -> Result<TlsSession, String> {
-    let tls = native_tls::TlsConnector::builder().build().map_err(friendly)?;
-    let addr = (acc.imap_host.as_str(), acc.imap_port);
+    let tcp = tcp_connect(&acc.imap_host, acc.imap_port)?;
     let client = match acc.imap_security {
-        Security::Tls => imap::connect(addr, &acc.imap_host, &tls),
-        Security::Starttls => imap::connect_starttls(addr, &acc.imap_host, &tls),
-    }
-    .map_err(friendly)?;
+        Security::Tls => {
+            let mut client = imap::Client::new(tls_wrap(tcp, &acc.imap_host)?);
+            client.read_greeting().map_err(friendly)?;
+            client
+        }
+        // Uvítání serveru už přečetl starttls() – na šifrovaném spojení se znovu neposílá
+        Security::Starttls => {
+            starttls(&tcp)?;
+            imap::Client::new(tls_wrap(tcp, &acc.imap_host)?)
+        }
+    };
     client.login(&acc.username, password).map_err(|(e, _)| friendly(e))
 }
 
@@ -275,9 +400,7 @@ pub async fn imap_add_account(app: AppHandle, input: AddAccountInput) -> Result<
         .map_err(|e| format!("Odesílací server (SMTP): {}", friendly(e)))
         .and_then(|ok| if ok { Ok(()) } else { Err("Odesílací server (SMTP) nepřijal spojení.".into()) })?;
 
-    keyring::Entry::new(KEYRING_SERVICE, &acc.email)
-        .and_then(|e| e.set_password(&password))
-        .map_err(|e| format!("Heslo se nepodařilo uložit do klíčenky: {e}"))?;
+    password_set(&app, &acc.email, &password)?;
 
     let mut accounts = load_accounts(&app);
     accounts.retain(|a| !a.email.eq_ignore_ascii_case(&acc.email));
@@ -296,9 +419,7 @@ pub async fn imap_remove_account(app: AppHandle, email: String) -> Result<(), St
     let mut accounts = load_accounts(&app);
     accounts.retain(|a| !a.email.eq_ignore_ascii_case(&email));
     save_accounts(&app, &accounts)?;
-    if let Ok(e) = keyring::Entry::new(KEYRING_SERVICE, &email) {
-        let _ = e.delete_credential();
-    }
+    password_delete(&app, &email);
     Ok(())
 }
 
@@ -689,4 +810,37 @@ fn chrono_like_date() -> String {
     let secs = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
     let dt = mail_parser::DateTime::from_timestamp(secs);
     dt.to_rfc822()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Read;
+
+    /// Síťový test TLS spojení (bez přihlášení): cargo test --lib -- --ignored imap_tls
+    #[test]
+    #[ignore]
+    fn imap_tls_greeting() {
+        for (host, port, sec) in [
+            ("wes1-imap.wedos.net", 993, Security::Tls),
+            ("imap.seznam.cz", 993, Security::Tls),
+            ("wes1-imap.wedos.net", 143, Security::Starttls),
+        ] {
+            let tcp = tcp_connect(host, port).expect("tcp");
+            if sec == Security::Starttls {
+                starttls(&tcp).expect("starttls");
+            }
+            let mut tls = tls_wrap(tcp, host).expect("tls");
+            if sec == Security::Tls {
+                let mut c = imap::Client::new(&mut tls);
+                c.read_greeting().expect("greeting");
+            }
+            tls.write_all(b"a1 CAPABILITY\r\n").expect("write");
+            let mut buf = vec![0u8; 4096];
+            let n = tls.read(&mut buf).expect("read");
+            let caps = String::from_utf8_lossy(&buf[..n]);
+            println!("{host}:{port} {:?} OK – {}", sec, caps.lines().next().unwrap_or(""));
+            assert!(caps.contains("IMAP4"));
+        }
+    }
 }

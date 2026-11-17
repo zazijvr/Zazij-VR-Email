@@ -1,5 +1,4 @@
 mod oauth;
-#[cfg(desktop)]
 mod imap_mail;
 #[cfg(desktop)]
 mod mail_watch;
@@ -41,7 +40,7 @@ pub fn run() {
         });
     }
 
-    // IMAP/SMTP účty (Seznam, vlastní doména…) jen na počítači
+    // Příkazy jen pro počítač (IMAP/SMTP účty jsou i v mobilní sadě níže)
     #[cfg(desktop)]
     let builder = builder.invoke_handler(tauri::generate_handler![
         oauth::start_google_login,
@@ -74,7 +73,20 @@ pub fn run() {
         oauth::get_saved_accounts,
         oauth::get_active_account,
         oauth::switch_google_account,
-        oauth::logout_google_account
+        oauth::logout_google_account,
+        imap_mail::imap_add_account,
+        imap_mail::imap_list_accounts,
+        imap_mail::imap_remove_account,
+        imap_mail::imap_list_folders,
+        imap_mail::imap_list_messages,
+        imap_mail::imap_get_message,
+        imap_mail::imap_get_attachment,
+        imap_mail::imap_set_flag,
+        imap_mail::imap_move,
+        imap_mail::imap_delete,
+        imap_mail::imap_append,
+        imap_mail::imap_empty_folder,
+        imap_mail::smtp_send
     ]);
 
     builder

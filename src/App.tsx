@@ -725,6 +725,26 @@ function App() {
     return () => { unlisten.then((f) => f()).catch(() => {}); };
   }, []);
 
+  // Android – Zpět: tah od levého okraje vysune menu; jinak se postupně zavře menu, nastavení,
+  // otevřený e-mail (EmailApp přes událost vr-back). Když není co zavřít, pokračuje systém.
+  const backStateRef = useRef({ isMobileMenuOpen, isSettingsOpen, canOpenMenu: !!(googleToken || activeImap) });
+  backStateRef.current = { isMobileMenuOpen, isSettingsOpen, canOpenMenu: !!(googleToken || activeImap) };
+  useEffect(() => {
+    window.__vrBack = (edge) => {
+      const st = backStateRef.current;
+      if (edge === 'left' && st.canOpenMenu && !st.isSettingsOpen) {
+        if (!st.isMobileMenuOpen) setIsMobileMenuOpen(true);
+        return true;
+      }
+      if (st.isMobileMenuOpen) { setIsMobileMenuOpen(false); return true; }
+      if (st.isSettingsOpen) { setIsSettingsOpen(false); return true; }
+      const ev = new CustomEvent<{ handled: boolean }>('vr-back', { detail: { handled: false } });
+      window.dispatchEvent(ev);
+      return ev.detail.handled;
+    };
+    return () => { delete window.__vrBack; };
+  }, []);
+
   const selectAccount = (acc: SwitcherAccount) => {
     setIsMobileMenuOpen(false);
     if (acc.kind === 'imap') switchToImap(acc.email);
@@ -751,8 +771,10 @@ function App() {
 
       <MobileHeader
         toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        userEmail={userInfo?.email || (googleToken ? 'test@zazijvr.cz' : undefined)}
+        userEmail={activeImap ?? (userInfo?.email || (googleToken ? 'test@zazijvr.cz' : undefined))}
         logoutGoogleAccount={logoutGoogleAccount}
+        isImapAccount={!!activeImap}
+        onManageAccounts={() => setIsSettingsOpen(true)}
       />
 
 
@@ -763,7 +785,7 @@ function App() {
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] z-30 md:z-[100] pointer-events-none"></div>
 
         {/* Overlay pro mobilní menu */}
-        {isMobileMenuOpen && googleToken && (
+        {isMobileMenuOpen && (googleToken || activeImap) && (
           <div
             className="fixed inset-0 bg-navy-deep/60 backdrop-blur-sm z-40 md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}

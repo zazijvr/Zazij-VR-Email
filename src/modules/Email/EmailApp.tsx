@@ -96,6 +96,20 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     return () => window.removeEventListener('vr-account-switched', reset);
   }, []);
 
+  // Android – Zpět (App → vr-back): zavřít okno přes celou obrazovku, pak otevřený e-mail
+  const backRef = useRef({ selectedEmailId, modalEmailId });
+  backRef.current = { selectedEmailId, modalEmailId };
+  useEffect(() => {
+    const onBack = (e: Event) => {
+      const detail = (e as CustomEvent<{ handled: boolean }>).detail;
+      if (detail.handled) return;
+      if (backRef.current.modalEmailId) { setModalEmailId(null); detail.handled = true; }
+      else if (backRef.current.selectedEmailId) { setSelectedEmailId(null); detail.handled = true; }
+    };
+    window.addEventListener('vr-back', onBack);
+    return () => window.removeEventListener('vr-back', onBack);
+  }, []);
+
   // Kliknutí na upozornění o nové poště – otevřít zprávu (App předtím přepne účet a složku)
   useEffect(() => {
     const open = (e: Event) => {

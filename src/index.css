@@ -164,6 +164,20 @@ body.email-detail-active #mobile-user {
 @media (prefers-reduced-motion: reduce) {
   .anim-detail-in { animation: none; }
 }
+/* Logo ZažijVR: neonové probliknutí jednou za 10 s (stejně jako v aplikaci Moje Kára) */
+@keyframes vrNeonBlink {
+  0%, 12%, 100% { opacity: 0.9; filter: drop-shadow(0 0 6px rgba(0, 243, 255, 0.35)); }
+  1%   { opacity: 0.25; }
+  2%   { opacity: 0.9; }
+  3%   { opacity: 0.3; }
+  4.5% { opacity: 1; filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.9)); }
+  8%   { opacity: 1; filter: drop-shadow(0 0 7px rgba(0, 243, 255, 0.6)); }
+}
+.vr-neon-logo { animation: vrNeonBlink 10s linear 3s infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .vr-neon-logo { animation: none; }
+}
+
 .anim-slide-in-right-overlay { animation: slideInFromRightOverlay 0.5s var(--delay, 0ms) cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
 
 
