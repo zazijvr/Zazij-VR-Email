@@ -26,6 +26,10 @@ interface SettingsModalProps {
   setCustomLabels: Dispatch<SetStateAction<GmailLabel[]>>;
   /** Po přidání / odebrání IMAP účtu */
   onImapAccountsChanged?: () => void;
+  /** Aktivní jiný (IMAP) účet, null = Google účet */
+  activeImap?: string | null;
+  onSwitchImap?: (email: string) => void;
+  onImapAccountRemoved?: (email: string) => void;
 }
 
 export default function SettingsModal({
@@ -42,6 +46,9 @@ export default function SettingsModal({
   customLabels,
   setCustomLabels,
   onImapAccountsChanged,
+  activeImap = null,
+  onSwitchImap,
+  onImapAccountRemoved,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState('general');
   const modalRef = useRef<HTMLDivElement>(null);
@@ -224,7 +231,7 @@ export default function SettingsModal({
               {savedAccounts.length > 0 ? (
                 <>
                   {savedAccounts.map((email) => {
-                    const isActive = userInfo?.email === email || (savedAccounts.length === 1 && googleToken);
+                    const isActive = !activeImap && (userInfo?.email === email || (savedAccounts.length === 1 && !!googleToken));
                     return (
                       <div key={email} className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-5 rounded-2xl transition-all border ${isActive ? 'bg-neon-blue/10 border-neon-blue/50 shadow-[0_0_15px_rgba(0,243,255,0.1)]' : 'bg-navy-card border-neon-blue/[0.15] hover:border-white/30'}`}>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 overflow-hidden mb-3 sm:mb-0">
@@ -292,7 +299,7 @@ export default function SettingsModal({
             </div>
           </div>
 
-          <ImapAccountsSection onAccountsChanged={onImapAccountsChanged} />
+          <ImapAccountsSection onAccountsChanged={onImapAccountsChanged} activeEmail={activeImap} onSwitch={onSwitchImap} onRemoved={onImapAccountRemoved} />
 
         </div>
         )}

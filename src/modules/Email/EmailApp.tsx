@@ -4,20 +4,13 @@ import EmailList from '../../components/EmailList';
 import EmailDetail from '../../components/EmailDetail';
 import EmailComposer from '../../components/EmailComposer';
 import { useAlert } from '../../components/AlertProvider';
-import { deleteThread, getMessage, modifyThread, trashThread, untrashThread } from '../../services/gmail';
+import { getMessage } from '../../services/gmail';
+import { useMailProvider } from '../../services/mailProvider';
+import { useQueryClient } from '@tanstack/react-query';
 import type { EmailRef, MoveRequest } from '../../types/email';
 import type { GmailLabel } from '../../types/gmail';
 import type { UnreadCounts } from '../../types/account';
 import type { ComposerConfig, ComposerSuccess } from '../../types/composer';
-
-const SYSTEM_FOLDERS: Record<string, string> = {
-  'Doručené': 'INBOX',
-  'Odeslané': 'SENT',
-  'Důležité': 'STARRED',
-  'Rozepsané': 'DRAFT',
-  'Spam': 'SPAM',
-  'Koš': 'TRASH',
-};
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
@@ -49,6 +42,8 @@ const getFolderIcon = (folder: string) => {
 
 export default function EmailApp({ googleToken, activeFolder, unreadCounts, setUnreadCounts, triggerCompose, triggerMove, loginWithGoogle, isVerticalLayout, customLabels, userEmail }: EmailAppProps) {
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+  const provider = useMailProvider();
+  const queryClient = useQueryClient();
 
   // Poměr panelů seznam / náhled – zvlášť pro vodorovné a svislé rozložení, pamatuje se v localStorage
   const splitKey = isVerticalLayout ? 'vr-split-vertical' : 'vr-split-horizontal';
@@ -140,15 +135,12 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerMove]);
 
-  const labelIdFor = (labelName: string): string | null =>
-    SYSTEM_FOLDERS[labelName] ?? customLabels?.find((l) => l.name === labelName)?.id ?? null;
-
-  /** Doplní id vlákna, když z UI přišlo jen id zprávy */
+  /** Doplní id vlákna, když z UI přišlo jen id zprávy (jen Gmail – u IMAPu je id zprávy zároveň vláknem) */
   const resolveEmail = async (emailObj: EmailRef | string): Promise<EmailRef> => {
     const emailData: EmailRef = typeof emailObj === 'string'
       ? { id: emailObj, subject: '(Bez specifikace)', from: '', sizeText: '', dateText: '' }
       : emailObj;
-    if (!emailData.threadId && typeof emailObj === 'string' && googleToken) {
+    if (!emailData.threadId && typeof emailObj === 'string' && googleToken && provider?.kind === 'gmail') {
       try {
         emailData.threadId = (await getMessage(googleToken, emailData.id, 'minimal')).threadId;
       } catch (err) {
@@ -158,52 +150,59 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     return emailData;
   };
 
-  const handleMoveEmail = async (emailId: string, sourceLabel: string, targetLabel: string, fullEmailObj?: EmailRef) => {
-    if (!googleToken) return;
-    setHiddenEmailIds((prev) => (prev.includes(emailId) ? prev : [...prev, emailId]));
+  /** IMAP: zpráva po přesunu dostane na serveru nové UID – místo optimistických přesunů se seznam znovu načte */
+  const refreshImapAfter = async (ids: string[], action: () => Promise<void>, errorPrefix: string) => {
+    setHiddenEmailIds((prev) => [...prev.filter((x) => !ids.includes(x)), ...ids]);
+    if (ids.includes(selectedEmailId ?? '')) setSelectedEmailId(null);
+    if (ids.includes(modalEmailId ?? '')) setModalEmailId(null);
+    try {
+      await action();
+    } catch (err) {
+      setHiddenEmailIds((prev) => prev.filter((x) => !ids.includes(x)));
+      showAlert(`${errorPrefix}:\n${errorText(err)}`, null, 'error');
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['threads'] });
+      queryClient.invalidateQueries({ queryKey: ['imapFolders'] });
+    }
+  };
 
+  const handleMoveEmail = async (emailId: string, sourceLabel: string, targetLabel: string, fullEmailObj?: EmailRef) => {
+    if (!provider) return;
+    const ref: EmailRef = fullEmailObj ?? { id: emailId };
+    if (provider.kind === 'imap') {
+      await refreshImapAfter([emailId], () => provider.move(ref, sourceLabel, targetLabel), 'Přesun se nepovedl');
+      return;
+    }
+    setHiddenEmailIds((prev) => (prev.includes(emailId) ? prev : [...prev, emailId]));
     if (fullEmailObj) {
       setOptimisticMoves((prev) => [...prev.filter((m) => m.id !== emailId), { ...fullEmailObj, targetFolder: targetLabel }]);
     }
-
-    const sourceId = labelIdFor(sourceLabel);
-    const targetId = labelIdFor(targetLabel);
-    if (!sourceId || !targetId) return;
-
-    const threadId = fullEmailObj?.threadId || emailId;
-
+    if (sourceLabel === 'Koš') setTrashedEmails((prev) => prev.filter((t) => t.id !== emailId));
+    if (targetLabel === 'Koš') {
+      setTrashedEmails((prev) => [...prev.filter((t) => t.id !== emailId), { ...ref, trashedFrom: sourceLabel }]);
+    }
     try {
-      if (sourceId === 'TRASH') {
-        setTrashedEmails((prev) => prev.filter((t) => t.id !== emailId));
-        await untrashThread(googleToken, threadId);
-      } else if (targetId === 'TRASH') {
-        setTrashedEmails((prev) => [
-          ...prev.filter((t) => t.id !== emailId),
-          { ...(fullEmailObj || { id: emailId }), trashedFrom: sourceLabel },
-        ]);
-        await trashThread(googleToken, threadId);
-        return;
-      }
-      // Přesun = přidat cílový štítek a odebrat zdrojový
-      await modifyThread(googleToken, threadId, [targetId], sourceId !== 'TRASH' ? [sourceId] : []);
+      await provider.move(ref, sourceLabel, targetLabel);
     } catch (e) {
-      console.error('Selhal přesun e-mailu přes Gmail API:', e);
+      console.error('Selhal přesun e-mailu:', e);
     }
   };
 
   const handleGlobalTrash = async (emailObj: EmailRef | string) => {
-    if (!googleToken) return;
+    if (!provider) return;
     const emailData = await resolveEmail(emailObj);
+    // V koši se maže natrvalo, jinde se e-mail jen přesune do koše
+    const action = () => (activeFolder === 'Koš' ? provider.deleteForever(emailData, activeFolder) : provider.trash(emailData, activeFolder));
+    if (provider.kind === 'imap') {
+      await refreshImapAfter([emailData.id], action, 'Chyba při mazání e-mailu');
+      return;
+    }
 
     setTrashedEmails((prev) => [...prev.filter((t) => t.id !== emailData.id), { ...emailData, trashedFrom: activeFolder }]);
     if (selectedEmailId === emailData.id) setSelectedEmailId(null);
     if (modalEmailId === emailData.id) setModalEmailId(null);
-
     try {
-      const threadId = emailData.threadId || emailData.id;
-      // V koši se maže natrvalo, jinde se e-mail jen přesune do koše
-      if (activeFolder === 'Koš') await deleteThread(googleToken, threadId);
-      else await trashThread(googleToken, threadId);
+      await action();
     } catch (err) {
       console.error('Chyba z API: ', err);
       setTrashedEmails((prev) => prev.filter((t) => t.id !== emailData.id));
@@ -212,8 +211,12 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   };
 
   const handleGlobalRestore = async (emailObj: EmailRef | string) => {
-    if (!googleToken) return;
+    if (!provider) return;
     const emailData = await resolveEmail(emailObj);
+    if (provider.kind === 'imap') {
+      await refreshImapAfter([emailData.id], () => provider.restore(emailData), 'Nelze obnovit');
+      return;
+    }
 
     const trashedEntry = trashedEmails.find((t) => t.id === emailData.id);
     setTrashedEmails((prev) => prev.filter((t) => t.id !== emailData.id));
@@ -224,10 +227,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     if (modalEmailId === emailData.id) setModalEmailId(null);
 
     try {
-      const threadId = emailData.threadId || emailData.id;
-      await untrashThread(googleToken, threadId);
-      // Vrátit i do Doručených, aby e-mail nezůstal jen v archivu
-      await modifyThread(googleToken, threadId, ['INBOX']);
+      await provider.restore(emailData);
     } catch (err) {
       console.error('Chyba z API: ', err);
       // Nepovedlo se – e-mail zůstává v koši
@@ -238,15 +238,19 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   };
 
   const handleGlobalSpam = async (emailObj: EmailRef | string) => {
-    if (!googleToken) return;
+    if (!provider) return;
     const emailData = await resolveEmail(emailObj);
+    if (provider.kind === 'imap') {
+      await refreshImapAfter([emailData.id], () => provider.markSpam(emailData, activeFolder), 'Nepodařilo se označit jako SPAM');
+      return;
+    }
 
     setSpamEmails((prev) => [...prev.filter((t) => t.id !== emailData.id), { ...emailData, spammedFrom: activeFolder }]);
     if (selectedEmailId === emailData.id) setSelectedEmailId(null);
     if (modalEmailId === emailData.id) setModalEmailId(null);
 
     try {
-      await modifyThread(googleToken, emailData.threadId || emailData.id, ['SPAM'], ['INBOX']);
+      await provider.markSpam(emailData, activeFolder);
     } catch (err) {
       console.error('Chyba při označování spamu: ', err);
       setSpamEmails((prev) => prev.filter((t) => t.id !== emailData.id));
@@ -256,7 +260,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
-      {googleToken && (
+      {(provider || googleToken) && (
         <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-navy-card backdrop-blur-md relative z-[100] overflow-visible">
 
           {/* Synchronizovaná horní neonová linka (Úplně stejná jako u EmailDetail) */}
@@ -294,7 +298,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
       )}
 
       <div ref={splitContainerRef} style={{ '--split': `${(splitRatio * 100).toFixed(2)}%` } as CSSProperties} className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
-        {!googleToken ? (
+        {!provider && !googleToken ? (
           <div className="flex-1 flex w-full h-full flex-col">
             <EmailList googleToken={googleToken} loginWithGoogle={loginWithGoogle} />
           </div>

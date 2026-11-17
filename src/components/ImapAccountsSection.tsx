@@ -14,10 +14,14 @@ const isDesktopApp = () => !!window.__TAURI_INTERNALS__ && !/Android|iPhone|iPad
 interface Props {
   /** Volá se po přidání / odebrání účtu (rodič si obnoví seznam účtů) */
   onAccountsChanged?: () => void;
+  /** Právě otevřený IMAP účet */
+  activeEmail?: string | null;
+  onSwitch?: (email: string) => void;
+  onRemoved?: (email: string) => void;
 }
 
 /** Nastavení → Propojené účty: jiné než Google účty (Seznam.cz, vlastní doména) */
-export default function ImapAccountsSection({ onAccountsChanged }: Props) {
+export default function ImapAccountsSection({ onAccountsChanged, activeEmail, onSwitch, onRemoved }: Props) {
   const { showAlert, showConfirm } = useAlert();
   const [accounts, setAccounts] = useState<ImapAccount[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -63,12 +67,13 @@ export default function ImapAccountsSection({ onAccountsChanged }: Props) {
     }
     setSaving(true);
     try {
-      await imapAddAccount({ ...server, email: email.trim(), displayName: displayName.trim() }, password);
+      const added = await imapAddAccount({ ...server, email: email.trim(), displayName: displayName.trim() }, password);
       await reload();
       onAccountsChanged?.();
       resetForm();
       setIsFormOpen(false);
-      showAlert(`Účet ${email.trim()} je připojený.`, 'Účet přidán', 'success');
+      // Nový účet rovnou otevřít
+      onSwitch?.(added.email);
     } catch (err) {
       setError(String(err));
       // U vlastní domény bývá chyba v odhadu serverů – rovnou je ukázat
@@ -81,6 +86,7 @@ export default function ImapAccountsSection({ onAccountsChanged }: Props) {
   const remove = (acc: ImapAccount) => {
     showConfirm(`Odebrat účet ${acc.email} z aplikace? Pošta na serveru zůstane.`, 'Odebrat účet', async () => {
       await imapRemoveAccount(acc.email).catch((e) => showAlert(String(e), 'Chyba', 'error'));
+      onRemoved?.(acc.email);
       await reload();
       onAccountsChanged?.();
     }, { confirmText: 'Odebrat', type: 'warning' });
@@ -98,8 +104,10 @@ export default function ImapAccountsSection({ onAccountsChanged }: Props) {
       <h3 className="text-lg sm:text-xl font-bold text-slate-200 mb-4 border-b border-neon-blue/[0.15] pb-2">Další e-mailové účty (Seznam, vlastní doména)</h3>
 
       <div className="flex flex-col gap-3">
-        {accounts.map((acc) => (
-          <div key={acc.email} className="flex items-center justify-between gap-3 bg-navy-card border border-neon-blue/[0.15] p-4 rounded-2xl">
+        {accounts.map((acc) => {
+          const isActive = acc.email === activeEmail;
+          return (
+          <div key={acc.email} className={`flex items-center justify-between gap-3 p-4 rounded-2xl border ${isActive ? 'bg-neon-purple/10 border-neon-purple/50' : 'bg-navy-card border-neon-blue/[0.15]'}`}>
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-full bg-neon-purple/10 border border-neon-purple/30 flex items-center justify-center text-neon-purple shrink-0">
                 <Mail size={18} />
@@ -107,14 +115,24 @@ export default function ImapAccountsSection({ onAccountsChanged }: Props) {
               <div className="flex flex-col min-w-0">
                 <span className="text-white font-bold truncate">{acc.displayName || acc.email}</span>
                 <span className="text-slate-500 text-xs truncate">{acc.email} · {acc.imapHost}</span>
+                {isActive && <span className="text-neon-purple text-xs font-semibold mt-0.5">Právě otevřený</span>}
               </div>
             </div>
+            <div className="flex items-center gap-2 shrink-0">
+            {!isActive && onSwitch && (
+              <button onClick={() => onSwitch(acc.email)}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/5 hover:bg-neon-purple/20 text-slate-300 hover:text-neon-purple border border-neon-blue/[0.15] hover:border-neon-purple/50 rounded-xl text-xs sm:text-sm font-bold transition-all">
+                PŘEPNOUT
+              </button>
+            )}
             <button onClick={() => remove(acc)} title="Odebrat účet"
               className="p-2 bg-white/5 hover:bg-danger/20 text-slate-400 hover:text-danger border border-neon-blue/[0.15] hover:border-danger/50 rounded-xl transition-all shrink-0">
               <X size={18} />
             </button>
+            </div>
           </div>
-        ))}
+          );
+        })}
 
         {!isFormOpen ? (
           <button onClick={() => setIsFormOpen(true)}

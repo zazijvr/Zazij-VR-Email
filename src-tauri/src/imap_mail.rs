@@ -331,53 +331,110 @@ pub async fn imap_list_folders(app: AppHandle, email: String) -> Result<Vec<Imap
     .await
 }
 
-/// Stránka zpráv složky od nejnovější (page 0 = nejnovějších `page_size`)
+fn summary_from_fetch(parser: &MessageParser, f: &imap::types::Fetch) -> Option<ImapMessageSummary> {
+    let uid = f.uid?;
+    let header = f.header().unwrap_or(&[]);
+    let msg = parser.parse_headers(header)?;
+    let (from, from_raw) = fmt_address(msg.from());
+    let flags = f.flags();
+    let has = |flag: &imap::types::Flag| flags.iter().any(|x| x == flag);
+    Some(ImapMessageSummary {
+        uid,
+        from,
+        from_raw,
+        to: fmt_address(msg.to()).1,
+        cc: fmt_address(msg.cc()).1,
+        subject: msg.subject().unwrap_or("").to_string(),
+        date: msg.date().map(|d| d.to_timestamp() * 1000).unwrap_or(0),
+        seen: has(&imap::types::Flag::Seen),
+        flagged: has(&imap::types::Flag::Flagged),
+        answered: has(&imap::types::Flag::Answered),
+        draft: has(&imap::types::Flag::Draft),
+        size: f.size.unwrap_or(0),
+        has_attachment: header_has_attachment(header),
+        snippet: String::new(),
+    })
+}
+
+const SUMMARY_QUERY: &str = "(UID FLAGS RFC822.SIZE BODY.PEEK[HEADER])";
+
+/// Stránka zpráv složky od nejnovější (page 0 = nejnovějších `page_size`).
+/// filter: „unseen“ | „flagged“; query: hledaný text (předmět, odesílatel, obsah)
 #[command]
-pub async fn imap_list_messages(app: AppHandle, email: String, folder: String, page: u32, page_size: u32) -> Result<ImapMessagePage, String> {
+pub async fn imap_list_messages(
+    app: AppHandle,
+    email: String,
+    folder: String,
+    page: u32,
+    page_size: u32,
+    filter: Option<String>,
+    query: Option<String>,
+) -> Result<ImapMessagePage, String> {
     with_session(&app, &email, move |s| {
         let mbox = s.examine(&folder).map_err(friendly)?;
-        let total = mbox.exists;
-        if total == 0 {
-            return Ok(ImapMessagePage { total, messages: vec![] });
-        }
-        let end = total.saturating_sub(page * page_size);
-        if end == 0 {
-            return Ok(ImapMessagePage { total, messages: vec![] });
-        }
-        let start = end.saturating_sub(page_size - 1).max(1);
-        let fetches = s
-            .fetch(format!("{start}:{end}"), "(UID FLAGS RFC822.SIZE BODY.PEEK[HEADER])")
-            .map_err(friendly)?;
         let parser = MessageParser::default();
-        let mut messages: Vec<ImapMessageSummary> = fetches
-            .iter()
-            .filter_map(|f| {
-                let uid = f.uid?;
-                let header = f.header().unwrap_or(&[]);
-                let msg = parser.parse_headers(header)?;
-                let (from, from_raw) = fmt_address(msg.from());
-                let flags = f.flags();
-                let has = |flag: &imap::types::Flag| flags.iter().any(|x| x == flag);
-                Some(ImapMessageSummary {
-                    uid,
-                    from,
-                    from_raw,
-                    to: fmt_address(msg.to()).1,
-                    cc: fmt_address(msg.cc()).1,
-                    subject: msg.subject().unwrap_or("").to_string(),
-                    date: msg.date().map(|d| d.to_timestamp() * 1000).unwrap_or(0),
-                    seen: has(&imap::types::Flag::Seen),
-                    flagged: has(&imap::types::Flag::Flagged),
-                    answered: has(&imap::types::Flag::Answered),
-                    draft: has(&imap::types::Flag::Draft),
-                    size: f.size.unwrap_or(0),
-                    has_attachment: header_has_attachment(header),
-                    snippet: String::new(),
-                })
-            })
+        let q = query.as_deref().map(str::trim).filter(|q| !q.is_empty());
+
+        if filter.is_none() && q.is_none() {
+            // Bez filtru: rozsah podle pořadových čísel – nejrychlejší
+            let total = mbox.exists;
+            let end = total.saturating_sub(page * page_size);
+            if end == 0 {
+                return Ok(ImapMessagePage { total, messages: vec![] });
+            }
+            let start = end.saturating_sub(page_size - 1).max(1);
+            let fetches = s.fetch(format!("{start}:{end}"), SUMMARY_QUERY).map_err(friendly)?;
+            let mut messages: Vec<_> = fetches.iter().filter_map(|f| summary_from_fetch(&parser, f)).collect();
+            messages.sort_by(|a, b| b.date.cmp(&a.date));
+            return Ok(ImapMessagePage { total, messages });
+        }
+
+        // S filtrem / hledáním: UID SEARCH na serveru, pak stránka nejnovějších UID
+        let mut criteria: Vec<String> = Vec::new();
+        match filter.as_deref() {
+            Some("unseen") => criteria.push("UNSEEN".into()),
+            Some("flagged") => criteria.push("FLAGGED".into()),
+            _ => {}
+        }
+        let mut charset = "";
+        if let Some(q) = q {
+            let esc = q.replace('\\', "\\\\").replace('"', "\\\"");
+            if !q.is_ascii() {
+                charset = "CHARSET UTF-8 ";
+            }
+            criteria.push(format!("OR OR SUBJECT \"{esc}\" FROM \"{esc}\" TEXT \"{esc}\""));
+        }
+        if criteria.is_empty() {
+            criteria.push("ALL".into());
+        }
+        let mut uids: Vec<u32> = s
+            .uid_search(format!("{charset}{}", criteria.join(" ")))
+            .map_err(friendly)?
+            .into_iter()
             .collect();
+        uids.sort_unstable_by(|a, b| b.cmp(a)); // vyšší UID = novější
+        let total = uids.len() as u32;
+        let slice: Vec<u32> = uids.into_iter().skip((page * page_size) as usize).take(page_size as usize).collect();
+        if slice.is_empty() {
+            return Ok(ImapMessagePage { total, messages: vec![] });
+        }
+        let fetches = s.uid_fetch(uid_set(&slice), SUMMARY_QUERY).map_err(friendly)?;
+        let mut messages: Vec<_> = fetches.iter().filter_map(|f| summary_from_fetch(&parser, f)).collect();
         messages.sort_by(|a, b| b.date.cmp(&a.date));
         Ok(ImapMessagePage { total, messages })
+    })
+    .await
+}
+
+/// Uložení hotové MIME zprávy do složky (koncepty); vrací nic – nové UID si seznam načte znovu
+#[command]
+pub async fn imap_append(app: AppHandle, email: String, folder: String, mime: String, draft: bool) -> Result<(), String> {
+    let (acc, _) = account(&app, &email)?;
+    let from_header = if acc.display_name.is_empty() { acc.email.clone() } else { format!("{} <{}>", acc.display_name, acc.email) };
+    let full = format!("From: {from_header}\r\nDate: {}\r\nMIME-Version: 1.0\r\n{}", chrono_like_date(), mime);
+    with_session(&app, &email, move |s| {
+        let flags = if draft { vec![imap::types::Flag::Draft, imap::types::Flag::Seen] } else { vec![imap::types::Flag::Seen] };
+        s.append_with_flags(&folder, full.as_bytes(), &flags).map_err(friendly)
     })
     .await
 }

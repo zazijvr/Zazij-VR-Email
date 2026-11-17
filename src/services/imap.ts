@@ -72,8 +72,15 @@ export const imapAddAccount = (account: ImapAccount, password: string) =>
 export const imapListAccounts = () => invoke<ImapAccount[]>('imap_list_accounts');
 export const imapRemoveAccount = (email: string) => invoke<void>('imap_remove_account', { email });
 export const imapListFolders = (email: string) => invoke<ImapFolder[]>('imap_list_folders', { email });
-export const imapListMessages = (email: string, folder: string, page: number, pageSize = 40) =>
-  invoke<{ total: number; messages: ImapMessageSummary[] }>('imap_list_messages', { email, folder, page, pageSize });
+export const imapListMessages = (
+  email: string, folder: string, page: number, pageSize = 40,
+  opts: { filter?: 'unseen' | 'flagged'; query?: string } = {},
+) =>
+  invoke<{ total: number; messages: ImapMessageSummary[] }>('imap_list_messages', {
+    email, folder, page, pageSize, filter: opts.filter ?? null, query: opts.query || null,
+  });
+export const imapAppend = (email: string, folder: string, mime: string, draft: boolean) =>
+  invoke<void>('imap_append', { email, folder, mime, draft });
 export const imapGetMessage = (email: string, folder: string, uid: number) =>
   invoke<ImapMessageDetail>('imap_get_message', { email, folder, uid });
 export const imapGetAttachment = (email: string, folder: string, uid: number, index: number) =>

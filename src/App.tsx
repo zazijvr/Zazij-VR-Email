@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 import { onAction, registerActionTypes, isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 // Vracíme čistý nativní fetch pro přímou podporu WebView Android vrstvy, 
@@ -18,6 +19,10 @@ import type { AppMode } from './components/Sidebar';
 import type { UnreadCounts, UserInfo } from './types/account';
 import type { GmailLabel } from './types/gmail';
 import type { MoveRequest } from './types/email';
+import { imapListFolders } from './services/imap';
+import {
+  MailProviderProvider, createGmailProvider, createImapProvider, imapCustomFolders, imapUnreadCounts,
+} from './services/mailProvider';
 
 function App() {
   const { showAlert, showConfirm } = useAlert();
@@ -36,6 +41,17 @@ function App() {
   }, [isVerticalLayout]);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  /** Aktivní jiný účet (IMAP) – null = pošta z aktivního Google účtu */
+  const [activeImap, setActiveImapState] = useState<string | null>(() => {
+    try { return localStorage.getItem('vr-active-imap'); } catch { return null; }
+  });
+  const setActiveImap = useCallback((email: string | null) => {
+    setActiveImapState(email);
+    try {
+      if (email) localStorage.setItem('vr-active-imap', email);
+      else localStorage.removeItem('vr-active-imap');
+    } catch { /* bez localStorage se volba jen nezapamatuje */ }
+  }, []);
   const [savedAccounts, setSavedAccounts] = useState<string[]>([]);
 
   const loadSavedAccounts = useCallback(async () => {
@@ -114,6 +130,13 @@ function App() {
   };
 
   const switchGoogleAccount = async (email: string) => {
+    // Přepnutí z jiného (IMAP) účtu na aktivní Google účet nepotřebuje nové přihlášení
+    if (activeImap && email === userInfo?.email) {
+      window.dispatchEvent(new Event('vr-account-switched'));
+      setActiveImap(null);
+      setIsSettingsOpen(false);
+      return;
+    }
     const previous = userInfo?.email;
     try {
       const refreshToken = await invoke<string>('switch_google_account', { email });
@@ -133,6 +156,7 @@ function App() {
            // Jiný účet – seznam si nesmí vzít poštu z mezipaměti předchozího účtu
            setUserInfo(null);
            window.dispatchEvent(new Event('vr-account-switched'));
+           setActiveImap(null);
            setGoogleToken(data.access_token);
            setIsSettingsOpen(false); // zavre po prepnuti modal
            return;
@@ -600,8 +624,41 @@ function App() {
   }, [labelsQuery.data]);
 
   useEffect(() => {
-    if (countsQuery.data) setUnreadCounts(countsQuery.data);
-  }, [countsQuery.data]);
+    if (countsQuery.data && !activeImap) setUnreadCounts(countsQuery.data);
+  }, [countsQuery.data, activeImap]);
+
+  // ───────────── Jiný účet (IMAP): složky, počty, poskytovatel pošty ─────────────
+  const imapFoldersQuery = useQuery({
+    queryKey: ['imapFolders', activeImap],
+    queryFn: () => imapListFolders(activeImap as string),
+    enabled: !!activeImap,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+  });
+  const imapFolders = imapFoldersQuery.data;
+  const imapLabels = useMemo(() => imapCustomFolders(imapFolders ?? []), [imapFolders]);
+
+  useEffect(() => {
+    if (activeImap && imapFolders) setUnreadCounts(imapUnreadCounts(imapFolders));
+  }, [activeImap, imapFolders]);
+
+  const switchToImap = (email: string) => {
+    window.dispatchEvent(new Event('vr-account-switched'));
+    setUnreadCounts({});
+    setActiveFolder('Doručené');
+    setActiveImap(email);
+    setIsSettingsOpen(false);
+  };
+
+  /** Pošta aktivního účtu (Gmail nebo IMAP) – komponenty pošty pracují jen s tímto rozhraním */
+  const mailProvider = useMemo(() => {
+    if (activeImap) return createImapProvider(activeImap, imapFolders ?? []);
+    if (googleToken && userInfo?.email) return createGmailProvider(googleToken, userInfo.email, customLabels);
+    return null;
+  }, [activeImap, imapFolders, googleToken, userInfo?.email, customLabels]);
+  const mailAccountEmail = activeImap ?? userInfo?.email;
+  const sidebarLabels = activeImap ? imapLabels : customLabels;
 
   useEffect(() => {
     // F5 = obnovit aktuální složku; Ctrl+F5 = znovu načíst celou aplikaci
@@ -642,7 +699,7 @@ function App() {
         )}
 
         {/* Levá navigace */}
-        <div className={`fixed inset-y-0 left-0 z-50 md:relative md:z-10 h-full shrink-0 overflow-visible transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${googleToken ? 'flex' : 'hidden'}`}>
+        <div className={`fixed inset-y-0 left-0 z-50 md:relative md:z-10 h-full shrink-0 overflow-visible transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${googleToken || activeImap ? 'flex' : 'hidden'}`}>
           <Sidebar
             activeFolder={activeFolder}
             setActiveFolder={setActiveFolder}
@@ -655,8 +712,8 @@ function App() {
             onComposeNew={() => setTriggerCompose(prev => prev + 1)}
             onCreateNewEvent={() => setTriggerCreateEvent(prev => prev + 1)}
             onMoveEmail={(moves) => setTriggerMove({ moves, ts: Date.now() })}
-            onMoveCustomFolder={handleMoveCustomFolder}
-            customLabels={customLabels}
+            onMoveCustomFolder={activeImap ? undefined : handleMoveCustomFolder}
+            customLabels={sidebarLabels}
             onMobileClose={() => setIsMobileMenuOpen(false)}
           />
         </div>
@@ -666,18 +723,20 @@ function App() {
           className="flex-1 h-full z-10 relative overflow-hidden"
         >
           {appMode === 'email' ? (
-            <EmailApp
-              googleToken={googleToken}
-              activeFolder={activeFolder}
-              unreadCounts={unreadCounts}
-              setUnreadCounts={setUnreadCounts}
-              triggerCompose={triggerCompose}
-              triggerMove={triggerMove}
-              loginWithGoogle={loginWithGoogle}
-              isVerticalLayout={isVerticalLayout}
-              customLabels={customLabels}
-              userEmail={userInfo?.email}
-            />
+            <MailProviderProvider value={mailProvider}>
+              <EmailApp
+                googleToken={googleToken}
+                activeFolder={activeFolder}
+                unreadCounts={unreadCounts}
+                setUnreadCounts={setUnreadCounts}
+                triggerCompose={triggerCompose}
+                triggerMove={triggerMove}
+                loginWithGoogle={loginWithGoogle}
+                isVerticalLayout={isVerticalLayout}
+                customLabels={sidebarLabels}
+                userEmail={mailAccountEmail}
+              />
+            </MailProviderProvider>
           ) : (
             <CalendarApp
               activeCalendarView={activeCalendarView}
@@ -702,6 +761,10 @@ function App() {
           logoutGoogleAccount={logoutGoogleAccount}
           customLabels={customLabels}
           setCustomLabels={setCustomLabels}
+          activeImap={activeImap}
+          onSwitchImap={switchToImap}
+          onImapAccountsChanged={() => imapFoldersQuery.refetch()}
+          onImapAccountRemoved={(email) => { if (email === activeImap) setActiveImap(null); }}
         />
       </div>
     </div>

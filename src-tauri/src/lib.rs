@@ -59,6 +59,7 @@ pub fn run() {
         imap_mail::imap_set_flag,
         imap_mail::imap_move,
         imap_mail::imap_delete,
+        imap_mail::imap_append,
         imap_mail::smtp_send
     ]);
     #[cfg(mobile)]

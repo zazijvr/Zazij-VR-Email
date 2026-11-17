@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback, type ChangeEvent } from 'react';
 import { Send, X, AlertTriangle, Paperclip, Save, File, Trash2, FileText, PenTool, ReplyAll } from 'lucide-react';
-import { encodeBase64Url, encodeHeaderName } from '../utils/emailParser';
+import { encodeHeaderName } from '../utils/emailParser';
 import RichTextEditor from './RichTextEditor';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import AutofillInput from './AutofillInput';
 import { saveNewContacts } from '../utils/contactManager';
-import { deleteDraft, modifyMessage, modifyThread, saveDraft, sendMessage } from '../services/gmail';
+import { deleteDraft, modifyThread } from '../services/gmail';
+import { useMailProvider } from '../services/mailProvider';
 import type { ComposerAttachment, ComposerConfig, ComposerSuccess, EmailSignature, EmailTemplate } from '../types/composer';
 
 export interface EmailComposerProps {
@@ -22,7 +23,12 @@ const readStored = <T,>(key: string): T[] => {
   try { return JSON.parse(localStorage.getItem(key) || '[]') || []; } catch { return []; }
 };
 
+/** Samotné adresy z polí Komu / Kopie („Jan <jan@x.cz>, eva@y.cz“ → [jan@x.cz, eva@y.cz]) */
+const extractAddresses = (...fields: string[]) =>
+  Array.from(new Set(fields.join(',').match(/[^\s<>,;"']+@[^\s<>,;"']+/g) ?? []));
+
 const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmail }: EmailComposerProps) => {
+  const provider = useMailProvider();
   const [to, setTo] = useState(config?.initialTo || '');
   const [cc, setCc] = useState(config?.initialCc || '');
   const [showCc, setShowCc] = useState(!!config?.initialCc);
@@ -335,14 +341,13 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   };
 
   const handleSaveDraft = async () => {
-    if (!googleToken) return;
+    if (!provider?.saveDraft) return;
     setIsSaving(true);
     setErrorMsg(null);
     try {
-      const raw = encodeBase64Url(buildMimeString());
-      const data = await saveDraft(googleToken, raw, { draftId, threadId: config?.threadId });
-      if (!draftId && data.id) setDraftId(data.id);
-      onSuccessAction?.('draft', { draftId: data.id || draftId || undefined });
+      const newId = await provider.saveDraft(buildMimeString(), { draftId, threadId: config?.threadId });
+      if (!draftId && newId) setDraftId(newId);
+      onSuccessAction?.('draft', { draftId: newId || draftId || undefined });
       onClose?.();
     } catch (err) {
       console.error("Chyba při ukládání draftu:", err);
@@ -364,17 +369,13 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
          saveNewContacts(userEmail, [to, cc]);
       }
 
-      if (!googleToken) throw new Error('Nejste přihlášeni.');
-      const raw = encodeBase64Url(buildMimeString());
-      const sentData = await sendMessage(googleToken, raw, config?.threadId);
+      if (!provider) throw new Error('Nejste přihlášeni.');
+      const recipients = extractAddresses(to, cc);
+      if (recipients.length === 0) throw new Error('Chybí platná adresa příjemce.');
+      // Odeslaná zpráva se netváří jako nová (Gmail: odebere UNREAD; IMAP: kopie do Odeslaných jako přečtená)
+      const sentData = await provider.send(buildMimeString(), { recipients, threadId: config?.threadId });
 
-      // Zpráva poslaná sobě (nebo s vlastní adresou v kopii) dostane od Gmailu UNREAD –
-      // odeslaná pošta se ale nemá tvářit jako nová; nepřečtenou si ji uživatel může označit sám
-      if (sentData.labelIds?.includes('UNREAD')) {
-        await modifyMessage(googleToken, sentData.id, [], ['UNREAD']).catch((e) => console.warn('Odeslanou zprávu se nepodařilo označit jako přečtenou:', e));
-      }
-
-      if (draftId) {
+      if (draftId && googleToken && provider.kind === 'gmail') {
         await deleteDraft(googleToken, draftId).catch((e) => console.warn('Koncept se nepodařilo smazat:', e));
       }
 
@@ -384,7 +385,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       // Abysme neaplikovali štítek na úplně první odeslanou zprávu, která není odpovědí
       if (config?.type === 'reply' || config?.type === 'replyAll') {
         const repliedLabelId = localStorage.getItem('vr-replied-label-id');
-        if (repliedLabelId && threadIdOut) {
+        if (repliedLabelId && threadIdOut && googleToken && provider.kind === 'gmail') {
            try {
               await modifyThread(googleToken, threadIdOut, [repliedLabelId]);
               console.log("Thread označen cloud sync štítkem VR-Replied.");

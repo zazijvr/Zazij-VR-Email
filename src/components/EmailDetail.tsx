@@ -6,8 +6,9 @@ import { open } from '@tauri-apps/plugin-shell';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen, FileText } from 'lucide-react';
 import ICAL from 'ical.js';
-import { getAttachmentBytes, listDrafts, modifyThread } from '../services/gmail';
-import { loadEmailDetail, type EmailDetailData } from '../services/emailDetail';
+import { listDrafts } from '../services/gmail';
+import type { EmailDetailData } from '../services/emailDetail';
+import { useMailProvider } from '../services/mailProvider';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createEvent, type GoogleEventTime } from '../services/calendar';
 
@@ -42,6 +43,7 @@ import { useAlert } from './AlertProvider';
 
 export default function EmailDetail({ googleToken, isVerticalLayout, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed, userEmail }: EmailDetailProps) {
   const queryClient = useQueryClient();
+  const provider = useMailProvider();
   const detailKey = ['emailDetail', userEmail ?? '', selectedEmailId ?? ''] as const;
   const [emailData, setEmailDataState] = useState<EmailDetailData | null>(null);
   /** Změna zobrazeného e-mailu – propíše se i do mezipaměti, aby po návratu platila */
@@ -201,7 +203,7 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
   }, [previewBlob]);
 
   useEffect(() => {
-    if (!emailData?.attachments || !emailData?.messageId || !googleToken) return;
+    if (!emailData?.attachments || !emailData?.messageId || !provider) return;
 
     const fetchIcsData = async () => {
       const newDetails: Record<string, string> = {};
@@ -212,7 +214,7 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
         if (fName.endsWith('.ics') || mType === 'text/calendar') {
           if (!icsDetails[att.attachmentId]) {
             try {
-              const file = await getAttachmentBytes(googleToken, emailData.messageId, att.attachmentId);
+              const file = await provider.attachment(emailData, att);
               if (file) {
                 const binaryString = file.binary;
                 let utf8String = binaryString;
@@ -270,14 +272,14 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
     };
     fetchIcsData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emailData, googleToken]);
+  }, [emailData, provider]);
 
   const handleActionAttachment = async (attach: AttachmentInfo, action: 'open' | 'download') => {
-    if (downloadingAttachId || !googleToken || !emailData) return;
+    if (downloadingAttachId || !provider || !emailData) return;
     setDownloadingAttachId(attach.attachmentId);
 
     try {
-      const file = await getAttachmentBytes(googleToken, attach.messageId || emailData.messageId, attach.attachmentId);
+      const file = await provider.attachment(emailData, attach);
 
       if (file) {
         const bytes = file.bytes;
@@ -319,11 +321,15 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
   };
 
   const handleAddToCalendar = async (attach: AttachmentInfo) => {
-    if (downloadingAttachId || !googleToken || !emailData) return;
+    if (downloadingAttachId || !provider || !emailData) return;
+    if (!googleToken) {
+      showAlert('Přidání do kalendáře vyžaduje připojený Google účet.', 'Kalendář', 'info');
+      return;
+    }
     setDownloadingAttachId(attach.attachmentId);
 
     try {
-      const file = await getAttachmentBytes(googleToken, attach.messageId || emailData.messageId, attach.attachmentId);
+      const file = await provider.attachment(emailData, attach);
 
       if (file) {
         let utf8String = file.binary;
@@ -387,11 +393,11 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
 
   /** Stáhne přílohy jako data URL pro okno pro psaní (koncept, přeposlání) */
   const fetchAttachmentsForComposer = async (data: EmailDetailData): Promise<ComposerAttachment[]> => {
-    if (!googleToken) return [];
+    if (!provider) return [];
     const out: ComposerAttachment[] = [];
     for (const att of data.attachments) {
       try {
-        const file = await getAttachmentBytes(googleToken, att.messageId || data.messageId, att.attachmentId);
+        const file = await provider.attachment(data, att);
         if (!file) continue;
         const type = att.mimeType || 'application/octet-stream';
         out.push({ name: att.filename, type, content: `data:${type};base64,${file.base64}` });
@@ -403,9 +409,10 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
   };
 
   const handleResumeDraft = async (data: EmailDetailData) => {
-    if (!googleToken) return;
+    if (!provider) return;
     try {
-      const drafts = await listDrafts(googleToken);
+      // Gmail: navázat na existující koncept; IMAP: nový e-mail s obsahem konceptu
+      const drafts = provider.supportsDraftResume && googleToken ? await listDrafts(googleToken) : [];
       const draftObj = drafts.find(d => d.message?.id === data.messageId);
       const fetchedAttachments = await fetchAttachmentsForComposer(data);
 
@@ -422,7 +429,7 @@ export default function EmailDetail({ googleToken, isVerticalLayout, selectedEma
       });
     } catch (e) {
       console.error(e);
-      showAlert('Nepodařilo se spárovat koncept sítě GMail.', 'Chyba sítě', 'error');
+      showAlert('Koncept se nepodařilo otevřít.', 'Chyba sítě', 'error');
     }
   };
 
@@ -510,14 +517,12 @@ ${ccLine}
 
   const toggleReadStatus = async () => {
     setIsMoreMenuOpen(false);
-    if (!emailData || !googleToken) return;
+    if (!emailData || !provider) return;
     const isUnread = emailData.isUnread;
     setEmailData(prev => prev && ({ ...prev, isUnread: !isUnread }));
     window.dispatchEvent(new CustomEvent('vr-email-read-toggle', { detail: { id: selectedEmailId || emailData.messageId, isUnread: !isUnread } }));
     try {
-      const threadId = emailData.threadId || emailData.messageId;
-      if (isUnread) await modifyThread(googleToken, threadId, [], ['UNREAD']);
-      else await modifyThread(googleToken, threadId, ['UNREAD']);
+      await provider.setRead({ id: emailData.messageId, threadId: emailData.threadId }, isUnread, 'thread');
       if (onMobileBack && isUnread) setTimeout(onMobileBack, 150);
     } catch (err) {
       console.error(err);
@@ -572,8 +577,8 @@ ${ccLine}
   // při rychlém proklikávání se starší výsledek nezobrazí, chyba a opakování řeší knihovna
   const detailQuery = useQuery({
     queryKey: detailKey,
-    queryFn: () => loadEmailDetail(googleToken as string, selectedEmailId as string),
-    enabled: !!selectedEmailId && !!googleToken,
+    queryFn: () => provider!.loadDetail(selectedEmailId as string),
+    enabled: !!selectedEmailId && !!provider,
   });
   const loading = detailQuery.isLoading;
 
@@ -620,14 +625,12 @@ ${ccLine}
 
   /** Hvězdička / důležité – optimisticky, při chybě se vrátí */
   const toggleStarred = async () => {
-    if (!googleToken) return;
+    if (!provider) return;
     const currentIsStarred = emailData.isStarred;
     setEmailData(prev => prev && ({ ...prev, isStarred: !currentIsStarred }));
     window.dispatchEvent(new CustomEvent('vr-email-star-toggle', { detail: { id: selectedEmailId || emailData.messageId, isStarred: !currentIsStarred } }));
     try {
-      const threadId = emailData.threadId || emailData.messageId;
-      if (currentIsStarred) await modifyThread(googleToken, threadId, [], ['STARRED']);
-      else await modifyThread(googleToken, threadId, ['STARRED']);
+      await provider.setStarred({ id: emailData.messageId, threadId: emailData.threadId }, !currentIsStarred);
     } catch (err) {
       console.error(err);
       setEmailData(prev => prev && ({ ...prev, isStarred: currentIsStarred }));
