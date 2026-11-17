@@ -2,6 +2,7 @@ import { useState, type Dispatch, type FormEvent, type SetStateAction } from 're
 import { Plus, Trash2, Loader2, Folder, Edit2, Check, X } from 'lucide-react';
 
 import { createLabel, deleteLabel, renameLabel } from '../services/gmail';
+import { useQueryClient } from '@tanstack/react-query';
 import type { GmailLabel } from '../types/gmail';
 
 interface FolderSettingsProps {
@@ -11,6 +12,9 @@ interface FolderSettingsProps {
 }
 
 export default function FolderSettings({ googleToken, customLabels, setCustomLabels }: FolderSettingsProps) {
+  const queryClient = useQueryClient();
+  /** Složky a počty nepřečtených se po změně hned obnoví ze serveru */
+  const refreshFolders = () => queryClient.invalidateQueries({ queryKey: ['customLabels'] });
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -26,6 +30,7 @@ export default function FolderSettings({ googleToken, customLabels, setCustomLab
       const newLabel = await createLabel(googleToken, newFolderName.trim());
       setCustomLabels((prev) => [...(prev || []), newLabel]);
       setNewFolderName('');
+      refreshFolders();
     } catch (err) {
       console.error('Chyba při tvorbě složky', err);
     } finally {
@@ -39,6 +44,7 @@ export default function FolderSettings({ googleToken, customLabels, setCustomLab
     try {
       await deleteLabel(googleToken, id);
       setCustomLabels((prev) => prev.filter((l) => l.id !== id));
+      refreshFolders();
     } catch (err) {
       console.error('Chyba při mazání složky', err);
     } finally {
@@ -56,6 +62,7 @@ export default function FolderSettings({ googleToken, customLabels, setCustomLab
       const updatedLabel = await renameLabel(googleToken, id, editName.trim());
       setCustomLabels((prev) => prev.map((l) => (l.id === id ? updatedLabel : l)));
       setEditingId(null);
+      refreshFolders();
     } catch (err) {
       console.error('Chyba při přejmenování složky', err);
     } finally {

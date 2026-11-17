@@ -13,6 +13,7 @@ import SettingsModal from './components/SettingsModal';
 import MobileHeader from './components/MobileHeader';
 import EmailApp from './modules/Email/EmailApp';
 import CalendarApp from './modules/Calendar/CalendarApp';
+import { useCustomLabels, useProfile, useUnreadCounts } from './hooks/useMailboxQueries';
 import type { AppMode } from './components/Sidebar';
 import type { UnreadCounts, UserInfo } from './types/account';
 import type { GmailLabel } from './types/gmail';
@@ -583,120 +584,24 @@ function App() {
     }
   };
 
+  // Profil, vlastní složky a počty nepřečtených (TanStack Query – nestahují se při každém přepnutí složky)
+  const profileQuery = useProfile(googleToken);
+  const labelsQuery = useCustomLabels(googleToken);
+  const countsQuery = useUnreadCounts(googleToken, labelsQuery.data);
+
   useEffect(() => {
-    if (googleToken) {
-      apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
-        headers: { Authorization: `Bearer ${googleToken}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          setUserInfo({ email: data.emailAddress, messagesTotal: data.messagesTotal });
-        })
-        .catch(err => console.error("Chyba při stahování profilu:", err));
+    const p = profileQuery.data;
+    if (p?.emailAddress) setUserInfo({ email: p.emailAddress, messagesTotal: p.messagesTotal });
+  }, [profileQuery.data]);
 
-      let loadedUserLabels: GmailLabel[] = [];
+  // Místní stav zůstává kvůli okamžitým změnám (přesun složky, odečet po přečtení) – server ho při dalším stažení srovná
+  useEffect(() => {
+    if (labelsQuery.data) setCustomLabels(labelsQuery.data);
+  }, [labelsQuery.data]);
 
-      const fetchLabels = async () => {
-        try {
-          const res = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
-            headers: { Authorization: `Bearer ${googleToken}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.labels) {
-              // Filtrace všech custom lableů vytvořených uživatelem
-              let userLabels = (data.labels as GmailLabel[]).filter(l => l.type === 'user');
-              
-              // 1. Zjištění/Založení Master synchronizačního štítku VR-Replied
-              const syncLabelName = 'VR-Replied';
-              let repliedLabel = userLabels.find(l => l.name === syncLabelName);
-              
-              if (!repliedLabel) {
-                 try {
-                   console.log("Zakládám tajný master štítek VR-Replied pro cloud sync odpovědí...");
-                   const createRes = await apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
-                     method: 'POST',
-                     headers: { 
-                       Authorization: `Bearer ${googleToken}`,
-                       'Content-Type': 'application/json'
-                     },
-                     body: JSON.stringify({
-                       name: syncLabelName,
-                       labelListVisibility: 'labelHide',
-                       messageListVisibility: 'hide'
-                     })
-                   });
-                   if (createRes.ok) {
-                     const created = (await createRes.json()) as GmailLabel;
-                     repliedLabel = created;
-                     console.log("Tajný štítek založen:", created.id);
-                     userLabels.push(created); // dočasně ho přidáme aby ho poznala apka
-                   }
-                 } catch(e) { console.error("Nelze založit VR-Replied štítek", e); }
-              }
-
-              // Pokud ho máme, uložíme si jeho ID do globálního localStorage, aby na něj ostatní komponenty (EmailList/Composer) snáz dosáhly okamžitě, když API ještě probíhá
-              if (repliedLabel) {
-                localStorage.setItem('vr-replied-label-id', repliedLabel.id);
-              }
-
-              // Odstranění tajných štítků z vyobrazení postranního navigačního panelu složek
-              userLabels = userLabels.filter(l => l.name !== syncLabelName);
-              
-              setCustomLabels(userLabels);
-              loadedUserLabels = userLabels;
-            }
-          }
-        } catch (err) { console.error("Chyba při načítání štítků:", err); }
-      };
-
-      const fetchCounts = async () => {
-        const folderMapping = {
-          'Doručené': 'INBOX',
-          'Odeslané': 'SENT',
-          'Důležité': 'STARRED',
-          'Rozepsané': 'DRAFT',
-          'Spam': 'SPAM',
-          'Koš': 'TRASH'
-        };
-        try {
-          const counts: UnreadCounts = {};
-
-          // Combine system and custom labels for counting
-          const targets = Object.entries(folderMapping).map(([name, id]) => ({ name, id }));
-          loadedUserLabels.forEach(l => targets.push({ name: l.name, id: l.id }));
-
-          // Skryté / minimalizované okno – počty se dotáhnou při dalším ticku po návratu
-          if (document.hidden) return;
-
-          // Všechny složky najednou (dřív jedna po druhé)
-          await Promise.all(targets.map(async ({ name, id }) => {
-            const res = await apiFetch(`https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`, {
-              headers: { Authorization: `Bearer ${googleToken}` }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data.messagesUnread > 0) {
-                counts[name] = data.messagesUnread;
-              }
-            }
-          }));
-          // Nový objekt jen při změně – jinak by se každých 10 s překreslila celá aplikace
-          setUnreadCounts(prev => {
-            const prevKeys = Object.keys(prev);
-            const same = prevKeys.length === Object.keys(counts).length && prevKeys.every(k => prev[k] === counts[k]);
-            return same ? prev : counts;
-          });
-        } catch (err) {
-          console.error("Chyba při načítání nepřečtených e-mailů", err);
-        }
-      };
-
-      fetchLabels().then(fetchCounts);
-      const intervalId = setInterval(fetchCounts, 10000);
-      return () => clearInterval(intervalId);
-    }
-  }, [googleToken, activeFolder]);
+  useEffect(() => {
+    if (countsQuery.data) setUnreadCounts(countsQuery.data);
+  }, [countsQuery.data]);
 
   useEffect(() => {
     const handleF5 = (e: KeyboardEvent) => {
