@@ -1,6 +1,30 @@
-import React from 'react';
+import type { CalendarEvent } from '../../../types/calendar';
 import { Search, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
 import { getEventBgColor, getEventSolidColor, getEventColor } from '../utils/eventColors';
+
+interface MonthViewProps {
+  currentYear: number;
+  currentMonthName: string;
+  currentDate: Date;
+  handleDateChange: (direction: 'prev' | 'next' | 'today') => void;
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
+  firstDayOfMonth?: Date;
+  daysInMonth: number;
+  /** Kolik prázdných buněk je před 1. dnem měsíce */
+  startingDay: number;
+  totalCells: number;
+  events: CalendarEvent[];
+  /** Svátky podle data „RRRR-MM-DD“ */
+  specialDays?: Record<string, string[]>;
+  specialCalsLoading?: boolean;
+  openCreateForDay: (day: Date) => void;
+  /** Vybraný den „RRRR-MM-DD“ (mobil) */
+  selectedCalDay: string | null;
+  setSelectedCalDay: (day: string | null) => void;
+  setSelectedEvent: (event: CalendarEvent | null) => void;
+  activeCalendarView: string;
+}
 
 export default function MonthView({
   currentYear,
@@ -9,7 +33,6 @@ export default function MonthView({
   handleDateChange,
   searchQuery,
   setSearchQuery,
-  firstDayOfMonth,
   daysInMonth,
   startingDay,
   totalCells,
@@ -20,8 +43,8 @@ export default function MonthView({
   selectedCalDay,
   setSelectedCalDay,
   setSelectedEvent,
-  activeCalendarView
-}) {
+  activeCalendarView,
+}: MonthViewProps) {
 
   // Algoritmus pro generování buněk
   const calendarCells = [];
@@ -34,7 +57,7 @@ export default function MonthView({
       ? i - startingDay - daysInMonth + 1
       : i - startingDay + 1;
 
-    let cellDateObj;
+    let cellDateObj: Date;
     if (isPrevMonth) {
       cellDateObj = new Date(currentYear, currentDate.getMonth() - 1, dayNumber);
     } else if (isNextMonth) {

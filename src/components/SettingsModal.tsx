@@ -1,11 +1,29 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { X, Settings as SettingsIcon, FileText, PenTool, Folder, Download, Loader2, Sparkles } from 'lucide-react';
 import TemplateSettings from './TemplateSettings';
 import SignatureSettings from './SignatureSettings';
 import FolderSettings from './FolderSettings';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { getVersion } from '@tauri-apps/api/app';
-import { checkForUpdate, installUpdate, isUpdaterSupported } from '../utils/updater';
+import { checkForUpdate, installUpdate, isUpdaterSupported, type UpdateProgress } from '../utils/updater';
+import type { Update } from '@tauri-apps/plugin-updater';
+import type { GmailLabel } from '../types/gmail';
+import type { UserInfo } from '../types/account';
+
+interface SettingsModalProps {
+  isSettingsOpen: boolean;
+  setIsSettingsOpen: (open: boolean) => void;
+  googleToken: string | null;
+  userInfo: UserInfo | null;
+  loginWithGoogle: () => void;
+  isVerticalLayout: boolean;
+  setIsVerticalLayout: (vertical: boolean) => void;
+  savedAccounts?: string[];
+  switchGoogleAccount: (email: string) => void;
+  logoutGoogleAccount: (email: string) => void;
+  customLabels: GmailLabel[];
+  setCustomLabels: Dispatch<SetStateAction<GmailLabel[]>>;
+}
 
 export default function SettingsModal({
   isSettingsOpen,
@@ -19,18 +37,17 @@ export default function SettingsModal({
   switchGoogleAccount,
   logoutGoogleAccount,
   customLabels,
-  setCustomLabels
-}) {
+  setCustomLabels,
+}: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState('general');
-  const modalRef = useRef(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const [localVersion, setLocalVersion] = useState('');
   const [cloudVersion, setCloudVersion] = useState('');
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-  const [pendingUpdate, setPendingUpdate] = useState(null);
-  // idle | downloading | restarting | error
-  const [updateState, setUpdateState] = useState('idle');
-  const [updateProgress, setUpdateProgress] = useState(null);
+  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
+  const [updateState, setUpdateState] = useState<'idle' | 'downloading' | 'restarting' | 'error'>('idle');
+  const [updateProgress, setUpdateProgress] = useState<UpdateProgress | null>(null);
   const [updateError, setUpdateError] = useState('');
 
   useFocusTrap(modalRef, isSettingsOpen);
@@ -70,7 +87,7 @@ export default function SettingsModal({
     } catch (e) {
       console.error('Aktualizace selhala', e);
       setUpdateState('error');
-      setUpdateError(`Aktualizaci se nepodařilo nainstalovat: ${String(e?.message || e)}`);
+      setUpdateError(`Aktualizaci se nepodařilo nainstalovat: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 

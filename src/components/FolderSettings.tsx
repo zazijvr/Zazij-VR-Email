@@ -5,7 +5,7 @@ import { createLabel, deleteLabel, renameLabel } from '../services/gmail';
 import type { GmailLabel } from '../types/gmail';
 
 interface FolderSettingsProps {
-  googleToken: string;
+  googleToken: string | null;
   customLabels: GmailLabel[];
   setCustomLabels: Dispatch<SetStateAction<GmailLabel[]>>;
 }

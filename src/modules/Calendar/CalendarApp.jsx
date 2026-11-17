@@ -256,6 +256,7 @@ export default function CalendarApp({
                 endDate: endDateObj,
                 colorId: item.colorId,
                 description: item.description || '',
+                location: item.location || '',
                 isAllDay: isAllDay,
                 alertMinutes: alertMins,
                 attendees: item.attendees || []

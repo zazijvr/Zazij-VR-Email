@@ -32,7 +32,8 @@ export default function AgendaView({
           const q = agendaSearch.toLowerCase();
           return (
             ev.title?.toLowerCase().includes(q) ||
-            ev.description?.replace(/<[^>]*>?/gm,'').toLowerCase().includes(q)
+            ev.description?.replace(/<[^>]*>?/gm,'').toLowerCase().includes(q) ||
+            ev.location?.toLowerCase().includes(q)
           );
         })
         .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime());

@@ -1,12 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ComponentType, type CSSProperties, type Dispatch, type MouseEvent, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
-import EmailList from '../../components/EmailList';
-import EmailDetail from '../../components/EmailDetail';
-import EmailComposer from '../../components/EmailComposer';
-import { Mail, Inbox, Send, FileEdit, Flag, AlertOctagon, Trash2 } from 'lucide-react';
+import EmailListJs from '../../components/EmailList';
+import EmailDetailJs from '../../components/EmailDetail';
+import EmailComposerJs from '../../components/EmailComposer';
 import { useAlert } from '../../components/AlertProvider';
+import { deleteThread, getMessage, modifyThread, trashThread, untrashThread } from '../../services/gmail';
+import type { EmailRef, MoveRequest } from '../../types/email';
+import type { GmailLabel } from '../../types/gmail';
+import type { UnreadCounts } from '../../types/account';
+import type { ComposerConfig } from '../../types/composer';
 
-const getFolderIcon = (folder) => {
+// DOČASNÉ: tyto komponenty jsou zatím v JavaScriptu – po jejich převodu na TSX se obal odstraní
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const EmailList = EmailListJs as ComponentType<any>;
+const EmailDetail = EmailDetailJs as ComponentType<any>;
+const EmailComposer = EmailComposerJs as ComponentType<any>;
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+const SYSTEM_FOLDERS: Record<string, string> = {
+  'Doručené': 'INBOX',
+  'Odeslané': 'SENT',
+  'Důležité': 'STARRED',
+  'Rozepsané': 'DRAFT',
+  'Spam': 'SPAM',
+  'Koš': 'TRASH',
+};
+
+const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+interface EmailAppProps {
+  googleToken: string | null;
+  activeFolder: string;
+  unreadCounts: UnreadCounts;
+  setUnreadCounts: Dispatch<SetStateAction<UnreadCounts>>;
+  triggerCompose: number;
+  triggerMove: { moves: MoveRequest[]; ts: number } | null;
+  loginWithGoogle: () => void;
+  isVerticalLayout: boolean;
+  customLabels: GmailLabel[];
+  userEmail?: string;
+}
+
+const getFolderIcon = (folder: string) => {
   const commonClasses = "w-14 h-14 md:w-16 md:h-16 object-contain";
   switch (folder) {
     case 'Doručené': return <img src="/vr_inbox.svg" className={commonClasses} alt="Doručené" draggable="false" />;
@@ -19,29 +54,29 @@ const getFolderIcon = (folder) => {
   }
 };
 
-export default function EmailApp({ googleToken, activeFolder, unreadCounts, setUnreadCounts, triggerCompose, triggerMove, loginWithGoogle, isVerticalLayout, customLabels, userEmail }) {
-  const [selectedEmailId, setSelectedEmailId] = useState(null);
+export default function EmailApp({ googleToken, activeFolder, unreadCounts, setUnreadCounts, triggerCompose, triggerMove, loginWithGoogle, isVerticalLayout, customLabels, userEmail }: EmailAppProps) {
+  const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
   // Poměr panelů seznam / náhled – zvlášť pro vodorovné a svislé rozložení, pamatuje se v localStorage
   const splitKey = isVerticalLayout ? 'vr-split-vertical' : 'vr-split-horizontal';
-  const readSplit = (key) => {
+  const readSplit = (key: string) => {
     try {
-      const v = parseFloat(localStorage.getItem(key));
+      const v = parseFloat(localStorage.getItem(key) ?? '');
       return Number.isFinite(v) && v >= 0.2 && v <= 0.8 ? v : 0.5;
     } catch { return 0.5; }
   };
   const [splitRatio, setSplitRatio] = useState(() => readSplit(splitKey));
   useEffect(() => { setSplitRatio(readSplit(splitKey)); }, [splitKey]);
-  const splitContainerRef = useRef(null);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
   const [isDraggingSplit, setIsDraggingSplit] = useState(false);
 
-  const startSplitDrag = (e) => {
+  const startSplitDrag = (e: MouseEvent) => {
     e.preventDefault();
     const box = splitContainerRef.current?.getBoundingClientRect();
     if (!box) return;
     setIsDraggingSplit(true);
     let ratio = splitRatio;
-    const onMove = (ev) => {
+    const onMove = (ev: globalThis.MouseEvent) => {
       const r = isVerticalLayout ? (ev.clientY - box.top) / box.height : (ev.clientX - box.left) / box.width;
       ratio = Math.min(0.8, Math.max(0.2, r));
       setSplitRatio(ratio);
@@ -59,8 +94,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     setSplitRatio(0.5);
     try { localStorage.removeItem(splitKey); } catch { /* nic */ }
   };
-  const [modalEmailId, setModalEmailId] = useState(null);
-  const [autoResumeDraftId, setAutoResumeDraftId] = useState(null);
+  const [modalEmailId, setModalEmailId] = useState<string | null>(null);
+  const [autoResumeDraftId, setAutoResumeDraftId] = useState<string | null>(null);
 
   // Přepnutí účtu – zavřít otevřený e-mail předchozího účtu
   useEffect(() => {
@@ -72,17 +107,17 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     window.addEventListener('vr-account-switched', reset);
     return () => window.removeEventListener('vr-account-switched', reset);
   }, []);
-  const [composerConfig, setComposerConfig] = useState(null);
+  const [composerConfig, setComposerConfig] = useState<ComposerConfig | null>(null);
   const { showAlert } = useAlert();
 
-  const [trashedEmails, setTrashedEmails] = useState([]);
-  const [spamEmails, setSpamEmails] = useState([]);
-  const [hiddenEmailIds, setHiddenEmailIds] = useState([]);
-  const [optimisticMoves, setOptimisticMoves] = useState([]);
+  const [trashedEmails, setTrashedEmails] = useState<(EmailRef & { trashedFrom: string })[]>([]);
+  const [spamEmails, setSpamEmails] = useState<(EmailRef & { spammedFrom: string })[]>([]);
+  const [hiddenEmailIds, setHiddenEmailIds] = useState<string[]>([]);
+  const [optimisticMoves, setOptimisticMoves] = useState<(EmailRef & { targetFolder: string })[]>([]);
   const [refreshTriggerList, setRefreshTriggerList] = useState(0);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (document.getElementById('attachment-preview-modal')) return;
         // Escape v okně pro psaní řeší okno samo – nesmí zavřít i otevřený mail pod ním
@@ -96,7 +131,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [modalEmailId, composerConfig]);
 
-  const lastTriggerRef = React.useRef(triggerCompose);
+  const lastTriggerRef = useRef(triggerCompose);
 
   useEffect(() => {
     if (triggerCompose > lastTriggerRef.current) {
@@ -106,199 +141,117 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   }, [triggerCompose]);
 
   useEffect(() => {
-    if (triggerMove && Array.isArray(triggerMove.moves)) {
-      triggerMove.moves.forEach(move => {
-        handleMoveEmail(move.id, move.sourceLabel, move.targetLabel, move.fullObj);
-      });
-    } else if (triggerMove && triggerMove.id) {
-      handleMoveEmail(triggerMove.id, triggerMove.source, triggerMove.target, triggerMove.fullObj);
-    }
+    triggerMove?.moves.forEach((move) => {
+      handleMoveEmail(move.id, move.sourceLabel, move.targetLabel, move.fullObj);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerMove]);
 
-  const handleMoveEmail = async (emailId, sourceLabel, targetLabel, fullEmailObj) => {
+  const labelIdFor = (labelName: string): string | null =>
+    SYSTEM_FOLDERS[labelName] ?? customLabels?.find((l) => l.name === labelName)?.id ?? null;
+
+  /** Doplní id vlákna, když z UI přišlo jen id zprávy */
+  const resolveEmail = async (emailObj: EmailRef | string): Promise<EmailRef> => {
+    const emailData: EmailRef = typeof emailObj === 'string'
+      ? { id: emailObj, subject: '(Bez specifikace)', from: '', sizeText: '', dateText: '' }
+      : emailObj;
+    if (!emailData.threadId && typeof emailObj === 'string' && googleToken) {
+      try {
+        emailData.threadId = (await getMessage(googleToken, emailData.id, 'minimal')).threadId;
+      } catch (err) {
+        console.warn('Nepodařilo se zjistit vlákno e-mailu:', err);
+      }
+    }
+    return emailData;
+  };
+
+  const handleMoveEmail = async (emailId: string, sourceLabel: string, targetLabel: string, fullEmailObj?: EmailRef) => {
     if (!googleToken) return;
-    setHiddenEmailIds(prev => {
-      if (prev.includes(emailId)) return prev;
-      return [...prev, emailId];
-    });
+    setHiddenEmailIds((prev) => (prev.includes(emailId) ? prev : [...prev, emailId]));
 
     if (fullEmailObj) {
-      setOptimisticMoves(prev => {
-        const filtered = prev.filter(m => m.id !== emailId);
-        return [...filtered, { ...fullEmailObj, targetFolder: targetLabel }];
-      });
+      setOptimisticMoves((prev) => [...prev.filter((m) => m.id !== emailId), { ...fullEmailObj, targetFolder: targetLabel }]);
     }
 
-    const folderMapping = {
-      'Doručené': 'INBOX',
-      'Odeslané': 'SENT',
-      'Důležité': 'STARRED',
-      'Rozepsané': 'DRAFT',
-      'Spam': 'SPAM',
-      'Koš': 'TRASH'
-    };
-
-    const getLabelId = (labelName) => {
-      if (folderMapping[labelName]) return folderMapping[labelName];
-      const custom = customLabels?.find(l => l.name === labelName);
-      return custom ? custom.id : null;
-    };
-
-    const sourceId = getLabelId(sourceLabel);
-    const targetId = getLabelId(targetLabel);
-
+    const sourceId = labelIdFor(sourceLabel);
+    const targetId = labelIdFor(targetLabel);
     if (!sourceId || !targetId) return;
 
-    const targetIdMethod = fullEmailObj?.threadId || emailId;
+    const threadId = fullEmailObj?.threadId || emailId;
 
     try {
       if (sourceId === 'TRASH') {
-        setTrashedEmails(prev => prev.filter(t => t.id !== emailId));
-        await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/untrash`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
+        setTrashedEmails((prev) => prev.filter((t) => t.id !== emailId));
+        await untrashThread(googleToken, threadId);
       } else if (targetId === 'TRASH') {
-        setTrashedEmails(prev => {
-          const filtered = prev.filter(t => t.id !== emailId);
-          return [...filtered, { ...(fullEmailObj || { id: emailId }), trashedFrom: sourceLabel }];
-        });
-        await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/trash`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
+        setTrashedEmails((prev) => [
+          ...prev.filter((t) => t.id !== emailId),
+          { ...(fullEmailObj || { id: emailId }), trashedFrom: sourceLabel },
+        ]);
+        await trashThread(googleToken, threadId);
         return;
       }
-
-      // Add/Remove labels as needed
-      if (targetId !== 'TRASH') {
-        const removeLabels = sourceId !== 'TRASH' ? [sourceId] : [];
-        const addLabels = [targetId];
-
-        await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/modify`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ removeLabelIds: removeLabels, addLabelIds: addLabels })
-        });
-      }
+      // Přesun = přidat cílový štítek a odebrat zdrojový
+      await modifyThread(googleToken, threadId, [targetId], sourceId !== 'TRASH' ? [sourceId] : []);
     } catch (e) {
-      console.error("Selhal přesun e-mailu GMail API:", e);
+      console.error('Selhal přesun e-mailu přes Gmail API:', e);
     }
   };
 
-  const handleGlobalTrash = async (emailObj) => {
-    let emailData = typeof emailObj === 'string' ? { id: emailObj, subject: '(Bez specifikace)', from: '', sizeText: '', dateText: '' } : emailObj;
+  const handleGlobalTrash = async (emailObj: EmailRef | string) => {
+    if (!googleToken) return;
+    const emailData = await resolveEmail(emailObj);
 
-    if (!emailData.threadId && typeof emailObj === 'string') {
-      try {
-        const fetchRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.id}?fields=threadId`, {
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-        const threadData = await fetchRes.json();
-        if (threadData.threadId) emailData.threadId = threadData.threadId;
-      } catch (err) { console.warn("Fallback thread id fetch error: ", err); }
-    }
-
-    setTrashedEmails(prev => {
-      const filtered = prev.filter(t => t.id !== emailData.id);
-      return [...filtered, { ...emailData, trashedFrom: activeFolder }];
-    });
+    setTrashedEmails((prev) => [...prev.filter((t) => t.id !== emailData.id), { ...emailData, trashedFrom: activeFolder }]);
     if (selectedEmailId === emailData.id) setSelectedEmailId(null);
     if (modalEmailId === emailData.id) setModalEmailId(null);
 
     try {
-      let res;
-      const targetIdMethod = emailData.threadId || emailData.id;
-      if (activeFolder === 'Koš') {
-        res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-      } else {
-        res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/trash`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-      }
-      if (!res.ok) throw new Error(`${res.status}`);
+      const threadId = emailData.threadId || emailData.id;
+      // V koši se maže natrvalo, jinde se e-mail jen přesune do koše
+      if (activeFolder === 'Koš') await deleteThread(googleToken, threadId);
+      else await trashThread(googleToken, threadId);
     } catch (err) {
-      console.error("Chyba z API: ", err);
-      setTrashedEmails(prev => prev.filter(t => t.id !== emailData.id));
-      showAlert(`Chyba při mazání e-mailu:\n${err.message}`, null, 'error');
+      console.error('Chyba z API: ', err);
+      setTrashedEmails((prev) => prev.filter((t) => t.id !== emailData.id));
+      showAlert(`Chyba při mazání e-mailu:\n${errorText(err)}`, null, 'error');
     }
   };
 
-  const handleGlobalRestore = async (emailObj) => {
-    let emailData = typeof emailObj === 'string' ? { id: emailObj, subject: '(Bez specifikace)', from: '', sizeText: '', dateText: '' } : emailObj;
+  const handleGlobalRestore = async (emailObj: EmailRef | string) => {
+    if (!googleToken) return;
+    const emailData = await resolveEmail(emailObj);
 
-    if (!emailData.threadId && typeof emailObj === 'string') {
-      try {
-        const fetchRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.id}?fields=threadId`, {
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-        const threadData = await fetchRes.json();
-        if (threadData.threadId) emailData.threadId = threadData.threadId;
-      } catch (err) { console.warn("Fallback query failed: ", err); }
-    }
-
-    setTrashedEmails(prev => prev.filter(t => t.id !== emailData.id));
-
+    setTrashedEmails((prev) => prev.filter((t) => t.id !== emailData.id));
     if (selectedEmailId === emailData.id) setSelectedEmailId(null);
     if (modalEmailId === emailData.id) setModalEmailId(null);
 
     try {
-      const targetIdMethod = emailData.threadId || emailData.id;
-      const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/untrash`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${googleToken}` }
-      });
-      if (!res.ok) throw new Error(`${res.status}`);
-
-      // Go the extra mile and force it back into INBOX so it is never lost in pure Archive
-      await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/modify`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ addLabelIds: ['INBOX'] })
-      });
+      const threadId = emailData.threadId || emailData.id;
+      await untrashThread(googleToken, threadId);
+      // Vrátit i do Doručených, aby e-mail nezůstal jen v archivu
+      await modifyThread(googleToken, threadId, ['INBOX']);
     } catch (err) {
-      console.error("Chyba z API: ", err);
-      setHiddenEmailIds(prev => prev.filter(t => t !== emailData.id));
-      showAlert(`Nelze obnovit:\n${err.message}`, null, 'error');
+      console.error('Chyba z API: ', err);
+      setHiddenEmailIds((prev) => prev.filter((t) => t !== emailData.id));
+      showAlert(`Nelze obnovit:\n${errorText(err)}`, null, 'error');
     }
   };
 
-  const handleGlobalSpam = async (emailObj) => {
-    let emailData = typeof emailObj === 'string' ? { id: emailObj, subject: '(Bez specifikace)', from: '', sizeText: '', dateText: '' } : emailObj;
+  const handleGlobalSpam = async (emailObj: EmailRef | string) => {
+    if (!googleToken) return;
+    const emailData = await resolveEmail(emailObj);
 
-    if (!emailData.threadId && typeof emailObj === 'string') {
-      try {
-        const fetchRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailData.id}?fields=threadId`, {
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-        const threadData = await fetchRes.json();
-        if (threadData.threadId) emailData.threadId = threadData.threadId;
-      } catch (err) { console.warn("Fallback thread id fetch error: ", err); }
-    }
-
-    setSpamEmails(prev => {
-      const filtered = prev.filter(t => t.id !== emailData.id);
-      return [...filtered, { ...emailData, spammedFrom: activeFolder }];
-    });
+    setSpamEmails((prev) => [...prev.filter((t) => t.id !== emailData.id), { ...emailData, spammedFrom: activeFolder }]);
     if (selectedEmailId === emailData.id) setSelectedEmailId(null);
     if (modalEmailId === emailData.id) setModalEmailId(null);
 
     try {
-      const targetIdMethod = emailData.threadId || emailData.id;
-      const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${targetIdMethod}/modify`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] })
-      });
-      if (!res.ok) throw new Error(`${res.status}`);
+      await modifyThread(googleToken, emailData.threadId || emailData.id, ['SPAM'], ['INBOX']);
     } catch (err) {
-      console.error("Chyba při označování spamu: ", err);
-      setSpamEmails(prev => prev.filter(t => t.id !== emailData.id));
-      showAlert(`Nepodařilo se označit jako SPAM: ${err.message}`, null, 'error');
+      console.error('Chyba při označování spamu: ', err);
+      setSpamEmails((prev) => prev.filter((t) => t.id !== emailData.id));
+      showAlert(`Nepodařilo se označit jako SPAM: ${errorText(err)}`, null, 'error');
     }
   };
 
@@ -341,7 +294,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
         </div>
       )}
 
-      <div ref={splitContainerRef} style={{ '--split': `${(splitRatio * 100).toFixed(2)}%` }} className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
+      <div ref={splitContainerRef} style={{ '--split': `${(splitRatio * 100).toFixed(2)}%` } as CSSProperties} className={`flex-1 flex overflow-hidden ${isVerticalLayout ? 'flex-col' : 'flex-row'}`}>
         {!googleToken ? (
           <div className="flex-1 flex w-full h-full flex-col">
             <EmailList googleToken={googleToken} loginWithGoogle={loginWithGoogle} />
@@ -354,8 +307,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                 activeFolder={activeFolder}
                 selectedEmailId={selectedEmailId}
                 setSelectedEmailId={setSelectedEmailId}
-                onExpand={(id) => setModalEmailId(id)}
-                onDraftClick={(id) => setAutoResumeDraftId(id)}
+                onExpand={(id: string) => setModalEmailId(id)}
+                onDraftClick={(id: string) => setAutoResumeDraftId(id)}
                 trashedEmails={trashedEmails}
                 spamEmails={spamEmails}
                 hiddenEmailIds={hiddenEmailIds}
@@ -396,7 +349,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                 onRestore={selectedEmailId ? () => handleGlobalRestore(selectedEmailId) : undefined}
                 onSpam={selectedEmailId ? () => handleGlobalSpam(selectedEmailId) : undefined}
                 onMobileBack={() => setSelectedEmailId(null)}
-                onActionReply={(config) => setComposerConfig(config)}
+                onActionReply={(config: ComposerConfig) => setComposerConfig(config)}
                 autoResumeDraftId={autoResumeDraftId}
                 onDraftResumed={() => setAutoResumeDraftId(null)}
                 userEmail={userEmail}
@@ -414,7 +367,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               selectedEmailId={modalEmailId}
               onTrash={modalEmailId ? () => handleGlobalTrash(modalEmailId) : undefined}
               onSpam={modalEmailId ? () => handleGlobalSpam(modalEmailId) : undefined}
-              onActionReply={(config) => setComposerConfig(config)}
+              onActionReply={(config: ComposerConfig) => setComposerConfig(config)}
               onClose={() => setModalEmailId(null)}
               userEmail={userEmail}
             />
@@ -429,9 +382,10 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
           config={composerConfig}
           onClose={() => setComposerConfig(null)}
           userEmail={userEmail}
-          onSuccessAction={(action, meta) => {
-            if (action === 'send' && meta.draftMessageId) {
-              setHiddenEmailIds(prev => [...prev, meta.draftMessageId]);
+          onSuccessAction={(action: string, meta: { draftMessageId?: string }) => {
+            const draftId = meta.draftMessageId;
+            if (action === 'send' && draftId) {
+              setHiddenEmailIds(prev => [...prev, draftId]);
               if (selectedEmailId === meta.draftMessageId) setSelectedEmailId(null);
               if (modalEmailId === meta.draftMessageId) setModalEmailId(null);
             }

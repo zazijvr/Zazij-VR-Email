@@ -4,7 +4,7 @@ import { Plus, Trash2, Edit3, FileText } from 'lucide-react';
 import EmailComposer from './EmailComposer';
 import type { ComposerConfig, EmailTemplate } from '../types/composer';
 
-export default function TemplateSettings({ googleToken }: { googleToken: string }) {
+export default function TemplateSettings({ googleToken }: { googleToken: string | null }) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [composerConfig, setComposerConfig] = useState<ComposerConfig | null>(null);
   

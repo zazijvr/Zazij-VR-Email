@@ -1,6 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import { Fragment, useRef, useState, useEffect, type DragEvent, type MouseEvent } from 'react';
 import { Mail, Calendar, Settings, ChevronRight, ChevronDown } from 'lucide-react';
 import { getVersion } from '@tauri-apps/api/app';
+import type { GmailLabel } from '../types/gmail';
+import type { UnreadCounts } from '../types/account';
+import type { DragPayload, MoveRequest } from '../types/email';
+
+export type AppMode = 'email' | 'calendar';
+
+interface SidebarFolder {
+  id: string;
+  label: string;
+}
+
+interface SidebarProps {
+  activeFolder: string;
+  setActiveFolder: (folder: string) => void;
+  activeCalendarView: string;
+  setActiveCalendarView: (view: string) => void;
+  appMode: AppMode;
+  setAppMode: (mode: AppMode) => void;
+  setIsSettingsOpen: (open: boolean) => void;
+  unreadCounts?: UnreadCounts;
+  onComposeNew: () => void;
+  onCreateNewEvent: () => void;
+  onMoveEmail?: (moves: MoveRequest[]) => void;
+  /** Přesun vlastní složky pod jinou (null = na nejvyšší úroveň) */
+  onMoveCustomFolder?: (id: string, name: string, targetParent: string | null) => void;
+  customLabels?: GmailLabel[];
+  onMobileClose?: () => void;
+}
 
 export default function Sidebar({
   activeFolder,
@@ -16,9 +44,9 @@ export default function Sidebar({
   onMoveEmail,
   onMoveCustomFolder,
   customLabels = [],
-  onMobileClose
-}) {
-  const [folders, setFolders] = useState([
+  onMobileClose,
+}: SidebarProps) {
+  const [folders, setFolders] = useState<SidebarFolder[]>([
     { id: 'inbox', label: 'Doručené' },
     { id: 'important', label: 'Důležité' },
     { id: 'sent', label: 'Odeslané' },
@@ -26,19 +54,20 @@ export default function Sidebar({
     { id: 'spam', label: 'Spam' },
     { id: 'trash', label: 'Koš' }
   ]);
-  const [dragOverIdx, setDragOverIdx] = useState(null);
+  /** Index systémové složky, nebo klíč „custom_into_…“ / „custom_before_…“ / „root_custom“ */
+  const [dragOverIdx, setDragOverIdx] = useState<number | string | null>(null);
   const [appVersion, setAppVersion] = useState('');
 
   useEffect(() => {
     getVersion().then(setAppVersion).catch(() => {});
   }, []);
 
-  const [collapsedFolders, setCollapsedFolders] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('zazijvr_collapsed_folders') || '[]')); }
-    catch(e) { return new Set(); }
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(() => {
+    try { return new Set<string>(JSON.parse(localStorage.getItem('zazijvr_collapsed_folders') || '[]')); }
+    catch { return new Set<string>(); }
   });
 
-  const toggleCollapse = (e, folderName) => {
+  const toggleCollapse = (e: MouseEvent, folderName: string) => {
     e.stopPropagation();
     setCollapsedFolders(prev => {
       const next = new Set(prev);
@@ -50,8 +79,8 @@ export default function Sidebar({
   };
 
   useEffect(() => {
-    const handleAutoExpand = (e) => {
-      const targetPath = e.detail;
+    const handleAutoExpand = (e: Event) => {
+      const targetPath = (e as CustomEvent<string>).detail;
       setCollapsedFolders(prev => {
         if (!prev.has(targetPath)) return prev;
         const next = new Set(prev);
@@ -64,8 +93,8 @@ export default function Sidebar({
     return () => window.removeEventListener('zazijvr_expand_folder', handleAutoExpand);
   }, []);
 
-  const navScrollRef = React.useRef(null);
-  const handleNavDragOver = (e) => {
+  const navScrollRef = useRef<HTMLElement>(null);
+  const handleNavDragOver = (e: DragEvent) => {
     e.preventDefault();
     if (!navScrollRef.current) return;
     const { top, bottom } = navScrollRef.current.getBoundingClientRect();
@@ -77,23 +106,23 @@ export default function Sidebar({
     }
   };
   
-  const [specialCals, setSpecialCals] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('zazijvr_special_calendars')) || { cz_holidays: false }; }
-    catch(e) { return { cz_holidays: false }; }
+  const [specialCals, setSpecialCals] = useState<{ cz_holidays: boolean }>(() => {
+    try { return JSON.parse(localStorage.getItem('zazijvr_special_calendars') || 'null') || { cz_holidays: false }; }
+    catch { return { cz_holidays: false }; }
   });
 
   useEffect(() => {
     const saved = localStorage.getItem('zazijvr_folders');
     if (saved) {
-      try { setFolders(JSON.parse(saved)); } catch (e) {}
+      try { setFolders(JSON.parse(saved)); } catch { /* poškozené pořadí složek – zůstane výchozí */ }
     }
   }, []);
 
-  const handleDragStartFolder = (e, index) => {
+  const handleDragStartFolder = (e: DragEvent, index: number) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'FOLDER', index }));
   };
 
-  const handleDragOver = (e, idx) => {
+  const handleDragOver = (e: DragEvent, idx: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverIdx(idx);
@@ -103,13 +132,13 @@ export default function Sidebar({
     setDragOverIdx(null);
   };
 
-  const handleDrop = (e, dropIndex, targetLabel) => {
+  const handleDrop = (e: DragEvent, dropIndex: number, targetLabel: string | null) => {
     e.preventDefault();
     setDragOverIdx(null);
     try {
       const dataStr = e.dataTransfer.getData('application/json');
       if (!dataStr) return;
-      const data = JSON.parse(dataStr);
+      const data = JSON.parse(dataStr) as DragPayload;
       
       if (data.type === 'FOLDER') {
         const sourceIndex = data.index;
@@ -124,18 +153,18 @@ export default function Sidebar({
            onMoveCustomFolder(data.id, data.name, targetLabel);
         }
       } else if (data.type === 'EMAIL') {
-        if (data.sourceLabel !== targetLabel && onMoveEmail) {
+        if (targetLabel && data.sourceLabel !== targetLabel && onMoveEmail) {
            onMoveEmail([{ id: data.id, sourceLabel: data.sourceLabel, targetLabel, fullObj: data.emailData }]);
         }
       } else if (data.type === 'EMAIL_MULTI') {
-        if (onMoveEmail) {
+        if (targetLabel && onMoveEmail) {
           const moves = data.items
             .filter(item => item.sourceLabel !== targetLabel)
             .map(item => ({ id: item.id, sourceLabel: item.sourceLabel, targetLabel, fullObj: item.emailData }));
           if (moves.length > 0) onMoveEmail(moves);
         }
       }
-    } catch(e) {}
+    } catch { /* přetažené něco, co není z aplikace */ }
   };  return (
     <div className="relative min-w-[16rem] w-max max-w-[26rem] bg-[#061026] md:bg-[#0a1630] backdrop-blur-3xl md:backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col pb-4 pt-[calc(1rem+env(safe-area-inset-top,2rem))] md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
       <div className="flex justify-center w-full px-4 mb-4 md:mb-8">
@@ -302,7 +331,7 @@ export default function Sidebar({
                   const isCollapsed = collapsedFolders.has(folder.name);
                   
                   return (
-                    <React.Fragment key={folder.id}>
+                    <Fragment key={folder.id}>
                       {isDragOverBefore && (
                         <div 
                            className="h-1 bg-[#061026] border border-[#00f3ff] rounded-full my-1 z-30 transition-all relative overflow-hidden"
@@ -380,7 +409,7 @@ export default function Sidebar({
                       </span>
                     )}
                   </div>
-                  </React.Fragment>
+                  </Fragment>
                 );
               });
             })()}

@@ -1,10 +1,32 @@
-import React from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { EventForm, RecurrenceFreq, RecurrenceRule } from '../../../types/calendar';
 import { createPortal } from 'react-dom';
 import { X, MapPin, Loader2, Bell } from 'lucide-react';
 import DatePicker from '../../../components/DatePicker';
 import TimePicker from '../../../components/TimePicker';
 import RichTextEditor from '../../../components/RichTextEditor';
 import AutofillInput from '../../../components/AutofillInput';
+
+interface EventModalProps {
+  isCreateModalOpen: boolean;
+  handleAttemptCloseCreateModal: () => void;
+  /** null = nová událost */
+  editEventId: string | null;
+  newEventForm: EventForm;
+  setNewEventForm: Dispatch<SetStateAction<EventForm>>;
+  handleCreateEvent: () => void;
+  isCreatingEvent: boolean;
+  userEmail?: string;
+}
+
+const ALERT_OPTIONS: { label: string; value: EventForm['alertMinutes'] }[] = [
+  { label: 'Výchozí (Google)', value: 'default' },
+  { label: 'Žádné', value: null },
+  { label: '10 min', value: 10 },
+  { label: '30 min', value: 30 },
+  { label: '1 hod', value: 60 },
+  { label: '1 den', value: 1440 },
+];
 
 export default function EventModal({
   isCreateModalOpen,
@@ -14,8 +36,8 @@ export default function EventModal({
   setNewEventForm,
   handleCreateEvent,
   isCreatingEvent,
-  userEmail
-}) {
+  userEmail,
+}: EventModalProps) {
   if (!isCreateModalOpen) return null;
     return createPortal(
       <>
@@ -62,7 +84,7 @@ export default function EventModal({
                   <input 
                     type="text" 
                     value={newEventForm.title}
-                    onChange={e => setNewEventForm(prev => ({...prev, title: e.target.value}))}
+                    onChange={e => setNewEventForm((prev: EventForm) => ({...prev, title: e.target.value}))}
                     className="w-full bg-[#020817]/50 border border-[#00f3ff]/40 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00f3ff] shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)_inset] transition-all" 
                     placeholder=""
                     autoFocus
@@ -78,9 +100,9 @@ export default function EventModal({
                        const newStart = new Date(val);
                        const currentEnd = new Date(newEventForm.endDate);
                        if (newStart > currentEnd) {
-                         setNewEventForm(prev => ({...prev, startDate: val, endDate: val}));
+                         setNewEventForm((prev: EventForm) => ({...prev, startDate: val, endDate: val}));
                        } else {
-                         setNewEventForm(prev => ({...prev, startDate: val}));
+                         setNewEventForm((prev: EventForm) => ({...prev, startDate: val}));
                        }
                      }}
                    />
@@ -94,9 +116,9 @@ export default function EventModal({
                        const newEnd = new Date(val);
                        const currentStart = new Date(newEventForm.startDate);
                        if (newEnd < currentStart) {
-                         setNewEventForm(prev => ({...prev, startDate: val, endDate: val}));
+                         setNewEventForm((prev: EventForm) => ({...prev, startDate: val, endDate: val}));
                        } else {
-                         setNewEventForm(prev => ({...prev, endDate: val}));
+                         setNewEventForm((prev: EventForm) => ({...prev, endDate: val}));
                        }
                      }}
                    />
@@ -105,7 +127,7 @@ export default function EventModal({
 
                <div 
                  className="flex items-center gap-3 cursor-pointer group w-fit select-none"
-                 onClick={() => setNewEventForm(prev => ({...prev, allDay: !prev.allDay}))}
+                 onClick={() => setNewEventForm((prev: EventForm) => ({...prev, allDay: !prev.allDay}))}
                >
                   <div className={`w-5 h-5 flex items-center justify-center border rounded transition-all shadow-[0_0_10px_rgba(0,243,255,0.2)] ${newEventForm.allDay ? 'bg-[#00f3ff]/20 border-[#00f3ff] text-[#00f3ff] shadow-[0_0_15px_rgba(0,243,255,0.4)]' : 'bg-[#020817]/50 border-[#00f3ff]/40 text-transparent'}`}>
                      <span className="text-[14px] font-black leading-none pb-[2px]">{newEventForm.allDay ? '✓' : ''}</span>
@@ -119,7 +141,7 @@ export default function EventModal({
                      <TimePicker 
                        label="OD"
                        value={newEventForm.startTime}
-                       onChange={val => setNewEventForm(prev => ({...prev, startTime: val}))}
+                       onChange={val => setNewEventForm((prev: EventForm) => ({...prev, startTime: val}))}
                      />
                    </div>
                    <div className="flex-1">
@@ -127,7 +149,7 @@ export default function EventModal({
                        label="DO"
                        align="right"
                        value={newEventForm.endTime}
-                       onChange={val => setNewEventForm(prev => ({...prev, endTime: val}))}
+                       onChange={val => setNewEventForm((prev: EventForm) => ({...prev, endTime: val}))}
                      />
                    </div>
                  </div>
@@ -136,18 +158,11 @@ export default function EventModal({
                <div className="flex flex-col relative z-30">
                  <label className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest mb-1.5 block">Upozornění</label>
                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { label: 'Výchozí (Google)', value: 'default' },
-                      { label: 'Žádné', value: null },
-                      { label: '10 min', value: 10 },
-                      { label: '30 min', value: 30 },
-                      { label: '1 hod', value: 60 },
-                      { label: '1 den', value: 1440 }
-                    ].map(opt => (
+                    {ALERT_OPTIONS.map(opt => (
                        <button 
                          key={opt.label}
                          type="button"
-                         onClick={() => setNewEventForm(prev => ({...prev, alertMinutes: opt.value}))}
+                         onClick={() => setNewEventForm((prev: EventForm) => ({...prev, alertMinutes: opt.value}))}
                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border uppercase tracking-wider outline-none ${
                             newEventForm.alertMinutes === opt.value 
                               ? 'bg-[#00f3ff]/20 text-[#00f3ff] border-[#00f3ff] shadow-[0_0_10px_rgba(0,243,255,0.4)]'
@@ -161,7 +176,7 @@ export default function EventModal({
                       type="button"
                       onClick={() => {
                         if (['default', null, 10, 30, 60, 1440].includes(newEventForm.alertMinutes)) {
-                           setNewEventForm(prev => ({...prev, alertMinutes: 5}));
+                           setNewEventForm((prev: EventForm) => ({...prev, alertMinutes: 5}));
                         }
                       }}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border uppercase tracking-wider outline-none ${
@@ -182,7 +197,7 @@ export default function EventModal({
                     const customUnit = absMinutes >= 1440 && absMinutes % 1440 === 0 ? 1440 : 
                                        absMinutes >= 60 && absMinutes % 60 === 0 ? 60 : 1;
                     
-                    const customVal = newEventForm.alertMinutes < 0 ? '' : (absMinutes / customUnit);
+                    const customVal = typeof newEventForm.alertMinutes === 'number' && newEventForm.alertMinutes < 0 ? '' : (absMinutes / customUnit);
 
                     return (
                        <div className="flex flex-col md:flex-row gap-4 md:items-center mt-3 bg-gradient-to-r from-[#00f3ff]/10 to-[#020817]/40 border border-[#00f3ff]/20 border-l-[3px] border-l-[#00f3ff] py-3 px-5 rounded-r-xl rounded-l-sm shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] w-fit animate-in fade-in slide-in-from-top-2">
@@ -195,18 +210,18 @@ export default function EventModal({
                              value={customVal !== '' ? customVal : ''}
                              onChange={(e) => {
                                 if (e.target.value === '') {
-                                   setNewEventForm(prev => ({...prev, alertMinutes: -1 * customUnit}));
+                                   setNewEventForm((prev: EventForm) => ({...prev, alertMinutes: -1 * customUnit}));
                                    return;
                                 }
                                 let v = parseInt(e.target.value);
                                 if (!isNaN(v)) {
                                    v = Math.max(1, v);
-                                   setNewEventForm(prev => ({...prev, alertMinutes: v * customUnit}));
+                                   setNewEventForm((prev: EventForm) => ({...prev, alertMinutes: v * customUnit}));
                                 }
                              }}
                              onBlur={(e) => {
                                 if (e.target.value === '') {
-                                   setNewEventForm(prev => ({...prev, alertMinutes: 1 * customUnit}));
+                                   setNewEventForm((prev: EventForm) => ({...prev, alertMinutes: 1 * customUnit}));
                                 }
                              }}
                              className="w-[3.5rem] bg-transparent border-b-2 border-[#00f3ff]/25 hover:border-[#00f3ff]/50 focus:border-[#00f3ff] text-[#00f3ff] px-1 py-1 focus:outline-none focus:shadow-[0_4px_10px_-4px_rgba(0,243,255,0.5)] transition-all text-xl font-black text-center drop-shadow-[0_0_8px_rgba(0,243,255,0.6)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -218,7 +233,7 @@ export default function EventModal({
                              <button
                                key={u.l}
                                type="button"
-                               onClick={() => setNewEventForm(prev => ({...prev, alertMinutes: (customVal || 1) * u.v}))}
+                               onClick={() => setNewEventForm((prev: EventForm) => ({...prev, alertMinutes: (customVal || 1) * u.v}))}
                                className={`px-4 py-2 text-[10px] font-bold transition-all uppercase tracking-widest ${
                                  customUnit === u.v 
                                    ? 'bg-[#00f3ff]/30 text-white shadow-[inset_0_0_12px_rgba(0,243,255,0.4)]' 
@@ -239,17 +254,17 @@ export default function EventModal({
                  <label className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest mb-1.5 block">Opakování</label>
                  <div className="flex flex-wrap gap-2">
                     {[
-                      { label: 'Neopakovat', value: 'NONE' },
-                      { label: 'Denně', value: 'DAILY' },
-                      { label: 'Týdně', value: 'WEEKLY' },
-                      { label: 'Měsíčně', value: 'MONTHLY' },
-                      { label: 'Ročně', value: 'YEARLY' },
-                      { label: 'Vlastní', value: 'CUSTOM' }
-                    ].map(opt => (
+                      { label: 'Neopakovat', value: 'NONE' as RecurrenceRule },
+                      { label: 'Denně', value: 'DAILY' as RecurrenceRule },
+                      { label: 'Týdně', value: 'WEEKLY' as RecurrenceRule },
+                      { label: 'Měsíčně', value: 'MONTHLY' as RecurrenceRule },
+                      { label: 'Ročně', value: 'YEARLY' as RecurrenceRule },
+                      { label: 'Vlastní', value: 'CUSTOM' as RecurrenceRule }
+                    ].map((opt) => (
                        <button
                          key={opt.value}
                          type="button"
-                         onClick={() => setNewEventForm(prev => ({...prev, recurrenceRule: opt.value}))}
+                         onClick={() => setNewEventForm((prev: EventForm) => ({...prev, recurrenceRule: opt.value}))}
                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border uppercase tracking-wider outline-none ${
                             newEventForm.recurrenceRule === opt.value 
                               ? 'bg-[#00f3ff]/20 text-[#00f3ff] border-[#00f3ff] shadow-[0_0_10px_rgba(0,243,255,0.4)]'
@@ -273,25 +288,25 @@ export default function EventModal({
                           onChange={(e) => {
                              let v = parseInt(e.target.value);
                              if (!isNaN(v) && v > 0) {
-                                setNewEventForm(prev => ({...prev, recurrenceInterval: v}));
+                                setNewEventForm((prev: EventForm) => ({...prev, recurrenceInterval: v}));
                              } else if (e.target.value === '') {
-                                setNewEventForm(prev => ({...prev, recurrenceInterval: ''}));
+                                setNewEventForm((prev: EventForm) => ({...prev, recurrenceInterval: ''}));
                              }
                           }}
                           onBlur={(e) => {
-                             if (e.target.value === '' || e.target.value <= 0) {
-                                setNewEventForm(prev => ({...prev, recurrenceInterval: 1}));
+                             if (e.target.value === '' || Number(e.target.value) <= 0) {
+                                setNewEventForm((prev: EventForm) => ({...prev, recurrenceInterval: 1}));
                              }
                           }}
                           className="w-[3.5rem] bg-transparent border-b-2 border-[#00f3ff]/25 hover:border-[#00f3ff]/50 focus:border-[#00f3ff] text-[#00f3ff] px-1 py-1 focus:outline-none focus:shadow-[0_4px_10px_-4px_rgba(0,243,255,0.5)] transition-all text-xl font-black text-center drop-shadow-[0_0_8px_rgba(0,243,255,0.6)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
 
                         <div className="flex items-center overflow-hidden rounded-lg border border-[#00f3ff]/40 shadow-[0_0_15px_rgba(0,243,255,0.1)]">
-                          {[ {l: 'DNY', v: 'DAILY'}, {l: 'TÝDNY', v: 'WEEKLY'}, {l: 'MĚSÍCE', v: 'MONTHLY'}, {l: 'ROKY', v: 'YEARLY'} ].map((u, i) => (
+                          {[ {l: 'DNY', v: 'DAILY' as RecurrenceFreq}, {l: 'TÝDNY', v: 'WEEKLY' as RecurrenceFreq}, {l: 'MĚSÍCE', v: 'MONTHLY' as RecurrenceFreq}, {l: 'ROKY', v: 'YEARLY' as RecurrenceFreq} ].map((u, i) => (
                             <button
                               key={u.v}
                               type="button"
-                              onClick={() => setNewEventForm(prev => ({...prev, customFreq: u.v}))}
+                              onClick={() => setNewEventForm((prev: EventForm) => ({...prev, customFreq: u.v}))}
                               className={`px-4 py-2 text-[10px] font-bold transition-all uppercase tracking-widest ${
                                 newEventForm.customFreq === u.v 
                                   ? 'bg-[#00f3ff]/30 text-white shadow-[inset_0_0_12px_rgba(0,243,255,0.4)]' 
@@ -311,7 +326,7 @@ export default function EventModal({
                           <div className="flex items-center overflow-hidden rounded-lg border border-[#00f3ff]/40 shadow-[0_0_15px_rgba(0,243,255,0.1)]">
                             <button
                                type="button"
-                               onClick={() => setNewEventForm(prev => ({...prev, recurrenceUntil: ''}))}
+                               onClick={() => setNewEventForm((prev: EventForm) => ({...prev, recurrenceUntil: ''}))}
                                className={`px-4 py-2 text-[10px] font-bold transition-all uppercase tracking-widest ${
                                   !newEventForm.recurrenceUntil ? 'bg-[#00f3ff]/30 text-white shadow-[inset_0_0_12px_rgba(0,243,255,0.4)]' : 'bg-[#020817]/60 text-slate-500 hover:bg-[#020817]/80 hover:text-[#00f3ff]'
                                }`}
@@ -320,7 +335,7 @@ export default function EventModal({
                             </button>
                             <button
                                type="button"
-                               onClick={() => !newEventForm.recurrenceUntil && setNewEventForm(prev => ({...prev, recurrenceUntil: prev.startDate}))}
+                               onClick={() => !newEventForm.recurrenceUntil && setNewEventForm((prev: EventForm) => ({...prev, recurrenceUntil: prev.startDate}))}
                                className={`border-l border-[#00f3ff]/30 px-4 py-2 text-[10px] font-bold transition-all uppercase tracking-widest ${
                                   newEventForm.recurrenceUntil ? 'bg-[#00f3ff]/30 text-white shadow-[inset_0_0_12px_rgba(0,243,255,0.4)]' : 'bg-[#020817]/60 text-slate-500 hover:bg-[#020817]/80 hover:text-[#00f3ff]'
                                }`}
@@ -333,7 +348,7 @@ export default function EventModal({
                             <input 
                                type="date"
                                value={newEventForm.recurrenceUntil}
-                               onChange={(e) => setNewEventForm(prev => ({...prev, recurrenceUntil: e.target.value}))}
+                               onChange={(e) => setNewEventForm((prev: EventForm) => ({...prev, recurrenceUntil: e.target.value}))}
                                className="bg-[#020817]/50 border border-[#00f3ff]/40 hover:border-[#00f3ff] rounded-lg px-3 py-1.5 text-[#00f3ff] font-bold focus:text-white focus:outline-none focus:shadow-[0_0_10px_rgba(0,243,255,0.3)] transition-all font-mono text-xs w-[130px] [color-scheme:dark] animate-in slide-in-from-left-2 fade-in"
                             />
                           )}
@@ -347,7 +362,7 @@ export default function EventModal({
                  <AutofillInput 
                    label="Hosté (e-maily oddělené čárkou)"
                    value={newEventForm.attendees || ''}
-                   onChange={e => setNewEventForm(prev => ({...prev, attendees: e.target.value}))}
+                   onChange={e => setNewEventForm((prev: EventForm) => ({...prev, attendees: e.target.value}))}
                    className="w-full bg-[#020817]/50 border border-[#00f3ff]/40 rounded-xl px-4 py-2 text-sm text-[#00f3ff] font-mono focus:outline-none focus:border-[#00f3ff] shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)_inset] transition-all" 
                    placeholder=""
                    userEmail={userEmail}
@@ -358,7 +373,8 @@ export default function EventModal({
                  <label className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest mb-1.5 block">Popis</label>
                  <RichTextEditor 
                    value={newEventForm.description} 
-                   onChange={(desc) => setNewEventForm(prev => ({...prev, description: desc}))} 
+                   onChange={(desc: string) => setNewEventForm((prev: EventForm) => ({...prev, description: desc}))} 
+                   placeholder={undefined}
                    className="flex-1 w-full"
                    hideImageUpload={true}
                  />
