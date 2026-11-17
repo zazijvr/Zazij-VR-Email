@@ -436,30 +436,30 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   };
 
   return (
-    <div ref={modalRef} className="fixed inset-0 bg-[#061026] z-[99999] flex items-center justify-center p-0 pt-[env(safe-area-inset-top)] sm:p-6 lg:p-10">
-      <div className="bg-[#061026] sm:border-[2px] border-[#00f3ff]/40 sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
+    <div ref={modalRef} className="fixed inset-0 bg-navy z-[99999] flex items-center justify-center p-0 pt-[env(safe-area-inset-top)] sm:p-6 lg:p-10">
+      <div className="bg-navy sm:border-[2px] border-neon-blue/40 sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
         
         {/* Dekorační linky nahoře */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00f3ff] to-transparent opacity-50"></div>
-        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1/4 h-0.5 bg-[#00f3ff] shadow-[0_0_10px_#00f3ff]"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neon-blue to-transparent opacity-50"></div>
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1/4 h-0.5 bg-neon-blue shadow-[0_0_10px_#00f3ff]"></div>
 
-        <div className="flex justify-between items-center p-6 border-b border-[#00f3ff]/10 bg-[#0a1630]">
+        <div className="flex justify-between items-center p-6 border-b border-neon-blue/10 bg-navy-card">
           <h2 className="text-2xl font-black tracking-[0.2em] text-white flex items-center gap-3">
             <img src="/vr_drafts.svg" className="w-8 h-8 object-contain" alt="VR Mascot" draggable="false" />
             {config?.type === 'template' ? 'EDITOR ŠABLONY' : config?.type === 'reply' || config?.type === 'replyAll' ? 'ODPOVĚĎ' : config?.type === 'forward' ? 'PŘEPOSLÁNÍ' : 'NOVÁ ZPRÁVA'}
           </h2>
           <button
             onClick={handleAttemptClose}
-            className="p-2 bg-white/5 hover:bg-[#ef4444]/20 text-slate-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
+            className="p-2 bg-white/5 hover:bg-danger/20 text-slate-400 hover:text-danger rounded-full transition-all border border-transparent hover:border-danger/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center"
           >
             <X size={22} strokeWidth={2} />
           </button>
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden border-b border-[#00f3ff]/10">
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 flex flex-col gap-4 bg-[#061026]">
+        <div className="flex-1 flex flex-col overflow-hidden border-b border-neon-blue/10">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 flex flex-col gap-4 bg-navy">
             {errorMsg && (
-              <div className="p-4 bg-[#ef4444]/10 border border-[#ef4444]/40 rounded-xl text-[#ef4444] flex items-center gap-3 font-semibold">
+              <div className="p-4 bg-danger/10 border border-danger/40 rounded-xl text-danger flex items-center gap-3 font-semibold">
                 <AlertTriangle className="shrink-0" />
                 {errorMsg}
               </div>
@@ -467,13 +467,13 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   
             {config?.type === 'template' && (
               <div className="flex flex-col gap-2 relative">
-                <label className="text-[10px] text-[#00f3ff] uppercase tracking-widest font-bold ml-1 opacity-70">Název šablony (pro zobrazení v menu)</label>
+                <label className="text-[10px] text-neon-blue uppercase tracking-widest font-bold ml-1 opacity-70">Název šablony (pro zobrazení v menu)</label>
                 <input 
                   type="text" 
                   value={templateTitle} 
                   onChange={e => setTemplateTitle(e.target.value)}
                   placeholder="Např. Formální pozvánka"
-                  className="w-full bg-[#061026]/50 border border-[#f72585]/60 shadow-[0_0_10px_rgba(247,37,133,0.1)] rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#f72585] focus:shadow-[0_0_15px_rgba(247,37,133,0.3)] focus:bg-[#061026] transition-all font-bold"
+                  className="w-full bg-navy/50 border border-neon-purple/60 shadow-[0_0_10px_rgba(247,37,133,0.1)] rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-neon-purple focus:shadow-[0_0_15px_rgba(247,37,133,0.3)] focus:bg-navy transition-all font-bold"
                 />
               </div>
             )}
@@ -486,13 +486,13 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                     value={to} 
                     onChange={e => setTo(e.target.value)}
                     userEmail={userEmail}
-                    className="w-full bg-[#061026]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#061026] font-mono"
+                    className="w-full bg-navy/50 border border-neon-blue/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-neon-blue/60 focus:bg-navy font-mono"
                     headerRight={
                       <>
                         {config?.type === 'reply' && !hasUpgradedToReplyAll && (config?.originalCc || config?.originalTo) && (
                           <button 
                             onClick={(e) => { e.preventDefault(); handleUpgradeToReplyAll(); }}
-                            className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#00f3ff]/60 hover:text-yellow-400 p-0.5 transition-colors uppercase font-bold tracking-widest"
+                            className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-neon-blue/60 hover:text-yellow-400 p-0.5 transition-colors uppercase font-bold tracking-widest"
                             title="Odpovědět všem"
                           >
                             <ReplyAll size={12} /> <span className="hidden sm:inline">VŠEM</span>
@@ -501,7 +501,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                         {!showCc && (
                           <button 
                             onClick={(e) => { e.preventDefault(); setShowCc(true); }}
-                            className="text-[9px] sm:text-[10px] uppercase font-bold text-[#00f3ff]/60 hover:text-[#00f3ff] px-1.5 py-0.5 bg-[#061026]/80 border border-[#00f3ff]/20 rounded transition-colors tracking-widest"
+                            className="text-[9px] sm:text-[10px] uppercase font-bold text-neon-blue/60 hover:text-neon-blue px-1.5 py-0.5 bg-navy/80 border border-neon-blue/20 rounded transition-colors tracking-widest"
                             title="Přidat Kopii (CC)"
                           >
                             + CC
@@ -518,31 +518,31 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                     value={cc} 
                     onChange={e => setCc(e.target.value)}
                     userEmail={userEmail}
-                    className="w-full bg-[#061026]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#061026] font-mono"
+                    className="w-full bg-navy/50 border border-neon-blue/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-neon-blue/60 focus:bg-navy font-mono"
                   />
                 )}
               </div>
             )}
   
             <div className="flex flex-col gap-2 relative">
-              <label className="text-[10px] text-[#00f3ff] uppercase tracking-widest font-bold ml-1 opacity-70">Předmět</label>
+              <label className="text-[10px] text-neon-blue uppercase tracking-widest font-bold ml-1 opacity-70">Předmět</label>
               <input 
                 type="text" 
                 value={subject} 
                 onChange={e => setSubject(e.target.value)}
-                className="w-full bg-[#061026]/50 border border-[#00f3ff]/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#00f3ff]/60 focus:bg-[#061026]  transition-all font-bold tracking-wide"
+                className="w-full bg-navy/50 border border-neon-blue/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-neon-blue/60 focus:bg-navy  transition-all font-bold tracking-wide"
               />
             </div>
   
             <div className="flex flex-col gap-2 relative flex-1 min-h-[250px] lg:min-h-[350px]">
-              <label className="text-[10px] text-[#00f3ff] uppercase tracking-widest font-bold ml-1 opacity-70">Zpráva</label>
+              <label className="text-[10px] text-neon-blue uppercase tracking-widest font-bold ml-1 opacity-70">Zpráva</label>
               <div className="relative w-full h-full flex-1 flex flex-col">
                 <RichTextEditor
                    key={bodyVersion}
                    value={body}
                    onChange={handleBodyChange}
                    placeholder="Napište svou zprávu..."
-                   className="flex-1 w-full absolute inset-0 bg-[#061026]/50 border-[#00f3ff]/20 "
+                   className="flex-1 w-full absolute inset-0 bg-navy/50 border-neon-blue/20 "
                 />
               </div>
             </div>
@@ -551,15 +551,15 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 bg-[#0a1630] flex flex-col gap-4 shrink-0 border-t border-[#00f3ff]/10 z-10 relative">
+        <div className="p-4 sm:p-6 bg-navy-card flex flex-col gap-4 shrink-0 border-t border-neon-blue/10 z-10 relative">
           
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-2 w-full">
               {attachments.map((att, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-[#00f3ff]/10 border border-[#00f3ff]/40 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgba(0,243,255,0.1)] transition-all">
-                   <File size={14} className="text-[#00f3ff]" />
+                <div key={idx} className="flex items-center gap-2 bg-neon-blue/10 border border-neon-blue/40 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgba(0,243,255,0.1)] transition-all">
+                   <File size={14} className="text-neon-blue" />
                    <span className="text-white text-xs font-mono max-w-[200px] truncate">{att.name}</span>
-                   <button onClick={() => removeAttachment(idx)} className="ml-1 text-[#ef4444] hover:text-white transition-colors" title="Odebrat přílohu">
+                   <button onClick={() => removeAttachment(idx)} className="ml-1 text-danger hover:text-white transition-colors" title="Odebrat přílohu">
                       <Trash2 size={14} />
                    </button>
                 </div>
@@ -571,7 +571,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto relative">
             <button
                onClick={() => fileInputRef.current?.click()}
-               className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-[#00f3ff]/80 rounded-xl text-slate-400 hover:text-[#00f3ff] transition-all"
+               className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-neon-blue/80 rounded-xl text-slate-400 hover:text-neon-blue transition-all"
                title="Příloha"
             >
                <Paperclip size={18} className="group-hover:scale-110 transition-transform" />
@@ -588,17 +588,17 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             <div className="relative" ref={templateMenuRef}>
               <button
                  onClick={() => {setShowTemplateMenu(!showTemplateMenu); setShowSignatureMenu(false);}}
-                 className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-[#00f3ff]/80 rounded-xl text-slate-400 hover:text-[#00f3ff] transition-all"
+                 className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-neon-blue/80 rounded-xl text-slate-400 hover:text-neon-blue transition-all"
                  title="Šablony"
               >
                  <FileText size={18} className="group-hover:scale-110 transition-transform" />
               </button>
               {showTemplateMenu && (
-                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-[#020817]/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
-                   <div className="p-2 border-b border-[#00f3ff]/[0.15] text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vybrat Šablonu</div>
+                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-navy-deep/90 border border-neon-blue/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
+                   <div className="p-2 border-b border-neon-blue/[0.15] text-[10px] uppercase font-bold text-neon-blue/70 tracking-widest text-center bg-neon-blue/5">Vybrat Šablonu</div>
                    <button 
                      onClick={(e) => { e.preventDefault(); handleSaveCurrentAsTemplate(); }}
-                     className="w-full px-3 py-2.5 bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 text-[#00f3ff] font-bold text-xs flex items-center justify-center gap-2 border-b border-[#00f3ff]/20 transition-colors"
+                     className="w-full px-3 py-2.5 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue font-bold text-xs flex items-center justify-center gap-2 border-b border-neon-blue/20 transition-colors"
                    >
                      <Save size={14} /> ULOŽIT JAKO ŠABLONU
                    </button>
@@ -614,7 +614,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                              replaceBody(t.body);
                              setShowTemplateMenu(false);
                            }}
-                           className="p-3 hover:bg-[#00f3ff]/20 text-slate-300 hover:text-white cursor-pointer transition-colors border-b border-[#00f3ff]/10 last:border-0 truncate text-sm"
+                           className="p-3 hover:bg-neon-blue/20 text-slate-300 hover:text-white cursor-pointer transition-colors border-b border-neon-blue/10 last:border-0 truncate text-sm"
                          >
                            {t.title}
                          </div>
@@ -628,14 +628,14 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
             <div className="relative" ref={signatureMenuRef}>
               <button
                  onClick={() => {setShowSignatureMenu(!showSignatureMenu); setShowTemplateMenu(false);}}
-                 className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-[#00f3ff]/80 rounded-xl text-slate-400 hover:text-[#00f3ff] transition-all"
+                 className="group flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-600 hover:border-neon-blue/80 rounded-xl text-slate-400 hover:text-neon-blue transition-all"
                  title="Podpisy"
               >
                  <PenTool size={18} className="group-hover:scale-110 transition-transform" />
               </button>
               {showSignatureMenu && (
-                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-[#020817]/90 border border-[#00f3ff]/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
-                   <div className="p-2 border-b border-[#00f3ff]/[0.15] text-[10px] uppercase font-bold text-[#00f3ff]/70 tracking-widest text-center bg-[#00f3ff]/5">Vložit Podpis</div>
+                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-navy-deep/90 border border-neon-blue/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
+                   <div className="p-2 border-b border-neon-blue/[0.15] text-[10px] uppercase font-bold text-neon-blue/70 tracking-widest text-center bg-neon-blue/5">Vložit Podpis</div>
                    {savedSignatures.length === 0 ? (
                      <div className="p-4 text-xs text-slate-500 text-center font-semibold">Zatím nemáte žádné podpisy.</div>
                    ) : (
@@ -649,7 +649,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                              replaceBody(prev + (prev ? '<br><br>' : '') + s.body);
                              setShowSignatureMenu(false);
                            }}
-                           className="p-3 hover:bg-[#00f3ff]/20 text-slate-300 hover:text-white cursor-pointer transition-colors border-b border-[#00f3ff]/10 last:border-0 text-sm"
+                           className="p-3 hover:bg-neon-blue/20 text-slate-300 hover:text-white cursor-pointer transition-colors border-b border-neon-blue/10 last:border-0 text-sm"
                          >
                            <div className="font-bold truncate">{s.title}</div>
                            <div className="text-[10px] text-slate-500 truncate mt-0.5">{s.body.replace(/<[^>]+>/g, '').substring(0, 30)}...</div>
@@ -667,12 +667,12 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
               <button 
                 onClick={handleSaveTemplate}
                 disabled={!templateTitle.trim()}
-                className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-[#00f3ff]/50 hover:border-[#00f3ff]/80 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-neon-blue/50 hover:border-neon-blue/80 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#00f3ff]/10 group-hover:from-[#00f3ff]/30 group-hover:to-[#00f3ff]/30 transition-all duration-300"></div>
-                <div className="relative z-10 w-full h-full bg-[#061026] rounded-lg py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all">
-                   <Save size={18} className="text-[#00f3ff] group-hover:scale-110 transition-transform" />
-                   <span className="font-black tracking-[0.1em] text-[#00f3ff] text-xs sm:text-sm group-hover:text-white transition-colors">ULOŽIT ŠABLONU</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-neon-blue/10 to-neon-blue/10 group-hover:from-neon-blue/30 group-hover:to-neon-blue/30 transition-all duration-300"></div>
+                <div className="relative z-10 w-full h-full bg-navy rounded-lg py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all">
+                   <Save size={18} className="text-neon-blue group-hover:scale-110 transition-transform" />
+                   <span className="font-black tracking-[0.1em] text-neon-blue text-xs sm:text-sm group-hover:text-white transition-colors">ULOŽIT ŠABLONU</span>
                 </div>
               </button>
             ) : (
@@ -680,10 +680,10 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 <button 
                   onClick={handleSaveDraft}
                   disabled={isSaving || isSending}
-                  className="group flex-1 sm:w-48 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-[#00f3ff]/[0.15] hover:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group flex-1 sm:w-48 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-neon-blue/[0.15] hover:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="absolute inset-0 bg-transparent group-hover:bg-white/5 transition-all duration-300"></div>
-                  <div className="relative z-10 w-full h-full bg-[#061026] rounded-lg py-3 px-2 flex items-center justify-center gap-2 transition-all">
+                  <div className="relative z-10 w-full h-full bg-navy rounded-lg py-3 px-2 flex items-center justify-center gap-2 transition-all">
                      {isSaving ? (
                         <div className="w-5 h-5 rounded-full border-[2px] border-slate-500 border-t-gray-300 animate-spin"></div>
                      ) : (
@@ -698,16 +698,16 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 <button 
                   onClick={handleSend}
                   disabled={isSending || isSaving}
-                  className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-[#00f3ff]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-neon-blue/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#00f3ff]/10 group-hover:from-[#00f3ff]/30 group-hover:to-[#00f3ff]/30 transition-all duration-300"></div>
-                  <div className="relative z-10 w-full h-full bg-[#061026] rounded-lg py-3 px-2 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,243,255,0.2)] group-hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all">
+                  <div className="absolute inset-0 bg-gradient-to-r from-neon-blue/10 to-neon-blue/10 group-hover:from-neon-blue/30 group-hover:to-neon-blue/30 transition-all duration-300"></div>
+                  <div className="relative z-10 w-full h-full bg-navy rounded-lg py-3 px-2 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,243,255,0.2)] group-hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all">
                      {isSending ? (
-                        <div className="w-5 h-5 rounded-full border-[2px] border-[#00f3ff]/30 border-t-[#00f3ff] animate-spin"></div>
+                        <div className="w-5 h-5 rounded-full border-[2px] border-neon-blue/30 border-t-neon-blue animate-spin"></div>
                      ) : (
-                        <Send size={18} className="text-[#00f3ff] group-hover:scale-110 transition-transform" />
+                        <Send size={18} className="text-neon-blue group-hover:scale-110 transition-transform" />
                      )}
-                     <span className="font-black tracking-widest text-[#00f3ff] text-xs sm:text-sm group-hover:text-white transition-colors">
+                     <span className="font-black tracking-widest text-neon-blue text-xs sm:text-sm group-hover:text-white transition-colors">
                        {isSending ? 'ODESÍLÁM' : 'ODESLAT'}
                      </span>
                   </div>
@@ -720,14 +720,14 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       
       </div>
         {showCloseWarning && (
-        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-[#020817]/60 backdrop-blur-sm p-4">
-          <div className="bg-[#061026] border border-[#00f3ff]/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-navy-deep/60 backdrop-blur-sm p-4">
+          <div className="bg-navy border border-neon-blue/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-white tracking-wide mb-2">Zahodit rozepsanou zprávu?</h3>
             <p className="text-slate-400 text-sm mb-6">Máte neuložené změny. Opravdu chcete okno zavřít a změny zahodit?</p>
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setShowCloseWarning(false)}
-                className="px-4 py-2 bg-transparent text-slate-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-[#00f3ff]/[0.15]"
+                className="px-4 py-2 bg-transparent text-slate-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-neon-blue/[0.15]"
               >
                 Zpět k úpravám
               </button>
@@ -743,8 +743,8 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       )}
 
       {showTemplateNamePrompt && (
-        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-[#020817]/60 backdrop-blur-sm p-4">
-          <div className="bg-[#061026] border border-[#00f3ff]/50 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute inset-0 z-[200] flex items-center justify-center bg-navy-deep/60 backdrop-blur-sm p-4">
+          <div className="bg-navy border border-neon-blue/50 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-white tracking-wide mb-2">Nová Šablona</h3>
             <p className="text-slate-400 text-sm mb-4">Zadejte název, pod kterým se má tento e-mail uložit do rychlých šablon.</p>
             <input 
@@ -757,19 +757,19 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 if (e.key === 'Escape') setShowTemplateNamePrompt(false);
               }}
               placeholder="Např. Reakce na projekt..."
-              className="w-full bg-[#061026] border border-[#00f3ff]/40 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-[#00f3ff] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all mb-6 font-bold"
+              className="w-full bg-navy border border-neon-blue/40 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-neon-blue focus:shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all mb-6 font-bold"
             />
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setShowTemplateNamePrompt(false)}
-                className="px-4 py-2 bg-transparent text-slate-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-[#00f3ff]/[0.15]"
+                className="px-4 py-2 bg-transparent text-slate-300 font-bold rounded-xl hover:bg-white/5 transition-colors border border-neon-blue/[0.15]"
               >
                 Zrušit
               </button>
               <button 
                 onClick={confirmSaveCurrentAsTemplate}
                 disabled={!newTemplateName.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-[#00f3ff]/20 text-[#00f3ff] hover:bg-[#00f3ff]/30 hover:shadow-[0_0_15px_rgba(0,243,255,0.3)] border border-[#00f3ff]/50 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 bg-neon-blue/20 text-neon-blue hover:bg-neon-blue/30 hover:shadow-[0_0_15px_rgba(0,243,255,0.3)] border border-neon-blue/50 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save size={16} /> Uložit
               </button>

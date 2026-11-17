@@ -135,7 +135,7 @@ export default function EmailListItem({
           {email.isUnread ? <MailOpen size={24}/> : <Mail size={24} />}
           <span className="tracking-widest uppercase text-[10px]">{email.isUnread ? 'Přečíst' : 'Nepřečteno'}</span>
         </div>
-        <div className={`flex items-center gap-2 text-[#ff3366] font-bold ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
+        <div className={`flex items-center gap-2 text-neon-red font-bold ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
           <span className="tracking-widest uppercase text-[10px]">Smazat</span>
           <Trash2 size={24} />
         </div>
@@ -194,16 +194,16 @@ export default function EmailListItem({
             }
           } 
         }}
-        className={`relative flex flex-col md:flex-row md:items-center px-4 py-4 md:py-3 rounded-xl cursor-pointer select-none border overflow-hidden ${email._newArrival ? 'animate-new-email ' : ''}${isKeyboardFocus && !isActiveRow ? 'md:bg-white/[0.08] md:border-[#00f3ff]/25 md:shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10 ' : ''}${isActiveRow
-            ? 'bg-gradient-to-r from-[#00f3ff]/20 to-[#00f3ff]/5 border-[#00f3ff] md:shadow-[0_0_20px_rgba(0,243,255,0.2)]'
+        className={`relative flex flex-col md:flex-row md:items-center px-4 py-4 md:py-3 rounded-xl cursor-pointer select-none border overflow-hidden ${email._newArrival ? 'animate-new-email ' : ''}${isKeyboardFocus && !isActiveRow ? 'md:bg-white/[0.08] md:border-neon-blue/25 md:shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10 ' : ''}${isActiveRow
+            ? 'bg-gradient-to-r from-neon-blue/20 to-neon-blue/5 border-neon-blue md:shadow-[0_0_20px_rgba(0,243,255,0.2)]'
             : email.isUnread
-              ? 'bg-[#0a1630] md:bg-transparent md:bg-gradient-to-r md:from-[#00f3ff]/10 md:to-transparent border-[#00f3ff]/30 md:hover:border-[#00f3ff]/60 shadow-[inset_3px_0_0_#00f3ff]'
-              : 'bg-[#0a1630] md:bg-white/[0.02] border-[#00f3ff]/10 md:hover:bg-white/[0.08] md:hover:border-[#00f3ff]/25 shadow-[0_4px_15px_rgba(0,0,0,0.5)] md:shadow-none'
+              ? 'bg-navy-card md:bg-transparent md:bg-gradient-to-r md:from-neon-blue/10 md:to-transparent border-neon-blue/30 md:hover:border-neon-blue/60 shadow-[inset_3px_0_0_#00f3ff]'
+              : 'bg-navy-card md:bg-white/[0.02] border-neon-blue/10 md:hover:bg-white/[0.08] md:hover:border-neon-blue/25 shadow-[0_4px_15px_rgba(0,0,0,0.5)] md:shadow-none'
           }`}
       >
         {/* Checkbox (Desktop only) */}
         <div 
-          className="hidden md:flex w-[40px] pr-2 justify-center items-center text-[#00f3ff] opacity-80 hover:opacity-100 transition-opacity z-10" 
+          className="hidden md:flex w-[40px] pr-2 justify-center items-center text-neon-blue opacity-80 hover:opacity-100 transition-opacity z-10" 
           onClick={(e) => toggleSelectEmail(email.id, e)}
         >
           {selectedMailIds.has(email.id) ? <CheckSquare size={18} /> : <Square size={18} className="opacity-40 group-hover:opacity-100" />}
@@ -215,30 +215,30 @@ export default function EmailListItem({
           className="md:hidden absolute left-2 top-1/2 flex-shrink-0 w-[46px] h-[46px] transition-transform duration-500 [transform-style:preserve-3d] z-10"
           style={{ transform: isMultiSelected ? 'translateY(-50%) rotateY(180deg)' : 'translateY(-50%) rotateY(0deg)' }}
         >
-          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-gradient-to-br from-[#00f3ff]/20 to-[#f72585]/20 border border-[#00f3ff]/40 shadow-[0_0_10px_rgba(0,243,255,0.2)] [backface-visibility:hidden]">
-            <span className="font-black text-xl text-[#00f3ff]">
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 border border-neon-blue/40 shadow-[0_0_10px_rgba(0,243,255,0.2)] [backface-visibility:hidden]">
+            <span className="font-black text-xl text-neon-blue">
                {getAvatarInitial(activeFolder === 'Odeslané' ? email.to : email.from)}
             </span>
           </div>
-          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[#00f3ff] shadow-[0_0_15px_rgba(0,243,255,0.6)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-neon-blue shadow-[0_0_15px_rgba(0,243,255,0.6)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
             <Check className="text-black" size={24} strokeWidth={4} />
           </div>
         </div>
 
         {/* Sender / Initial */}
         <div className="flex w-full md:w-[var(--col-from)] items-center mb-1 md:mb-0 shrink-0">
-          <div className={`font-bold truncate w-full md:pr-4 flex items-center gap-2 pl-[58px] md:pl-0 ${email.isUnread || isActiveRow ? 'text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-slate-200'}`}>
+          <div className={`font-bold truncate w-full md:pr-4 flex items-center gap-2 pl-[58px] md:pl-0 ${email.isUnread || isActiveRow ? 'text-neon-blue drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-slate-200'}`}>
             <div className="flex items-center gap-1.5 shrink-0">
               {email.isUnread && (
-                <span className="w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]" title="Nepřečteno"></span>
+                <span className="w-2 h-2 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff]" title="Nepřečteno"></span>
               )}
               {email.isStarred && (
-                <span className="w-2 h-2 rounded-full bg-[#f72585] shadow-[0_0_8px_#f72585]" title="Důležité"></span>
+                <span className="w-2 h-2 rounded-full bg-neon-purple shadow-[0_0_8px_#f72585]" title="Důležité"></span>
               )}
             </div>
             <span className="truncate">{activeFolder === 'Odeslané' ? email.to : email.from}</span>
-            <span className="md:hidden ml-auto flex-shrink-0 text-xs text-[#00f3ff]/60 font-normal flex items-center gap-1">
-              {email.hasAttachment && <Paperclip size={12} className={email.isUnread || isActiveRow ? 'text-[#00f3ff]' : 'text-[#00f3ff]/50'} />}
+            <span className="md:hidden ml-auto flex-shrink-0 text-xs text-neon-blue/60 font-normal flex items-center gap-1">
+              {email.hasAttachment && <Paperclip size={12} className={email.isUnread || isActiveRow ? 'text-neon-blue' : 'text-neon-blue/50'} />}
               {email.dateText && email.dateText !== 'Dnes' ? email.dateText : email.timeText}
             </span>
           </div>
@@ -253,7 +253,7 @@ export default function EmailListItem({
           </div>
           {email.snippet?.startsWith('↩️ ') ? (
             <div className="flex items-center gap-1.5 min-w-0 truncate mt-[1px]">
-               <Reply size={14} className="text-[#00f3ff] shrink-0 drop-shadow-[0_0_5px_rgba(0,243,255,0.6)]" />
+               <Reply size={14} className="text-neon-blue shrink-0 drop-shadow-[0_0_5px_rgba(0,243,255,0.6)]" />
                <span className="text-xs text-slate-500 truncate group-hover:text-slate-400 transition-colors">
                  {email.snippet.replace('↩️ ', '')}
                </span>
@@ -270,7 +270,7 @@ export default function EmailListItem({
           {email.sizeText}
         </div>
         <div
-          className={`hidden md:flex shrink-0 w-[var(--col-date)] items-center justify-end gap-1.5 whitespace-nowrap text-xs ${email.isUnread || isActiveRow ? 'text-[#00f3ff] font-bold' : 'text-slate-400'}`}
+          className={`hidden md:flex shrink-0 w-[var(--col-date)] items-center justify-end gap-1.5 whitespace-nowrap text-xs ${email.isUnread || isActiveRow ? 'text-neon-blue font-bold' : 'text-slate-400'}`}
           title={[email.dateText, email.timeText].filter(Boolean).join(' ')}
         >
           {email.hasAttachment && <Paperclip size={13} className="shrink-0 opacity-70" />}
@@ -278,10 +278,10 @@ export default function EmailListItem({
         </div>
 
         {/* Desktop Actions */}
-        <div className="hidden md:group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 items-center gap-0.5 px-1 py-0.5 rounded-lg bg-[#0d1b38] border border-[#00f3ff]/25 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+        <div className="hidden md:group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 items-center gap-0.5 px-1 py-0.5 rounded-lg bg-navy-light border border-neon-blue/25 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
           <button
             onClick={(e) => handleToggleRead(email.id, email.isUnread, e)}
-            className={`p-1.5 rounded-md transition-all ${email.isUnread ? 'hover:bg-[#00f3ff]/20 text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]' : 'hover:bg-white/10 text-slate-500 hover:text-white'}`}
+            className={`p-1.5 rounded-md transition-all ${email.isUnread ? 'hover:bg-neon-blue/20 text-neon-blue drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]' : 'hover:bg-white/10 text-slate-500 hover:text-white'}`}
             title={email.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
           >
             {email.isUnread ? <Mail size={16} /> : <MailOpen size={16} />}
@@ -290,7 +290,7 @@ export default function EmailListItem({
           {email.labelIds?.includes('DRAFT') ? (
             <button
               onClick={(e) => { e.stopPropagation(); if (typeof onDraftClick === 'function') onDraftClick(email.id); }}
-              className="p-1.5 rounded-md transition-all hover:bg-[#00f3ff]/20 text-[#00f3ff] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]"
+              className="p-1.5 rounded-md transition-all hover:bg-neon-blue/20 text-neon-blue drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]"
               title="Ihned upravit koncept"
             >
               <FileEdit size={16} />
@@ -298,16 +298,16 @@ export default function EmailListItem({
           ) : (
             <button
               onClick={(e) => handleToggleStar(email.id, email.isStarred, e)}
-              className={`flex items-center justify-center p-1.5 rounded-md transition-all ${email.isStarred ? 'hover:bg-[#f72585]/20' : 'hover:bg-[#f72585]/10'}`}
+              className={`flex items-center justify-center p-1.5 rounded-md transition-all ${email.isStarred ? 'hover:bg-neon-purple/20' : 'hover:bg-neon-purple/10'}`}
               title={email.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
             >
-              <div className={`w-3.5 h-3.5 rounded-full transition-all ${email.isStarred ? 'bg-[#f72585] shadow-[0_0_8px_#f72585]' : 'border-2 border-slate-500 group-hover:border-[#f72585]/50'}`}></div>
+              <div className={`w-3.5 h-3.5 rounded-full transition-all ${email.isStarred ? 'bg-neon-purple shadow-[0_0_8px_#f72585]' : 'border-2 border-slate-500 group-hover:border-neon-purple/50'}`}></div>
             </button>
           )}
 
           <button
             onClick={(e) => { e.stopPropagation(); if (onSwipeDelete) onSwipeDelete(email); else handleTrashEmail(email, e); }}
-            className="p-1.5 rounded-md transition-all hover:bg-[#ef4444]/20 text-slate-500 hover:text-[#ef4444]"
+            className="p-1.5 rounded-md transition-all hover:bg-danger/20 text-slate-500 hover:text-danger"
             title="Smazat (Delete)"
           >
             <Trash2 size={16} />

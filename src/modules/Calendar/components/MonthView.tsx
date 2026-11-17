@@ -106,19 +106,19 @@ export default function MonthView({
                 }
             }
         }}
-        className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] p-1 sm:p-2 border border-[#00f3ff]/10 transition-all relative group flex flex-col cursor-pointer overflow-hidden
-          ${isPrevMonth || isNextMonth ? 'opacity-30 bg-[#0a1630]' : 'bg-[#00f3ff]/5 hover:bg-[#00f3ff]/10 hover:border-[#00f3ff]/30'}
-          ${isToday && !isSelected ? 'ring-2 ring-inset ring-[#d9257b]' : ''}
-          ${isSelected ? 'bg-[#00f3ff]/20 border border-[#00f3ff]/60 shadow-[inset_0_0_20px_rgba(0,243,255,0.3)] z-10 scale-[1.02] ring-2 ring-[#00f3ff]' : ''}
+        className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] p-1 sm:p-2 border border-neon-blue/10 transition-all relative group flex flex-col cursor-pointer overflow-hidden
+          ${isPrevMonth || isNextMonth ? 'opacity-30 bg-navy-card' : 'bg-neon-blue/5 hover:bg-neon-blue/10 hover:border-neon-blue/30'}
+          ${isToday && !isSelected ? 'ring-2 ring-inset ring-neon-rose' : ''}
+          ${isSelected ? 'bg-neon-blue/20 border border-neon-blue/60 shadow-[inset_0_0_20px_rgba(0,243,255,0.3)] z-10 scale-[1.02] ring-2 ring-neon-blue' : ''}
         `}
       >
         <div className="flex justify-between items-start z-10 pointer-events-none mb-1">
-          <span className={`text-sm sm:text-lg font-black tracking-widest ${isToday ? 'text-[#d9257b] drop-shadow-[0_0_8px_rgba(217,37,123,1)]' : 'text-slate-400 group-hover:text-white transition-colors'}`}>
+          <span className={`text-sm sm:text-lg font-black tracking-widest ${isToday ? 'text-neon-rose drop-shadow-[0_0_8px_rgba(217,37,123,1)]' : 'text-slate-400 group-hover:text-white transition-colors'}`}>
             {dayNumber}
           </span>
           {(!isPrevMonth && !isNextMonth) && (
              <div 
-                className="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-[#00f3ff]/20 text-[#00f3ff] transition-all opacity-0 group-hover:opacity-100 pointer-events-auto"
+                className="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-neon-blue/20 text-neon-blue transition-all opacity-0 group-hover:opacity-100 pointer-events-auto"
                 onClick={(e) => { e.stopPropagation(); openCreateForDay(cellDateObj); }}
                 title="Přidat událost na tento den"
              >
@@ -131,7 +131,7 @@ export default function MonthView({
         {!isPrevMonth && !isNextMonth && cellSpecialDays.length > 0 && (
            <div className="flex flex-col gap-0.5 mb-1 z-10">
                {cellSpecialDays.map((holiday, idx) => (
-                   <span key={idx} className="text-[7.5px] sm:text-[9.5px] text-[#d9257b] font-bold tracking-widest uppercase truncate pointer-events-none drop-shadow-[0_0_3px_#d9257b]">
+                   <span key={idx} className="text-[7.5px] sm:text-[9.5px] text-neon-rose font-bold tracking-widest uppercase truncate pointer-events-none drop-shadow-[0_0_3px_#d9257b]">
                        {holiday}
                    </span>
                ))}
@@ -154,7 +154,7 @@ export default function MonthView({
                               key={ev.id} 
                               className={`text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded truncate font-mono tracking-tight pointer-events-auto transition-all transform z-20 shadow-sm border ${
                                   isPast 
-                                    ? 'bg-transparent border-dashed border-[#00f3ff]/[0.15] text-white/30 opacity-40 grayscale line-through hover:opacity-100 hover:decoration-transparent hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]'
+                                    ? 'bg-transparent border-dashed border-neon-blue/[0.15] text-white/30 opacity-40 grayscale line-through hover:opacity-100 hover:decoration-transparent hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(0,0,0,0.5)]'
                                     : `${getEventBgColor(ev.colorId)} ${getEventColor(ev.colorId)} hover:scale-105 hover:brightness-125`
                               }`}
                               onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev); }}
@@ -182,7 +182,7 @@ export default function MonthView({
         </div>
 
         {isSelected && (
-           <div className="absolute inset-0 border-2 border-[#00f3ff] rounded pointer-events-none" />
+           <div className="absolute inset-0 border-2 border-neon-blue rounded pointer-events-none" />
         )}
       </div>
     );
@@ -196,7 +196,7 @@ export default function MonthView({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
-      <div className="flex flex-shrink-0 items-center justify-between gap-4 p-5 md:p-8 border-b border-[#00f3ff]/20 bg-[#0a1630] backdrop-blur-md relative z-10 overflow-visible">
+      <div className="flex flex-shrink-0 items-center justify-between gap-4 p-5 md:p-8 border-b border-neon-blue/20 bg-navy-card backdrop-blur-md relative z-10 overflow-visible">
          {/* Dekorativní kyberpunkové žíly Header */}
          <div className="hidden md:block absolute right-0 top-0 h-[114px] w-[400px] overflow-hidden pointer-events-none opacity-50 z-[5]">
              <svg width="100%" height="100%" viewBox="0 0 400 114" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -225,17 +225,17 @@ export default function MonthView({
 
          <div className="flex items-center gap-6 relative w-full justify-between">
            <div className="flex items-center gap-4 md:gap-6">
-             <div className="p-2 md:p-3 rounded-2xl bg-[#00f3ff]/10 border-2 border-[#00f3ff]/40 shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all flex items-center justify-center min-w-[56px] md:min-w-[72px] min-h-[56px] md:min-h-[72px]">
+             <div className="p-2 md:p-3 rounded-2xl bg-neon-blue/10 border-2 border-neon-blue/40 shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all flex items-center justify-center min-w-[56px] md:min-w-[72px] min-h-[56px] md:min-h-[72px]">
                <img src="/vr_calendar.svg" className="w-10 h-10 md:w-16 md:h-16 object-contain" alt="Kalendář" draggable="false" />
              </div>
              
              <div className="flex flex-col justify-center relative mt-1 select-none">
                {/* MOBILE VIEW */}
                <div className="md:hidden flex flex-col">
-                 <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] leading-tight flex items-center gap-2">
-                   {currentMonthName} <span className="text-[#d9257b] drop-shadow-[0_0_10px_#d9257b]">{currentYear}</span>
+                 <h1 className="text-3xl font-black text-neon-blue tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] leading-tight flex items-center gap-2">
+                   {currentMonthName} <span className="text-neon-rose drop-shadow-[0_0_10px_#d9257b]">{currentYear}</span>
                  </h1>
-                 <div className="text-[10px] uppercase tracking-widest text-[#00f3ff]/60 mt-1">
+                 <div className="text-[10px] uppercase tracking-widest text-neon-blue/60 mt-1">
                    System // Timeline // {activeCalendarView}
                  </div>
                </div>
@@ -243,17 +243,17 @@ export default function MonthView({
                {/* DESKTOP VIEW */}
                <div className="hidden md:flex flex-col justify-center w-full">
                  <div className="flex items-center gap-3 ml-2 mb-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#d9257b] shadow-[0_0_8px_rgba(217,37,123,0.8)]"></div>
-                   <span className="text-[#00f3ff] text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
+                   <div className="w-1.5 h-1.5 rounded-full bg-neon-rose shadow-[0_0_8px_rgba(217,37,123,0.8)]"></div>
+                   <span className="text-neon-blue text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
                      System // Timeline // 0xE9
                    </span>
                  </div>
                  <div className="flex flex-row items-baseline">
-                   <span className="text-[#00f3ff] text-5xl font-light mr-4 opacity-70">[</span>
-                   <h1 className="text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal">
-                     {currentMonthName} <span className="text-[#d9257b] drop-shadow-[0_0_15px_rgba(217,37,123,0.8)]">{currentYear}</span>
+                   <span className="text-neon-blue text-5xl font-light mr-4 opacity-70">[</span>
+                   <h1 className="text-5xl font-black text-neon-blue tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal">
+                     {currentMonthName} <span className="text-neon-rose drop-shadow-[0_0_15px_rgba(217,37,123,0.8)]">{currentYear}</span>
                    </h1>
-                   <span className="text-[#00f3ff] text-5xl font-light ml-4 opacity-70">]</span>
+                   <span className="text-neon-blue text-5xl font-light ml-4 opacity-70">]</span>
                  </div>
                </div>
              </div>
@@ -262,10 +262,10 @@ export default function MonthView({
            {/* LUPA PRO MOBIL */}
            <button
              onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('vr-mobile-search-toggle')); }}
-             className="md:hidden group relative p-3.5 rounded-full bg-[#061026]/80 backdrop-blur-md border border-[#00f3ff]/40 text-[#00f3ff] active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-[#00f3ff]/10 ml-4 overflow-hidden focus:outline-none"
+             className="md:hidden group relative p-3.5 rounded-full bg-navy/80 backdrop-blur-md border border-neon-blue/40 text-neon-blue active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-neon-blue/10 ml-4 overflow-hidden focus:outline-none"
            >
-             <div className="absolute inset-0 bg-gradient-to-br from-[#00f3ff]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-             <div className="absolute inset-[3px] rounded-full border border-[#00f3ff]/20 group-hover:border-[#00f3ff]/50 pointer-events-none"></div>
+             <div className="absolute inset-0 bg-gradient-to-br from-neon-blue/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+             <div className="absolute inset-[3px] rounded-full border border-neon-blue/20 group-hover:border-neon-blue/50 pointer-events-none"></div>
              <Search size={20} className="relative z-10 drop-shadow-[0_0_8px_rgba(0,243,255,1)] group-hover:drop-shadow-[0_0_12px_rgba(0,243,255,1)] transition-all" strokeWidth={2.5} />
            </button>
          </div>
@@ -274,42 +274,42 @@ export default function MonthView({
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         
         {/* Pravý sloupec - Kalendář */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#0a1630] backdrop-blur-sm z-0 relative">
+        <div className="flex-1 flex flex-col min-w-0 bg-navy-card backdrop-blur-sm z-0 relative">
           
-          <div className="flex items-center pl-2 md:pl-7 py-2 border-b border-[#00f3ff]/10 shrink-0 gap-2 md:gap-4 justify-between pr-2 md:pr-4">
+          <div className="flex items-center pl-2 md:pl-7 py-2 border-b border-neon-blue/10 shrink-0 gap-2 md:gap-4 justify-between pr-2 md:pr-4">
              <div className="flex items-center gap-1 md:gap-2">
-                 <button onClick={() => handleDateChange('prev')} className="p-1 sm:p-2 hover:bg-[#00f3ff]/20 rounded-lg text-[#00f3ff] transition-all"><ChevronLeft size={18} className="sm:w-5 sm:h-5" /></button>
+                 <button onClick={() => handleDateChange('prev')} className="p-1 sm:p-2 hover:bg-neon-blue/20 rounded-lg text-neon-blue transition-all"><ChevronLeft size={18} className="sm:w-5 sm:h-5" /></button>
                  <button 
                    onClick={() => handleDateChange('today')} 
-                   className="px-3 sm:px-6 py-1 sm:py-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] bg-[#d9257b]/10 hover:bg-[#d9257b]/20 rounded-lg text-[#d9257b] transition-all border border-[#d9257b]/50 shadow-[0_0_15px_rgba(217,37,123,0.3)] hover:shadow-[0_0_25px_rgba(217,37,123,0.6)] mx-1 md:mx-2 whitespace-nowrap drop-shadow-[0_0_5px_rgba(217,37,123,0.8)] focus:outline-none hover:scale-105"
+                   className="px-3 sm:px-6 py-1 sm:py-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] bg-neon-rose/10 hover:bg-neon-rose/20 rounded-lg text-neon-rose transition-all border border-neon-rose/50 shadow-[0_0_15px_rgba(217,37,123,0.3)] hover:shadow-[0_0_25px_rgba(217,37,123,0.6)] mx-1 md:mx-2 whitespace-nowrap drop-shadow-[0_0_5px_rgba(217,37,123,0.8)] focus:outline-none hover:scale-105"
                  >
                    Dnes
                  </button>
-                 <button onClick={() => handleDateChange('next')} className="p-1 sm:p-2 hover:bg-[#00f3ff]/20 rounded-lg text-[#00f3ff] transition-all"><ChevronRight size={18} className="sm:w-5 sm:h-5" /></button>
+                 <button onClick={() => handleDateChange('next')} className="p-1 sm:p-2 hover:bg-neon-blue/20 rounded-lg text-neon-blue transition-all"><ChevronRight size={18} className="sm:w-5 sm:h-5" /></button>
              </div>
 
              <div className="hidden md:flex flex-1 max-w-sm relative group">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#00f3ff]/50 group-focus-within:text-[#00f3ff] transition-colors pointer-events-none z-10" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neon-blue/50 group-focus-within:text-neon-blue transition-colors pointer-events-none z-10" />
                 <input
                   type="text"
                   placeholder="Hledat události v měsíci..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-9 py-1.5 w-full bg-[#00f3ff]/5 border border-[#00f3ff]/30 rounded-md text-xs text-white placeholder-[#00f3ff]/40 outline-none focus:border-[#00f3ff] transition-all duration-300 shadow-[inset_0_0_10px_rgba(0,243,255,0.05)] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)]"
+                  className="pl-9 pr-9 py-1.5 w-full bg-neon-blue/5 border border-neon-blue/30 rounded-md text-xs text-white placeholder-neon-blue/40 outline-none focus:border-neon-blue transition-all duration-300 shadow-[inset_0_0_10px_rgba(0,243,255,0.05)] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)]"
                 />
                 {searchQuery && (
                    <button 
                      onClick={() => setSearchQuery('')}
-                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00f3ff]/60 hover:text-[#00f3ff] transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(0,243,255,0.5)] z-10 hover:scale-125"
+                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neon-blue/60 hover:text-neon-blue transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(0,243,255,0.5)] z-10 hover:scale-125"
                    >✕</button>
                 )}
              </div>
-             {specialCalsLoading && <Loader2 size={16} className="text-[#d9257b] animate-spin hidden sm:block mx-4 shrink-0" />}
+             {specialCalsLoading && <Loader2 size={16} className="text-neon-rose animate-spin hidden sm:block mx-4 shrink-0" />}
           </div>
 
-          <div className="grid grid-cols-7 border-b border-[#00f3ff]/20 bg-[#0a1120] shrink-0">
+          <div className="grid grid-cols-7 border-b border-neon-blue/20 bg-[#0a1120] shrink-0">
             {['PO', 'ÚT', 'ST', 'ČT', 'PÁ', 'SO', 'NE'].map(day => (
-              <div key={day} className="py-2 sm:py-3 text-center text-xs sm:text-sm font-black tracking-widest text-[#00f3ff] uppercase drop-shadow-[0_0_5px_rgba(0,243,255,0.8)] border-r border-[#00f3ff]/10 last:border-0">{day}</div>
+              <div key={day} className="py-2 sm:py-3 text-center text-xs sm:text-sm font-black tracking-widest text-neon-blue uppercase drop-shadow-[0_0_5px_rgba(0,243,255,0.8)] border-r border-neon-blue/10 last:border-0">{day}</div>
             ))}
           </div>
 
@@ -320,13 +320,13 @@ export default function MonthView({
 
         {/* Levý sloupec pro detail výběru dne (pouze desktop / širší obrazovka) */}
         {selectedCalDay && (
-           <div className="hidden lg:flex w-80 flex-col bg-[#061026] border-l border-[#00f3ff]/20 animate-in slide-in-from-right duration-300 transform-gpu z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+           <div className="hidden lg:flex w-80 flex-col bg-navy border-l border-neon-blue/20 animate-in slide-in-from-right duration-300 transform-gpu z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
                
-               <div className="p-6 border-b border-[#00f3ff]/10 bg-gradient-to-br from-[#020817]/60 to-transparent relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff] opacity-5 rounded-full blur-2xl transform translate-x-10 -translate-y-10 group-hover:bg-[#d9257b] transition-colors duration-1000"></div>
+               <div className="p-6 border-b border-neon-blue/10 bg-gradient-to-br from-navy-deep/60 to-transparent relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-neon-blue opacity-5 rounded-full blur-2xl transform translate-x-10 -translate-y-10 group-hover:bg-neon-rose transition-colors duration-1000"></div>
                    
                    <div className="flex justify-between items-start mb-6 relative">
-                       <h3 className="text-4xl font-black text-[#00f3ff] tracking-widest drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] flex flex-col">
+                       <h3 className="text-4xl font-black text-neon-blue tracking-widest drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] flex flex-col">
                            <span className="text-sm font-mono text-slate-400 tracking-tight uppercase mb-1 drop-shadow-none">Detail dne</span>
                            {parseInt(selectedCalDay.split('-')[2])}. {currentMonthName.substring(0,3)}
                        </h3>
@@ -334,7 +334,7 @@ export default function MonthView({
                    
                    <button 
                        onClick={() => openCreateForDay(new Date(selectedCalDay))}
-                       className="w-full py-4 rounded-xl border border-[#00f3ff]/50 bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 text-[#00f3ff] text-xs font-bold shadow-[0_0_15px_rgba(0,243,255,0.15)] hover:shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all flex items-center justify-center gap-3 uppercase tracking-[0.2em] active:scale-95"
+                       className="w-full py-4 rounded-xl border border-neon-blue/50 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue text-xs font-bold shadow-[0_0_15px_rgba(0,243,255,0.15)] hover:shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all flex items-center justify-center gap-3 uppercase tracking-[0.2em] active:scale-95"
                    >
                        <Plus size={16} /> Prázdný záznam
                    </button>
@@ -363,10 +363,10 @@ export default function MonthView({
                    return (
                        <>
                            {daySpecials.map((holiday, idx) => (
-                               <div key={`hol-${idx}`} className="p-3 bg-[#d9257b]/10 border border-[#d9257b]/30 rounded-xl relative overflow-hidden group">
-                                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#d9257b] shadow-[0_0_10px_#d9257b]"></div>
+                               <div key={`hol-${idx}`} className="p-3 bg-neon-rose/10 border border-neon-rose/30 rounded-xl relative overflow-hidden group">
+                                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-neon-rose shadow-[0_0_10px_#d9257b]"></div>
                                    <div className="pl-2">
-                                       <span className="text-[10px] font-black uppercase text-[#d9257b] tracking-[0.25em] drop-shadow-[0_0_5px_#d9257b]">Svátek</span>
+                                       <span className="text-[10px] font-black uppercase text-neon-rose tracking-[0.25em] drop-shadow-[0_0_5px_#d9257b]">Svátek</span>
                                        <p className="text-sm font-bold text-white mt-1 truncation">{holiday}</p>
                                    </div>
                                </div>
@@ -382,7 +382,7 @@ export default function MonthView({
                                    
                                    <div className="pl-3">
                                        {ev.isAllDay ? (
-                                           <div className="text-[9px] font-black tracking-[0.2em] uppercase text-[#00f3ff] bg-[#00f3ff]/10 inline-block py-1 px-2 rounded border border-[#00f3ff]/20 mb-2">CELÝ DEN</div>
+                                           <div className="text-[9px] font-black tracking-[0.2em] uppercase text-neon-blue bg-neon-blue/10 inline-block py-1 px-2 rounded border border-neon-blue/20 mb-2">CELÝ DEN</div>
                                        ) : (
                                            <div className="text-xs font-mono font-bold opacity-80 mb-1">{ev.fullDate.toTimeString().substring(0, 5)} - {ev.endDate.toTimeString().substring(0, 5)}</div>
                                        )}

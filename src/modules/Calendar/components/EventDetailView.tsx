@@ -26,32 +26,32 @@ export default function EventDetailView({
     <>
       {/* --- MOBILE TOP BAR MORPHING FROM APP HEADER (PORTALLED) --- */}
       {createPortal(
-        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top,2rem))] bg-transparent border-b border-[#00f3ff]/20 z-[60] shrink-0 pointer-events-auto">
+        <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top,2rem))] bg-transparent border-b border-neon-blue/20 z-[60] shrink-0 pointer-events-auto">
            <button
              onClick={() => setSelectedEvent(null)}
-             className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/60 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow -ml-2"
+             className="w-10 h-10 flex items-center justify-center rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/60 text-neon-blue drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow -ml-2"
            >
              <ArrowLeft size={22} strokeWidth={2.5} />
            </button>
            <div className="flex items-center gap-3 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' } as CSSProperties}>
-             <button onClick={handleEditSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/40 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] shadow-[inset_0_0_15px_rgba(0,243,255,0.2)] transition-all active:scale-95 hover:bg-[#00f3ff]/20"><Edit2 size={18} /></button>
-             <button onClick={handleDeleteSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#fb7185]/60 text-[#fb7185] drop-shadow-[0_0_10px_rgba(251,113,133,0.8)] shadow-[inset_0_0_15px_rgba(251,113,133,0.3)] transition-all active:scale-95 hover:bg-rose-400/20">{isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}</button>
+             <button onClick={handleEditSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/40 text-neon-blue drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] shadow-[inset_0_0_15px_rgba(0,243,255,0.2)] transition-all active:scale-95 hover:bg-neon-blue/20"><Edit2 size={18} /></button>
+             <button onClick={handleDeleteSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-danger-soft/60 text-danger-soft drop-shadow-[0_0_10px_rgba(251,113,133,0.8)] shadow-[inset_0_0_15px_rgba(251,113,133,0.3)] transition-all active:scale-95 hover:bg-rose-400/20">{isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}</button>
            </div>
         </div>,
         document.body
       )}
 
-      <div className="fixed pt-[calc(4rem+env(safe-area-inset-top,2rem))] md:pt-0 inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4 max-md:animate-in max-md:slide-in-from-right max-md:duration-300 md:animate-in md:fade-in md:duration-150 bg-[#061026] md:bg-transparent shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none pointer-events-auto">
-        <div className="hidden md:block absolute inset-0 bg-[#020817]/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)}></div>
+      <div className="fixed pt-[calc(4rem+env(safe-area-inset-top,2rem))] md:pt-0 inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4 max-md:animate-in max-md:slide-in-from-right max-md:duration-300 md:animate-in md:fade-in md:duration-150 bg-navy md:bg-transparent shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none pointer-events-auto">
+        <div className="hidden md:block absolute inset-0 bg-navy-deep/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)}></div>
         
-        <div className="md:animate-in md:zoom-in-95 md:duration-200 relative bg-[#061026] md:border border-[#00f3ff]/40 md:shadow-[0_0_50px_rgba(0,243,255,0.2)] md:rounded-3xl rounded-none w-full h-full md:h-auto max-w-3xl md:max-h-[90vh] flex flex-col p-0 md:p-8 shrink-0 overflow-hidden md:z-10 box-border pointer-events-auto">
+        <div className="md:animate-in md:zoom-in-95 md:duration-200 relative bg-navy md:border border-neon-blue/40 md:shadow-[0_0_50px_rgba(0,243,255,0.2)] md:rounded-3xl rounded-none w-full h-full md:h-auto max-w-3xl md:max-h-[90vh] flex flex-col p-0 md:p-8 shrink-0 overflow-hidden md:z-10 box-border pointer-events-auto">
            
            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 md:p-0 relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff]/10 blur-[50px] pointer-events-none rounded-full" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#d9257b]/10 blur-[50px] pointer-events-none rounded-full" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-neon-blue/10 blur-[50px] pointer-events-none rounded-full" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-neon-rose/10 blur-[50px] pointer-events-none rounded-full" />
             
             <div className="hidden md:flex absolute top-0 right-0 items-center gap-1 z-20">
-               <button onClick={handleEditSelectedEvent} className="p-2 text-[#00f3ff] hover:bg-[#00f3ff]/20 hover:shadow-[0_0_10px_rgba(0,243,255,0.3)] rounded-full transition-all" title="Upravit">
+               <button onClick={handleEditSelectedEvent} className="p-2 text-neon-blue hover:bg-neon-blue/20 hover:shadow-[0_0_10px_rgba(0,243,255,0.3)] rounded-full transition-all" title="Upravit">
                  <Edit2 size={18} />
                </button>
                <button onClick={handleDeleteSelectedEvent} disabled={isDeleting} className="p-2 text-rose-400 hover:bg-rose-400/20 hover:shadow-[0_0_10px_rgba(251,113,133,0.3)] rounded-full transition-all" title="Smazat">
@@ -63,8 +63,8 @@ export default function EventDetailView({
                </button>
             </div>
 
-            <span className="hidden md:flex text-[#00f3ff] text-[10px] uppercase font-bold tracking-[0.2em] mb-3 items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]"></span>
+            <span className="hidden md:flex text-neon-blue text-[10px] uppercase font-bold tracking-[0.2em] mb-3 items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff]"></span>
               Detail události
             </span>
             
@@ -74,10 +74,10 @@ export default function EventDetailView({
         
         <div className="flex flex-col gap-4 text-slate-300 mt-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
            <div className="flex flex-col gap-1.5 shrink-0 mt-2">
-             <span className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Kdy</span>
-             <div className="flex items-center gap-3 bg-[#0a1630] border border-[#00f3ff]/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] overflow-hidden">
-               <div className="bg-[#00f3ff]/10 p-2 rounded-lg shrink-0">
-                 <Clock className="text-[#00f3ff]" size={20} />
+             <span className="text-neon-blue text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Kdy</span>
+             <div className="flex items-center gap-3 bg-navy-card border border-neon-blue/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] overflow-hidden">
+               <div className="bg-neon-blue/10 p-2 rounded-lg shrink-0">
+                 <Clock className="text-neon-blue" size={20} />
                </div>
                <span className="font-mono text-lg font-black tracking-wider text-white block truncate drop-shadow-sm" title="Časové rozpětí">
                  {(() => {
@@ -101,10 +101,10 @@ export default function EventDetailView({
            </div>
 
            <div className="flex flex-col gap-1.5 shrink-0 mt-2">
-             <span className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Upozornění</span>
-             <div className="flex items-center gap-3 bg-[#0a1630] border border-[#00f3ff]/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] overflow-hidden">
-               <div className="bg-[#00f3ff]/10 p-2 rounded-lg shrink-0">
-                 <Bell className="text-[#00f3ff]" size={20} />
+             <span className="text-neon-blue text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Upozornění</span>
+             <div className="flex items-center gap-3 bg-navy-card border border-neon-blue/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] overflow-hidden">
+               <div className="bg-neon-blue/10 p-2 rounded-lg shrink-0">
+                 <Bell className="text-neon-blue" size={20} />
                </div>
                <span className="font-mono text-[15px] font-bold tracking-wider text-white block truncate drop-shadow-sm">
                  {(() => {
@@ -129,10 +129,10 @@ export default function EventDetailView({
 
            {selectedEvent.recurringEventId && (
              <div className="flex flex-col gap-1.5 shrink-0 mt-2">
-               <span className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Opakování</span>
-               <div className="flex items-center gap-3 bg-[#0a1630] border border-[#00f3ff]/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] overflow-hidden">
-                 <div className="bg-[#00f3ff]/10 p-2 rounded-lg shrink-0">
-                   <Repeat className="text-[#00f3ff]" size={20} />
+               <span className="text-neon-blue text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Opakování</span>
+               <div className="flex items-center gap-3 bg-navy-card border border-neon-blue/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] overflow-hidden">
+                 <div className="bg-neon-blue/10 p-2 rounded-lg shrink-0">
+                   <Repeat className="text-neon-blue" size={20} />
                  </div>
                  <span className="font-mono text-[15px] font-bold tracking-wider text-white block truncate drop-shadow-sm">
                    {previewRecurrenceText || 'Aktivní (součást série)'}
@@ -143,8 +143,8 @@ export default function EventDetailView({
            
            {selectedEvent.description && (
              <div className="flex flex-col gap-1.5 mt-2 shrink-0">
-              <span className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Popis</span>
-              <div className="bg-[#0a1630] border border-[#00f3ff]/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
+              <span className="text-neon-blue text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Popis</span>
+              <div className="bg-navy-card border border-neon-blue/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
                 <div 
                   className="text-slate-200 text-base leading-relaxed rich-text-content break-words"
                   dangerouslySetInnerHTML={{ __html: selectedEvent.description }} 

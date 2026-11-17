@@ -126,9 +126,9 @@ export default function DatePicker({ value, onChange, label, className = "", ali
 
   return (
     <div className={`relative ${className}`}>
-      {label && <label className="text-[#00f3ff] text-[10px] font-bold uppercase tracking-widest mb-1.5 block select-none">{label}</label>}
+      {label && <label className="text-neon-blue text-[10px] font-bold uppercase tracking-widest mb-1.5 block select-none">{label}</label>}
       
-      <div className="w-full bg-[#020817]/50 border border-[#00f3ff]/40 rounded-xl px-4 py-3 shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] transition-all flex items-center justify-between focus-within:border-[#00f3ff] focus-within:shadow-[0_0_15px_rgba(0,243,255,0.2)_inset]">
+      <div className="w-full bg-navy-deep/50 border border-neon-blue/40 rounded-xl px-4 py-3 shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] transition-all flex items-center justify-between focus-within:border-neon-blue focus-within:shadow-[0_0_15px_rgba(0,243,255,0.2)_inset]">
         <input  
           type="text"
           value={inputValue}
@@ -145,12 +145,12 @@ export default function DatePicker({ value, onChange, label, className = "", ali
              if (e.key === 'Enter') e.currentTarget.blur();
           }}
           placeholder="DD.MM.RRRR"
-          className={`bg-transparent font-mono text-sm font-bold focus:outline-none w-full transition-all duration-300 ${flash ? 'text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.8)] scale-105' : 'text-white'}`}
+          className={`bg-transparent font-mono text-sm font-bold focus:outline-none w-full transition-all duration-300 ${flash ? 'text-neon-blue drop-shadow-[0_0_8px_rgba(0,243,255,0.8)] scale-105' : 'text-white'}`}
         />
         <button 
            type="button"
            onClick={toggleOpen}
-           className="pl-2 border-l border-[#00f3ff]/[0.15] ml-2 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-colors"
+           className="pl-2 border-l border-neon-blue/[0.15] ml-2 text-neon-blue/70 hover:text-neon-blue transition-colors"
         >
           <CalendarIcon size={16} />
         </button>
@@ -163,27 +163,27 @@ export default function DatePicker({ value, onChange, label, className = "", ali
              onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
              onMouseDown={(e) => e.stopPropagation()}
           />
-          <div className={`absolute top-full mt-2 p-4 bg-[#061026] border border-[#00f3ff]/40 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-2xl z-[700] w-72 select-none animate-in fade-in-0 zoom-in-95 pointer-events-auto ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          <div className={`absolute top-full mt-2 p-4 bg-navy border border-neon-blue/40 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-2xl z-[700] w-72 select-none animate-in fade-in-0 zoom-in-95 pointer-events-auto ${align === 'right' ? 'right-0' : 'left-0'}`}>
             {/* Dekorativní záře */}
-            <div className="absolute top-0 right-0 w-16 h-16 bg-[#00f3ff]/20 blur-[30px] rounded-full pointer-events-none" />
+            <div className="absolute top-0 right-0 w-16 h-16 bg-neon-blue/20 blur-[30px] rounded-full pointer-events-none" />
             
             <div className="flex items-center justify-between mb-4 relative z-10">
               <button 
                 type="button"
                 onClick={handlePrevMonth} 
-                className="p-1 rounded-md text-[#00f3ff]/70 hover:text-[#00f3ff] hover:bg-[#00f3ff]/10 transition-colors"
+                className="p-1 rounded-md text-neon-blue/70 hover:text-neon-blue hover:bg-neon-blue/10 transition-colors"
               >
                 <ChevronLeft size={18} />
               </button>
               <div className="flex flex-col items-center">
-                <div className="font-black text-[#00f3ff] uppercase tracking-wider text-sm drop-shadow-[0_0_5px_rgba(0,243,255,0.5)]">
+                <div className="font-black text-neon-blue uppercase tracking-wider text-sm drop-shadow-[0_0_5px_rgba(0,243,255,0.5)]">
                    {monthNames[currentMonth]} {currentYear}
                 </div>
                 {/* Přidáno magické tlačítko DNES */}
                 <button 
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setCurrentViewDate(new Date()); }}
-                  className="text-[9px] text-[#f72585]/70 hover:text-[#f72585] hover:drop-shadow-[0_0_5px_#f72585] uppercase tracking-[0.2em] font-bold mt-0.5 transition-all w-full text-center"
+                  className="text-[9px] text-neon-purple/70 hover:text-neon-purple hover:drop-shadow-[0_0_5px_#f72585] uppercase tracking-[0.2em] font-bold mt-0.5 transition-all w-full text-center"
                 >
                   • Dnes •
                 </button>
@@ -191,7 +191,7 @@ export default function DatePicker({ value, onChange, label, className = "", ali
               <button 
                 type="button"
                 onClick={handleNextMonth} 
-                className="p-1 rounded-md text-[#00f3ff]/70 hover:text-[#00f3ff] hover:bg-[#00f3ff]/10 transition-colors"
+                className="p-1 rounded-md text-neon-blue/70 hover:text-neon-blue hover:bg-neon-blue/10 transition-colors"
               >
                 <ChevronRight size={18} />
               </button>
@@ -226,11 +226,11 @@ export default function DatePicker({ value, onChange, label, className = "", ali
                     onClick={(e) => handleDayClick(e, dayNum)}
                     className={`h-8 w-8 mx-auto flex items-center justify-center rounded-lg cursor-pointer transition-all text-sm font-bold ${
                       isSelected && isToday
-                        ? 'bg-[#00f3ff]/20 text-[#00f3ff] border border-[#f72585] shadow-[0_0_15px_rgba(247,37,133,0.4)] scale-110'
+                        ? 'bg-neon-blue/20 text-neon-blue border border-neon-purple shadow-[0_0_15px_rgba(247,37,133,0.4)] scale-110'
                         : isSelected 
-                        ? 'bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff]/50 shadow-[0_0_10px_rgba(0,243,255,0.3)] scale-110' 
+                        ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_10px_rgba(0,243,255,0.3)] scale-110' 
                         : isToday
-                        ? 'text-[#f72585] border border-[#f72585]/50 bg-[#f72585]/10 shadow-[0_0_8px_rgba(247,37,133,0.3)]'
+                        ? 'text-neon-purple border border-neon-purple/50 bg-neon-purple/10 shadow-[0_0_8px_rgba(247,37,133,0.3)]'
                         : 'text-slate-300 hover:bg-white/10 border border-transparent'
                     }`}
                   >

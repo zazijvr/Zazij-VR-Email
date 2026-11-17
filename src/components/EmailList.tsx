@@ -771,12 +771,12 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
   type SortField = typeof sortField;
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <div className="w-4" />;
-    return sortAscending ? <ChevronUp size={16} className="text-[#00f3ff]" /> : <ChevronDown size={16} className="text-[#00f3ff]" />;
+    return sortAscending ? <ChevronUp size={16} className="text-neon-blue" /> : <ChevronDown size={16} className="text-neon-blue" />;
   };
 
   const HeaderItem = ({ label, field, className = "" }: { label: string; field: SortField; className?: string }) => (
     <div
-      className={`flex items-center gap-1 cursor-pointer hover:text-[#00f3ff] transition-colors select-none ${className} ${sortField === field ? 'text-[#00f3ff] font-bold' : 'text-slate-400'}`}
+      className={`flex items-center gap-1 cursor-pointer hover:text-neon-blue transition-colors select-none ${className} ${sortField === field ? 'text-neon-blue font-bold' : 'text-slate-400'}`}
       onClick={() => handleSort(field)}
     >
       <span>{label}</span>
@@ -791,27 +791,27 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
   if (!googleToken) {
     return (
-      <div className="flex-1 relative bg-[#061026]/80 backdrop-blur-md flex flex-col items-center justify-center h-full p-8 text-center shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
+      <div className="flex-1 relative bg-navy/80 backdrop-blur-md flex flex-col items-center justify-center h-full p-8 text-center shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
         <div className="flex flex-col items-center max-w-md gap-6 z-10">
-          <div className="w-24 h-24 rounded-full bg-[#00f3ff]/10 flex items-center justify-center shadow-[0_0_40px_rgba(0,243,255,0.2)] border-2 border-[#00f3ff]/40 mb-2 group animate-pulse-slow">
-            <Mail className="w-10 h-10 text-[#00f3ff]" />
+          <div className="w-24 h-24 rounded-full bg-neon-blue/10 flex items-center justify-center shadow-[0_0_40px_rgba(0,243,255,0.2)] border-2 border-neon-blue/40 mb-2 group animate-pulse-slow">
+            <Mail className="w-10 h-10 text-neon-blue" />
           </div>
           <h2 className="text-3xl text-white font-black tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]">Systém uzamčen</h2>
           <p className="text-slate-400 text-sm tracking-widest font-mono uppercase opacity-70">Zabezpečená zóna: Vyžaduje se autentizace operátora</p>
 
           <button
             onClick={(e) => { e.stopPropagation(); loginWithGoogle?.(); }}
-            className="mt-8 px-10 py-4 relative group overflow-hidden bg-transparent border-2 border-[#00f3ff] text-[#00f3ff] font-black uppercase tracking-widest rounded-sm hover:text-black transition-all duration-300 cursor-pointer"
+            className="mt-8 px-10 py-4 relative group overflow-hidden bg-transparent border-2 border-neon-blue text-neon-blue font-black uppercase tracking-widest rounded-sm hover:text-black transition-all duration-300 cursor-pointer"
           >
-            <div className="absolute inset-0 w-full h-full bg-[#00f3ff] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 pointer-events-none"></div>
+            <div className="absolute inset-0 w-full h-full bg-neon-blue translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 pointer-events-none"></div>
             <span className="relative z-10 flex items-center gap-3 pointer-events-none">
-              <span className="w-2 h-2 rounded-full bg-[#f72585] group-hover:bg-black shadow-[0_0_8px_#f72585] transition-colors duration-300"></span>
+              <span className="w-2 h-2 rounded-full bg-neon-purple group-hover:bg-black shadow-[0_0_8px_#f72585] transition-colors duration-300"></span>
               Přihlásit se
             </span>
           </button>
         </div>
         {/* Dekorativní pozadí pro odlogovaný stav */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#00f3ff] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-neon-blue rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
       </div>
     );
   }
@@ -819,7 +819,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
   return (
     <div
       style={COL_STYLE}
-      className="mail-list flex-1 relative bg-[#061026]/20 md:bg-[#061026]/80 md:backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]"
+      className="mail-list flex-1 relative bg-navy/20 md:bg-navy/80 md:backdrop-blur-sm flex flex-col h-full shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]"
     >
 
       {/* Mobilní Nadpis Složky */}
@@ -835,28 +835,28 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
         const mascotImg = iconMap[activeFolder] ? <img src={iconMap[activeFolder]} alt="Mascot" className="h-14 w-auto object-contain" /> : null;
 
         return (
-          <div className="md:hidden px-6 pt-5 pb-3 bg-gradient-to-b from-[#020817]/60 to-transparent shrink-0 flex items-center justify-start gap-4 relative z-10">
+          <div className="md:hidden px-6 pt-5 pb-3 bg-gradient-to-b from-navy-deep/60 to-transparent shrink-0 flex items-center justify-start gap-4 relative z-10">
 
             {/* Horní neonová linka (Synchronizovaná) */}
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
 
             {/* Spodní laserová linka do ztracena (Synchronizovaná) */}
-            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00f3ff] via-[#00f3ff]/50 to-[#00f3ff]/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
+            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
 
             {mascotImg}
             <div className="flex-1 flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
+                <h1 className="text-3xl font-black text-neon-blue tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
                   {activeFolder}
                 </h1>
-                <div className="text-[10px] uppercase tracking-widest text-[#00f3ff]/60 mt-1">Systém // Výpis {visibleEmails.length} konverzací</div>
+                <div className="text-[10px] uppercase tracking-widest text-neon-blue/60 mt-1">Systém // Výpis {visibleEmails.length} konverzací</div>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('vr-mobile-search-toggle')); }}
-                className="group relative p-3.5 rounded-full bg-[#061026]/80 backdrop-blur-md border border-[#00f3ff]/40 text-[#00f3ff] active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-[#00f3ff]/10 ml-4 overflow-hidden focus:outline-none"
+                className="group relative p-3.5 rounded-full bg-navy/80 backdrop-blur-md border border-neon-blue/40 text-neon-blue active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-neon-blue/10 ml-4 overflow-hidden focus:outline-none"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-[#00f3ff]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                <div className="absolute inset-[3px] rounded-full border border-[#00f3ff]/20 group-hover:border-[#00f3ff]/50 pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-neon-blue/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <div className="absolute inset-[3px] rounded-full border border-neon-blue/20 group-hover:border-neon-blue/50 pointer-events-none"></div>
                 <Search size={20} className="relative z-10 drop-shadow-[0_0_8px_rgba(0,243,255,1)] group-hover:drop-shadow-[0_0_12px_rgba(0,243,255,1)] transition-all" strokeWidth={2.5} />
               </button>
             </div>
@@ -865,7 +865,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       })()}
 
       {/* Sub-toolbar */}
-      <div className="hidden md:flex items-center pl-7 py-3 pr-[38px] md:mx-3 md:mt-3 md:rounded-xl bg-[#0a1630] md:bg-[#061026] border-b md:border border-[#00f3ff]/10 md:border-[#00f3ff]/20 md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-20 shrink-0">
+      <div className="hidden md:flex items-center pl-7 py-3 pr-[38px] md:mx-3 md:mt-3 md:rounded-xl bg-navy-card md:bg-navy border-b md:border border-neon-blue/10 md:border-neon-blue/20 md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-20 shrink-0">
 
         {/* Placeholder šířky pro sloupec s Checkboxy */}
         <div className="w-[40px] pr-2" />
@@ -879,13 +879,13 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
         {/* Šířka pro sloupec Předmět (Zarovná Search Bar a prodlouží se až k nápisu Datum) */}
         <div className="flex-1 relative group pr-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#00f3ff]/50 group-focus-within:text-[#00f3ff] transition-colors pointer-events-none z-10" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neon-blue/50 group-focus-within:text-neon-blue transition-colors pointer-events-none z-10" />
           <input
             type="text"
             placeholder="Hledat zprávy..."
             value={searchInputValue}
             onChange={(e) => setSearchInputValue(e.target.value)}
-            className="pl-9 pr-9 py-1.5 w-full bg-[#00f3ff]/5 border border-[#00f3ff]/30 rounded-md text-xs text-white placeholder-[#00f3ff]/40 outline-none focus:border-[#00f3ff] transition-all duration-300 shadow-[inset_0_0_10px_rgba(0,243,255,0.05)] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)]"
+            className="pl-9 pr-9 py-1.5 w-full bg-neon-blue/5 border border-neon-blue/30 rounded-md text-xs text-white placeholder-neon-blue/40 outline-none focus:border-neon-blue transition-all duration-300 shadow-[inset_0_0_10px_rgba(0,243,255,0.05)] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)]"
           />
           {searchInputValue && (
             <button
@@ -895,7 +895,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
                 setSortField('date');
                 setSortAscending(false);
               }}
-              className="absolute right-6 top-1/2 -translate-y-1/2 text-[#00f3ff]/60 hover:text-[#f72585] transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(247,37,133,0.5)] z-10 hover:scale-125"
+              className="absolute right-6 top-1/2 -translate-y-1/2 text-neon-blue/60 hover:text-neon-purple transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(247,37,133,0.5)] z-10 hover:scale-125"
               title="Vymazat hledání a obnovit řazení"
             >
               ✕
@@ -906,8 +906,8 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
           <button
             onClick={() => setShowOnlyUnread(!showOnlyUnread)}
             className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all rounded-md flex items-center gap-2 ${showOnlyUnread
-              ? 'bg-[#00f3ff] text-black border border-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.6)] scale-105'
-              : 'bg-[#00f3ff]/5 text-[#00f3ff] border border-[#00f3ff]/40 shadow-[0_0_10px_rgba(0,243,255,0.15)] hover:bg-[#00f3ff]/20 hover:shadow-[0_0_20px_rgba(0,243,255,0.4)]'
+              ? 'bg-neon-blue text-black border border-neon-blue shadow-[0_0_20px_rgba(0,243,255,0.6)] scale-105'
+              : 'bg-neon-blue/5 text-neon-blue border border-neon-blue/40 shadow-[0_0_10px_rgba(0,243,255,0.15)] hover:bg-neon-blue/20 hover:shadow-[0_0_20px_rgba(0,243,255,0.4)]'
               }`}
           >
             {showOnlyUnread && <span className="font-black text-black">✖</span>}
@@ -917,9 +917,9 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       </div>
 
       {/* Pevný Header vytažený mimo scrollovací kontejner, aby scrollbar neprotínal jeho pravý okraj */}
-      <div className="hidden md:flex items-center pl-7 py-2.5 pr-[38px] bg-[#061026]/40 border-b border-[#00f3ff]/20 text-xs font-semibold tracking-wider uppercase shrink-0 z-30 w-full md:mt-2">
+      <div className="hidden md:flex items-center pl-7 py-2.5 pr-[38px] bg-navy/40 border-b border-neon-blue/20 text-xs font-semibold tracking-wider uppercase shrink-0 z-30 w-full md:mt-2">
         <div
-          className="w-[40px] pr-2 flex justify-center cursor-pointer text-[#00f3ff] hover:text-white transition-colors"
+          className="w-[40px] pr-2 flex justify-center cursor-pointer text-neon-blue hover:text-white transition-colors"
           onClick={toggleSelectAll}
           title="Zvolit vše"
         >
@@ -927,15 +927,15 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
         </div>
 
         {selectedMailIds.size > 0 ? (
-          <div className="flex-1 flex items-center gap-6 text-[#00f3ff] animate-in fade-in slide-in-from-left-4 duration-300">
-            <span className="font-bold tracking-widest bg-[#00f3ff]/20 px-3 py-1 rounded-md text-xs">
+          <div className="flex-1 flex items-center gap-6 text-neon-blue animate-in fade-in slide-in-from-left-4 duration-300">
+            <span className="font-bold tracking-widest bg-neon-blue/20 px-3 py-1 rounded-md text-xs">
               VYBRÁNO: {selectedMailIds.size}
             </span>
 
             <div className="flex items-center gap-3 ml-4">
               <button
                 onClick={handleBulkToggleRead}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#00f3ff]/20 border border-transparent hover:border-[#00f3ff]/50 transition-all font-bold uppercase tracking-wider text-xs"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neon-blue/20 border border-transparent hover:border-neon-blue/50 transition-all font-bold uppercase tracking-wider text-xs"
                 title="Změnit stav přečtení"
               >
                 {isFirstUnread ? <MailOpen size={16} /> : <Mail size={16} />}
@@ -944,17 +944,17 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
               <button
                 onClick={handleBulkToggleStar}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#f72585]/20 text-[#00f3ff] hover:text-[#f72585] border border-transparent hover:border-[#f72585]/50 transition-all font-bold uppercase tracking-wider text-xs"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neon-purple/20 text-neon-blue hover:text-neon-purple border border-transparent hover:border-neon-purple/50 transition-all font-bold uppercase tracking-wider text-xs"
                 title="Označit jako důležité"
               >
-                <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-[#f72585]/50' : 'bg-[#f72585] shadow-[0_0_8px_#f72585]'}`}></div>
+                <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-neon-purple/50' : 'bg-neon-purple shadow-[0_0_8px_#f72585]'}`}></div>
                 {isFirstStarred ? 'Odebrat' : 'Důležité'}
               </button>
 
               {activeFolder === 'Koš' && (
                 <button
                   onClick={handleBulkRestore}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-green-500/20 text-[#00f3ff] hover:text-green-400 border border-transparent hover:border-green-500/50 transition-all font-bold uppercase tracking-wider text-xs"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-green-500/20 text-neon-blue hover:text-green-400 border border-transparent hover:border-green-500/50 transition-all font-bold uppercase tracking-wider text-xs"
                   title="Obnovit vybrané e-maily z koše"
                 >
                   <RotateCcw size={16} /> Obnovit
@@ -963,7 +963,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
               <button
                 onClick={handleBulkTrash}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-red-500/20 text-[#00f3ff] hover:text-red-400 border border-transparent hover:border-red-500/50 transition-all font-bold uppercase tracking-wider text-xs"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-red-500/20 text-neon-blue hover:text-red-400 border border-transparent hover:border-red-500/50 transition-all font-bold uppercase tracking-wider text-xs"
                 title={activeFolder === 'Koš' ? "Trvale smazat vybrané e-maily" : "Smazat vybrané e-maily"}
               >
                 <Trash2 size={16} /> Smazat
@@ -991,8 +991,8 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       <div className="flex-1 w-full overflow-y-auto custom-scrollbar flex flex-col relative pt-2">
 
         {(loading || activeFolder !== fetchedFolderRef.current) ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-[#00f3ff]/60 min-h-64">
-            <span className="w-8 h-8 rounded-full border-4 border-[#00f3ff]/20 border-t-[#00f3ff] animate-spin"></span>
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-neon-blue/60 min-h-64">
+            <span className="w-8 h-8 rounded-full border-4 border-neon-blue/20 border-t-neon-blue animate-spin"></span>
             <span className="font-semibold tracking-wide">Stahování pošty...</span>
           </div>
         ) : visibleEmails.length === 0 ? (
@@ -1039,7 +1039,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
                     }
                   }}
                   disabled={loadingMore}
-                  className="px-6 py-3 rounded-full bg-[#00f3ff]/10 text-[#00f3ff] font-bold tracking-widest border border-[#00f3ff]/30 hover:bg-[#00f3ff]/20 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all flex items-center justify-center min-w-[200px]"
+                  className="px-6 py-3 rounded-full bg-neon-blue/10 text-neon-blue font-bold tracking-widest border border-neon-blue/30 hover:bg-neon-blue/20 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all flex items-center justify-center min-w-[200px]"
                 >
                   {loadingMore ? <Loader2 size={20} className="animate-spin" /> : 'NAČÍST STARŠÍ E-MAILY'}
                 </button>
@@ -1051,13 +1051,13 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
       {/* Mobile Multiselect Floating Bar */}
       {selectedMailIds.size > 0 && (
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-[90] bg-[#061026]/95 backdrop-blur-xl border border-[#00f3ff]/40 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,243,255,0.2)] animate-in slide-in-from-bottom-5 duration-300">
-          <div className="flex items-center justify-between mb-4 border-b border-[#00f3ff]/20 pb-3">
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-[90] bg-navy/95 backdrop-blur-xl border border-neon-blue/40 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,243,255,0.2)] animate-in slide-in-from-bottom-5 duration-300">
+          <div className="flex items-center justify-between mb-4 border-b border-neon-blue/20 pb-3">
             <div className="flex items-center gap-3">
               <button onClick={() => setSelectedMailIds(new Set())} className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 transition-colors">
                 <X size={20} />
               </button>
-              <span className="font-bold text-[#00f3ff] text-sm tracking-widest">{selectedMailIds.size} Vybráno</span>
+              <span className="font-bold text-neon-blue text-sm tracking-widest">{selectedMailIds.size} Vybráno</span>
             </div>
             <button
               onClick={toggleSelectAll}
@@ -1068,14 +1068,14 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
           </div>
 
           <div className="flex items-center justify-between px-2">
-            <button onClick={handleBulkToggleRead} className="flex flex-col items-center gap-1.5 text-[#00f3ff] hover:text-white transition-colors">
-              <div className="p-3 rounded-xl bg-[#00f3ff]/10 shadow-[inset_0_0_10px_rgba(0,243,255,0.2)]">{isFirstUnread ? <MailOpen size={20} /> : <Mail size={20} />}</div>
+            <button onClick={handleBulkToggleRead} className="flex flex-col items-center gap-1.5 text-neon-blue hover:text-white transition-colors">
+              <div className="p-3 rounded-xl bg-neon-blue/10 shadow-[inset_0_0_10px_rgba(0,243,255,0.2)]">{isFirstUnread ? <MailOpen size={20} /> : <Mail size={20} />}</div>
               <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstUnread ? 'Přečtené' : 'Nepřeč.'}</span>
             </button>
 
-            <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-[#f72585] hover:text-white transition-colors">
-              <div className="p-3 rounded-xl bg-[#f72585]/10 shadow-[inset_0_0_10px_rgba(247,37,133,0.2)]">
-                <div className={`w-5 h-5 rounded-full transition-all ${isFirstStarred ? 'border-2 border-[#f72585]/50' : 'bg-[#f72585] shadow-[0_0_10px_#f72585] animate-pulse'}`}></div>
+            <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-neon-purple hover:text-white transition-colors">
+              <div className="p-3 rounded-xl bg-neon-purple/10 shadow-[inset_0_0_10px_rgba(247,37,133,0.2)]">
+                <div className={`w-5 h-5 rounded-full transition-all ${isFirstStarred ? 'border-2 border-neon-purple/50' : 'bg-neon-purple shadow-[0_0_10px_#f72585] animate-pulse'}`}></div>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstStarred ? 'Odebrat' : 'Důležité'}</span>
             </button>
@@ -1087,8 +1087,8 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
               </button>
             )}
 
-            <button onClick={handleBulkTrash} className="flex flex-col items-center gap-1.5 text-[#ef4444] hover:text-white transition-colors">
-              <div className="p-3 rounded-xl bg-[#ef4444]/10 shadow-[inset_0_0_10px_rgba(239,68,68,0.2)]"><Trash2 size={20} /></div>
+            <button onClick={handleBulkTrash} className="flex flex-col items-center gap-1.5 text-danger hover:text-white transition-colors">
+              <div className="p-3 rounded-xl bg-danger/10 shadow-[inset_0_0_10px_rgba(239,68,68,0.2)]"><Trash2 size={20} /></div>
               <span className="text-[10px] font-bold uppercase tracking-wider">Smazat</span>
             </button>
           </div>
@@ -1097,9 +1097,9 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
       {/* Mobile Delete Confirmation Modal */}
       {mobileDeletePending && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020817]/80 backdrop-blur-sm p-4">
-          <div className="bg-[#061026] border-2 border-[#ff3366]/50 rounded-2xl p-6 w-full max-w-sm shadow-[0_0_40px_rgba(255,51,102,0.3)]">
-            <h3 className="text-xl font-black text-[#ff3366] tracking-widest uppercase mb-2">Potvrdit smazání</h3>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-deep/80 backdrop-blur-sm p-4">
+          <div className="bg-navy border-2 border-neon-red/50 rounded-2xl p-6 w-full max-w-sm shadow-[0_0_40px_rgba(255,51,102,0.3)]">
+            <h3 className="text-xl font-black text-neon-red tracking-widest uppercase mb-2">Potvrdit smazání</h3>
             <p className="text-slate-300 mb-6 font-semibold">Opravdu chcete tento e-mail přesunout do koše?</p>
             <div className="flex gap-4">
               <button
@@ -1113,7 +1113,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
                   handleTrashEmail(mobileDeletePending, null);
                   setMobileDeletePending(null);
                 }}
-                className="flex-1 py-3 rounded-xl bg-[#ff3366]/10 border border-[#ff3366] text-[#ff3366] font-bold tracking-widest uppercase transition-colors hover:bg-[#ff3366]/30 shadow-[inset_0_0_15px_rgba(255,51,102,0.2)]"
+                className="flex-1 py-3 rounded-xl bg-neon-red/10 border border-neon-red text-neon-red font-bold tracking-widest uppercase transition-colors hover:bg-neon-red/30 shadow-[inset_0_0_15px_rgba(255,51,102,0.2)]"
               >
                 Smazat
               </button>

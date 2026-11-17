@@ -166,7 +166,7 @@ export default function Sidebar({
       }
     } catch { /* přetažené něco, co není z aplikace */ }
   };  return (
-    <div className="relative min-w-[16rem] w-max max-w-[26rem] bg-[#061026] md:bg-[#0a1630] backdrop-blur-3xl md:backdrop-blur-md border-r border-[#00f3ff]/20 flex flex-col pb-4 pt-[calc(1rem+env(safe-area-inset-top,2rem))] md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
+    <div className="relative min-w-[16rem] w-max max-w-[26rem] bg-navy md:bg-navy-card backdrop-blur-3xl md:backdrop-blur-md border-r border-neon-blue/20 flex flex-col pb-4 pt-[calc(1rem+env(safe-area-inset-top,2rem))] md:py-8 z-20 select-none shrink-0 transition-all duration-300 h-full shadow-[5px_0_30px_rgba(0,0,0,0.8)]">
       <div className="flex justify-center w-full px-4 mb-4 md:mb-8">
         <img
           src="/cropped-logo-neon-pruhledna-150x50.png"
@@ -184,7 +184,7 @@ export default function Sidebar({
             if (onMobileClose) onMobileClose();
           }}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'email'
-              ? 'bg-[#00f3ff]/10 border border-[#00f3ff]/30 text-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
+              ? 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
               : 'text-slate-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
         >
@@ -197,7 +197,7 @@ export default function Sidebar({
             if (onMobileClose) onMobileClose();
           }}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'calendar'
-              ? 'bg-[#00f3ff]/10 border border-[#00f3ff]/30 text-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
+              ? 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
               : 'text-slate-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
         >
@@ -215,9 +215,9 @@ export default function Sidebar({
         {appMode === 'email' ? (
             <button 
               onClick={onComposeNew}
-              className="w-full relative group overflow-hidden rounded-xl border-2 border-[#00f3ff]/50 bg-[#00f3ff]/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-[#00f3ff]/20 hover:border-[#00f3ff] hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
+              className="w-full relative group overflow-hidden rounded-xl border-2 border-neon-blue/50 bg-neon-blue/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-neon-blue/20 hover:border-neon-blue hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
             >
-            <span className="font-bold text-base tracking-widest text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
+            <span className="font-bold text-base tracking-widest text-neon-blue drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
               <Mail size={18} strokeWidth={2.5} />
               Napsat e-mail
             </span>
@@ -228,9 +228,9 @@ export default function Sidebar({
                  onCreateNewEvent();
                  if (onMobileClose) onMobileClose();
               }}
-              className="w-full relative group overflow-hidden rounded-xl border-2 border-[#00f3ff]/50 bg-[#00f3ff]/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-[#00f3ff]/20 hover:border-[#00f3ff] hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
+              className="w-full relative group overflow-hidden rounded-xl border-2 border-neon-blue/50 bg-neon-blue/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-neon-blue/20 hover:border-neon-blue hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
             >
-            <span className="font-bold text-base tracking-widest text-[#00f3ff] drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
+            <span className="font-bold text-base tracking-widest text-neon-blue drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
               <Calendar size={18} strokeWidth={2.5} />
               Nová událost
             </span>
@@ -239,7 +239,7 @@ export default function Sidebar({
       </div>
 
       {/* Cyberpunk Neon Divider za akčním tlačítkem */}
-      <div className="w-full h-[1px] mb-4 mt-2 bg-gradient-to-r from-[#00f3ff]/0 via-[#00f3ff]/60 to-[#00f3ff]/0 shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none"></div>
+      <div className="w-full h-[1px] mb-4 mt-2 bg-gradient-to-r from-neon-blue/0 via-neon-blue/60 to-neon-blue/0 shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none"></div>
 
       {/* Neonové čáry dole – hotový obrázek (bez živých filtrů, nic nestojí) */}
       <img src="/neon_sidebar.png" alt="" draggable="false" className="absolute left-0 bottom-0 w-full h-auto opacity-60 pointer-events-none select-none z-0" />
@@ -263,26 +263,26 @@ export default function Sidebar({
                  if (onMobileClose) onMobileClose();
               }}
               className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
-                isDragOver ? 'bg-[#00f3ff]/30 border border-[#00f3ff] scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20' :
+                isDragOver ? 'bg-neon-blue/30 border border-neon-blue scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20' :
                 isActive
-                  ? 'bg-gradient-to-r from-[#00f3ff]/20 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
-                  : 'hover:bg-[#00f3ff]/5 border border-[#00f3ff]/10 text-[#00f3ff]/60 hover:text-[#00f3ff]'
+                  ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
+                  : 'hover:bg-neon-blue/5 border border-neon-blue/10 text-neon-blue/60 hover:text-neon-blue'
                 } group`}
             >
               {isActive && !isDragOver && (
-                <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-[#00f3ff]/10 to-transparent pointer-events-none" />
+                <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-neon-blue/10 to-transparent pointer-events-none" />
               )}
               <div className="flex items-center gap-3 relative z-10">
                 {isActive && (
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff] animate-pulse" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff] animate-pulse" />
                 )}
-                <span className={`font-semibold tracking-wide ${isActive ? 'text-[#00f3ff] font-bold' : 'text-[#00f3ff]/60'}`}>
+                <span className={`font-semibold tracking-wide ${isActive ? 'text-neon-blue font-bold' : 'text-neon-blue/60'}`}>
                   {folder.label}
                 </span>
               </div>
               
               {unreadCounts[folder.label] > 0 && (
-                <span className={`relative z-10 px-2.5 py-0.5 rounded text-xs font-extrabold transition-all duration-300 ${isActive ? 'bg-[#00f3ff] text-black shadow-[0_0_10px_rgba(0,243,255,0.8)]' : 'bg-[#00f3ff]/10 text-[#00f3ff] border border-[#00f3ff]/20'}`}>
+                <span className={`relative z-10 px-2.5 py-0.5 rounded text-xs font-extrabold transition-all duration-300 ${isActive ? 'bg-neon-blue text-black shadow-[0_0_10px_rgba(0,243,255,0.8)]' : 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'}`}>
                    {unreadCounts[folder.label]}
                 </span>
               )}
@@ -293,7 +293,7 @@ export default function Sidebar({
          {appMode === 'email' && customLabels && customLabels.length > 0 && (
            <>
               <div 
-                className={`h-px bg-[#00f3ff]/20 mx-4 !mt-7 !mb-7 relative shrink-0 transition-all ${dragOverIdx === 'root_custom' ? 'shadow-[0_0_15px_#00f3ff] scale-105' : ''}`}
+                className={`h-px bg-neon-blue/20 mx-4 !mt-7 !mb-7 relative shrink-0 transition-all ${dragOverIdx === 'root_custom' ? 'shadow-[0_0_15px_#00f3ff] scale-105' : ''}`}
                 onDragOver={(e) => {
                    e.preventDefault();
                    e.dataTransfer.dropEffect = 'move';
@@ -302,7 +302,7 @@ export default function Sidebar({
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, -1, null)}
               >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#061026] px-2 text-[10px] text-[#00f3ff]/50 font-bold tracking-widest uppercase whitespace-nowrap">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-navy px-2 text-[10px] text-neon-blue/50 font-bold tracking-widest uppercase whitespace-nowrap">
                   Vlastní složky
                 </div>
               </div>
@@ -334,10 +334,10 @@ export default function Sidebar({
                     <Fragment key={folder.id}>
                       {isDragOverBefore && (
                         <div 
-                           className="h-1 bg-[#061026] border border-[#00f3ff] rounded-full my-1 z-30 transition-all relative overflow-hidden"
+                           className="h-1 bg-navy border border-neon-blue rounded-full my-1 z-30 transition-all relative overflow-hidden"
                            style={{ marginLeft: `${1 + (depth > 0 ? depth - 1 : 0) * 1.2}rem`, marginRight: '1rem' }}
                         >
-                           <div className="absolute inset-0 w-full h-full bg-[#00f3ff] shadow-[0_0_15px_#00f3ff] animate-pulse opacity-70" />
+                           <div className="absolute inset-0 w-full h-full bg-neon-blue shadow-[0_0_15px_#00f3ff] animate-pulse opacity-70" />
                         </div>
                       )}
                       <div
@@ -371,40 +371,40 @@ export default function Sidebar({
                        if (onMobileClose) onMobileClose();
                     }}
                     className={`relative flex items-center justify-between py-3 cursor-pointer transition-all duration-300 overflow-hidden ${
-                      isDragOverInto ? 'bg-[#00f3ff]/30 border border-[#00f3ff] scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20 rounded-xl' :
+                      isDragOverInto ? 'bg-neon-blue/30 border border-neon-blue scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20 rounded-xl' :
                       isActive
-                        ? 'bg-gradient-to-r from-[#00f3ff]/20 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02] rounded-xl'
-                        : 'hover:bg-[#00f3ff]/5 border border-transparent hover:border-[#00f3ff]/10 text-[#00f3ff]/60 hover:text-[#00f3ff] rounded-xl'
+                        ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02] rounded-xl'
+                        : 'hover:bg-neon-blue/5 border border-transparent hover:border-neon-blue/10 text-neon-blue/60 hover:text-neon-blue rounded-xl'
                       } group`}
                     style={{ paddingLeft: `${1 + depth * 1.2}rem`, paddingRight: '1rem' }}
                   >
                     {isActive && (!isDragOverInto && !isDragOverBefore) && (
-                      <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-[#00f3ff]/10 to-transparent pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-neon-blue/10 to-transparent pointer-events-none" />
                     )}
                     <div className="flex items-center gap-2 relative z-10 w-full overflow-hidden">
                       {hasChildren ? (
                          <div 
                            onClick={(e) => toggleCollapse(e, folder.name)}
-                           className="p-1 -ml-1 rounded-md hover:bg-white/10 shrink-0 text-[#00f3ff]/70 hover:text-[#00f3ff] transition-colors"
+                           className="p-1 -ml-1 rounded-md hover:bg-white/10 shrink-0 text-neon-blue/70 hover:text-neon-blue transition-colors"
                          >
                             {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                          </div>
                       ) : (
                          <div className="w-[22px] shrink-0 flex justify-center items-center">
                             {isActive ? (
-                               <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff] animate-pulse shrink-0" />
+                               <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff] animate-pulse shrink-0" />
                             ) : depth > 0 ? (
-                               <div className="w-1 h-1 rounded-full bg-[#00f3ff]/30 shrink-0" />
+                               <div className="w-1 h-1 rounded-full bg-neon-blue/30 shrink-0" />
                             ) : null}
                          </div>
                       )}
                       
-                      <span className={`font-semibold tracking-wide whitespace-nowrap ${isActive ? 'text-[#00f3ff] font-bold' : 'text-[#00f3ff]/60'}`}>
+                      <span className={`font-semibold tracking-wide whitespace-nowrap ${isActive ? 'text-neon-blue font-bold' : 'text-neon-blue/60'}`}>
                         {displayName}
                       </span>
                     </div>
                     {unreadCounts[folder.name] > 0 && (
-                      <span className={`shrink-0 relative z-10 px-2.5 py-0.5 rounded text-xs font-extrabold transition-all duration-300 ${isActive ? 'bg-[#00f3ff] text-black shadow-[0_0_10px_rgba(0,243,255,0.8)]' : 'bg-[#00f3ff]/10 text-[#00f3ff] border border-[#00f3ff]/20'}`}>
+                      <span className={`shrink-0 relative z-10 px-2.5 py-0.5 rounded text-xs font-extrabold transition-all duration-300 ${isActive ? 'bg-neon-blue text-black shadow-[0_0_10px_rgba(0,243,255,0.8)]' : 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'}`}>
                          {unreadCounts[folder.name]}
                       </span>
                     )}
@@ -434,18 +434,18 @@ export default function Sidebar({
               }}
               className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
                 isActive
-                  ? 'bg-gradient-to-r from-[#00f3ff]/20 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
-                  : 'hover:bg-[#00f3ff]/5 border border-[#00f3ff]/10 text-[#00f3ff]/60 hover:text-[#00f3ff]'
+                  ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
+                  : 'hover:bg-neon-blue/5 border border-neon-blue/10 text-neon-blue/60 hover:text-neon-blue'
                 } group`}
             >
               {isActive && (
-                <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-[#00f3ff]/10 to-transparent pointer-events-none" />
+                <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-neon-blue/10 to-transparent pointer-events-none" />
               )}
               <div className="flex items-center gap-3 relative z-10">
                 {isActive && (
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff] animate-pulse" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff] animate-pulse" />
                 )}
-                <span className={`font-semibold tracking-wide ${isActive ? 'text-[#00f3ff] font-bold' : 'text-[#00f3ff]/60'}`}>
+                <span className={`font-semibold tracking-wide ${isActive ? 'text-neon-blue font-bold' : 'text-neon-blue/60'}`}>
                   {view.label}
                 </span>
               </div>
@@ -455,8 +455,8 @@ export default function Sidebar({
 
         {appMode === 'calendar' && (
            <>
-              <div className="h-px bg-[#00f3ff]/20 mx-4 !mt-7 !mb-7 relative shrink-0">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#061026] px-3 text-[10px] text-[#00f3ff]/50 font-bold tracking-[0.1em] uppercase whitespace-nowrap">
+              <div className="h-px bg-neon-blue/20 mx-4 !mt-7 !mb-7 relative shrink-0">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-navy px-3 text-[10px] text-neon-blue/50 font-bold tracking-[0.1em] uppercase whitespace-nowrap">
                   Speciální kalendáře
                 </div>
               </div>
@@ -474,16 +474,16 @@ export default function Sidebar({
                       }}
                       className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
                         isActive
-                          ? 'bg-gradient-to-r from-[#00f3ff]/15 to-transparent border border-[#00f3ff]/30 shadow-[inset_4px_0_0_#f72585,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
-                          : 'hover:bg-[#00f3ff]/5 border border-[#00f3ff]/10 text-[#00f3ff]/60 hover:text-[#00f3ff]'
+                          ? 'bg-gradient-to-r from-neon-blue/15 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_#f72585,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
+                          : 'hover:bg-neon-blue/5 border border-neon-blue/10 text-neon-blue/60 hover:text-neon-blue'
                         } group`}
                     >
                       {isActive && (
-                        <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-[#00f3ff]/10 to-transparent pointer-events-none" />
+                        <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-neon-blue/10 to-transparent pointer-events-none" />
                       )}
                       <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
-                         <div className={`w-1.5 h-1.5 rounded-full bg-[#00f3ff] shrink-0 transition-all ${isActive ? 'shadow-[0_0_8px_#00f3ff] animate-pulse' : 'opacity-40'}`} />
-                         <span className={`font-semibold tracking-wide truncate transition-colors ${isActive ? 'text-[#00f3ff] font-bold' : 'text-[#00f3ff]/60 group-hover:text-[#00f3ff]'}`}>
+                         <div className={`w-1.5 h-1.5 rounded-full bg-neon-blue shrink-0 transition-all ${isActive ? 'shadow-[0_0_8px_#00f3ff] animate-pulse' : 'opacity-40'}`} />
+                         <span className={`font-semibold tracking-wide truncate transition-colors ${isActive ? 'text-neon-blue font-bold' : 'text-neon-blue/60 group-hover:text-neon-blue'}`}>
                            CZ Státní svátky
                          </span>
                       </div>
@@ -495,7 +495,7 @@ export default function Sidebar({
       </nav>
       
       {appVersion && (
-        <div className="relative z-10 px-4 pb-0 pt-3 text-center text-[#00f3ff]/50 text-[10px] tracking-widest uppercase truncate border-t border-[#00f3ff]/20">
+        <div className="relative z-10 px-4 pb-0 pt-3 text-center text-neon-blue/50 text-[10px] tracking-widest uppercase truncate border-t border-neon-blue/20">
           Verze {appVersion}
         </div>
       )}

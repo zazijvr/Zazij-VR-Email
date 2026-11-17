@@ -134,7 +134,7 @@ export const getMessageBody = (payload: GmailMessagePart): MessageBody => {
      return { html: '', text: '', attachmentId: bodyAttachmentId };
   }
   
-  return { html: '<div class="text-[#00f3ff]/50 italic p-4">E-mail neobsahuje čitelné textové tělo, případně je obsaženo pouze v přílohách.</div>', text: '', attachmentId: null };
+  return { html: '<div class="text-neon-blue/50 italic p-4">E-mail neobsahuje čitelné textové tělo, případně je obsaženo pouze v přílohách.</div>', text: '', attachmentId: null };
 };
 
 export const extractAttachments = (payload: GmailMessagePart | undefined): AttachmentInfo[] => {

@@ -39,33 +39,33 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
 
   // Determine styles and icon based on type
   let Icon = Info;
-  let colorClass = 'text-[#00f3ff]';
-  let borderClass = 'border-[#00f3ff]/40';
-  let bgClass = 'bg-[#00f3ff]/10';
+  let colorClass = 'text-neon-blue';
+  let borderClass = 'border-neon-blue/40';
+  let bgClass = 'bg-neon-blue/10';
   let shadowClass = 'shadow-[0_0_30px_rgba(0,243,255,0.2)]';
 
   if (type === 'success') {
     Icon = CheckCircle;
-    colorClass = 'text-[#00f3ff]';
-    borderClass = 'border-[#00f3ff]/40';
-    bgClass = 'bg-[#00f3ff]/10';
+    colorClass = 'text-neon-blue';
+    borderClass = 'border-neon-blue/40';
+    bgClass = 'bg-neon-blue/10';
     shadowClass = 'shadow-[0_0_30px_rgba(0,243,255,0.2)]';
   } else if (type === 'error') {
     Icon = XCircle;
-    colorClass = 'text-[#ef4444]';
-    borderClass = 'border-[#ef4444]/40';
-    bgClass = 'bg-[#ef4444]/10';
+    colorClass = 'text-danger';
+    borderClass = 'border-danger/40';
+    bgClass = 'bg-danger/10';
     shadowClass = 'shadow-[0_0_30px_rgba(239,68,68,0.3)]';
   } else if (type === 'warning') {
     Icon = AlertTriangle;
-    colorClass = 'text-[#f59e0b]';
-    borderClass = 'border-[#f59e0b]/40';
-    bgClass = 'bg-[#f59e0b]/10';
+    colorClass = 'text-neon-amber';
+    borderClass = 'border-neon-amber/40';
+    bgClass = 'bg-neon-amber/10';
     shadowClass = 'shadow-[0_0_30px_rgba(245,158,11,0.2)]';
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999999] flex items-center justify-center p-4 bg-[#020817]/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999999] flex items-center justify-center p-4 bg-navy-deep/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         ref={modalRef}
         tabIndex={-1}
@@ -74,7 +74,7 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
       >
         <button 
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 bg-white/5 hover:bg-[#ef4444]/20 text-slate-400 hover:text-[#ef4444] rounded-full transition-all border border-transparent hover:border-[#ef4444]/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center z-10"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 bg-white/5 hover:bg-danger/20 text-slate-400 hover:text-danger rounded-full transition-all border border-transparent hover:border-danger/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center z-10"
         >
           <X size={20} className="sm:w-[22px] sm:h-[22px]" strokeWidth={2} />
         </button>

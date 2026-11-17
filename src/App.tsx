@@ -710,7 +710,7 @@ function App() {
   }, []);
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full overflow-hidden app-bg relative md:border border-[#00f3ff]/20 shadow-2xl select-none pt-[env(safe-area-inset-top)]">
+    <div className="flex flex-col h-[100dvh] w-full overflow-hidden app-bg relative md:border border-neon-blue/20 shadow-2xl select-none pt-[env(safe-area-inset-top)]">
 
 
       <MobileHeader
@@ -724,12 +724,12 @@ function App() {
 
 
         {/* Vizuální scelení celé aplikace shora - kyberpunkový top okraj rozhraní */}
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[#00f3ff]/80 via-[#00f3ff]/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] z-30 md:z-[100] pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] z-30 md:z-[100] pointer-events-none"></div>
 
         {/* Overlay pro mobilní menu */}
         {isMobileMenuOpen && googleToken && (
           <div
-            className="fixed inset-0 bg-[#020817]/60 backdrop-blur-sm z-40 md:hidden"
+            className="fixed inset-0 bg-navy-deep/60 backdrop-blur-sm z-40 md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
