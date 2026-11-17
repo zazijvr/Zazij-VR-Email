@@ -604,10 +604,12 @@ function App() {
   }, [countsQuery.data]);
 
   useEffect(() => {
+    // F5 = obnovit aktuální složku; Ctrl+F5 = znovu načíst celou aplikaci
     const handleF5 = (e: KeyboardEvent) => {
       if (e.key === 'F5') {
         e.preventDefault();
-        window.location.reload();
+        if (e.ctrlKey || e.metaKey) window.location.reload();
+        else window.dispatchEvent(new Event('vr-refresh-folder'));
       }
     };
     window.addEventListener('keydown', handleF5);

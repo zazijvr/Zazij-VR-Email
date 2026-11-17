@@ -73,6 +73,13 @@ export default function CalendarApp({
     return () => window.removeEventListener('vr-mobile-search-query-change', handleMobileSearch);
   }, []);
 
+  // F5 – obnovit události ze serveru
+  useEffect(() => {
+    const onRefresh = () => setRefreshTrigger(prev => prev + 1);
+    window.addEventListener('vr-refresh-folder', onRefresh);
+    return () => window.removeEventListener('vr-refresh-folder', onRefresh);
+  }, []);
+
   useEffect(() => {
     const handler = () => setSpecialCalsTrigger(prev => prev + 1);
     window.addEventListener('zazijvr_special_cals_changed', handler);

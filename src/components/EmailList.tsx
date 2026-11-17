@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { db } from '../db/db';
 import EmailListItem from './EmailListItem';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
-import { ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, CheckSquare, Square, RotateCcw, X } from 'lucide-react';
+import { ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, CheckSquare, Square, RotateCcw, RefreshCw, X } from 'lucide-react';
 import { listThreads, getThreadsMeta, modifyMessage } from '../services/gmail';
 import { formatThreads, mergeAndGroupEmails } from '../services/threads';
 import { saveNewContacts } from '../utils/contactManager';
@@ -176,6 +176,20 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     if (firstRefreshRef.current) { firstRefreshRef.current = false; return; }
     queryClient.invalidateQueries({ queryKey: ['threads'] });
   }, [refreshTriggerList, queryClient]);
+
+  /** Vynucené obnovení složky ze serveru (tlačítko, F5) – stáhne znovu všechny načtené stránky i počty nepřečtených */
+  const refreshFolder = useCallback(() => {
+    if (!googleToken || !userEmail) return;
+    queryClient.invalidateQueries({ queryKey: ['unreadCounts'] });
+    return queryClient.refetchQueries({ queryKey: threadsKey, exact: true });
+  }, [googleToken, userEmail, queryClient, threadsKey]);
+  const isRefreshing = threadsQuery.isFetching && !threadsQuery.isFetchingNextPage && folderLoaded;
+
+  useEffect(() => {
+    const onRefresh = () => { refreshFolder(); };
+    window.addEventListener('vr-refresh-folder', onRefresh);
+    return () => window.removeEventListener('vr-refresh-folder', onRefresh);
+  }, [refreshFolder]);
 
   // Nová složka / filtr → zase jen prvních 10 řádků
   useEffect(() => { setDisplayedEmailLimit(10); }, [threadsKey]);
@@ -853,7 +867,15 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
             </button>
           )}
         </div>
-        <div className="shrink-0 z-20 pl-4">
+        <div className="shrink-0 z-20 pl-4 flex items-center gap-2">
+          <button
+            onClick={() => refreshFolder()}
+            disabled={isRefreshing}
+            title="Obnovit složku (F5)"
+            className="p-1.5 rounded-md text-neon-blue bg-neon-blue/5 border border-neon-blue/40 hover:bg-neon-blue/20 transition-colors disabled:opacity-70"
+          >
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+          </button>
           <button
             onClick={() => setShowOnlyUnread(!showOnlyUnread)}
             className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all rounded-md flex items-center gap-2 ${showOnlyUnread
