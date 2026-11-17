@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type ComponentType, type CSSProperties, type Dispatch, type MouseEvent, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
-import EmailListJs from '../../components/EmailList';
+import EmailList from '../../components/EmailList';
 import EmailDetailJs from '../../components/EmailDetail';
 import EmailComposer from '../../components/EmailComposer';
 import { useAlert } from '../../components/AlertProvider';
@@ -12,7 +12,6 @@ import type { ComposerConfig, ComposerSuccess } from '../../types/composer';
 
 // DOČASNÉ: tyto komponenty jsou zatím v JavaScriptu – po jejich převodu na TSX se obal odstraní
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const EmailList = EmailListJs as ComponentType<any>;
 const EmailDetail = EmailDetailJs as ComponentType<any>;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -320,7 +319,6 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                 optimisticMoves={optimisticMoves}
                 onTrash={handleGlobalTrash}
                 onRestore={handleGlobalRestore}
-                onSpam={handleGlobalSpam}
                 setUnreadCounts={setUnreadCounts}
                 unreadCounts={unreadCounts}
                 loginWithGoogle={loginWithGoogle}

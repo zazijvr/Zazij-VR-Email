@@ -55,3 +55,8 @@ export type DragPayload =
   | { type: 'CUSTOM_FOLDER'; id: string; name: string }
   | { type: 'EMAIL'; id: string; sourceLabel: string; emailData?: EmailRef }
   | { type: 'EMAIL_MULTI'; items: { id: string; sourceLabel: string; emailData?: EmailRef }[] };
+
+/** Optimisticky zobrazené změny, než je Gmail potvrdí */
+export type TrashedEmail = EmailRef & { trashedFrom: string };
+export type SpammedEmail = EmailRef & { spammedFrom: string };
+export type OptimisticMove = EmailRef & { targetFolder: string };

@@ -1,27 +1,59 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
 import { db } from '../db/db';
-import DOMPurify from 'dompurify';
 import EmailListItem from './EmailListItem';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
-import { Paperclip, ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, Flag, Star, CheckSquare, Square, RotateCcw, FileEdit, X } from 'lucide-react';
-import { listThreads, getThreadsMeta } from '../services/gmail';
+import { ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, CheckSquare, Square, RotateCcw, X } from 'lucide-react';
+import { listThreads, getThreadsMeta, modifyMessage } from '../services/gmail';
 import { formatThreads, mergeAndGroupEmails } from '../services/threads';
 import { saveNewContacts } from '../utils/contactManager';
 import { useAlert } from './AlertProvider';
+import type { EmailRef, ListEmail, OptimisticMove, SpammedEmail, TrashedEmail } from '../types/email';
+import type { GmailLabel } from '../types/gmail';
+import type { UnreadCounts } from '../types/account';
+
+type ShownEmail = ListEmail;
+/** Cokoli, co umí zastavit probublání události (React událost i náhradní objekt) */
+type Stoppable = { stopPropagation: () => void } | null | undefined;
+
+interface EmailListProps {
+  googleToken: string | null;
+  activeFolder?: string;
+  selectedEmailId?: string | null;
+  setSelectedEmailId?: (id: string | null) => void;
+  onExpand?: (id: string) => void;
+  onDraftClick?: (id: string) => void;
+  trashedEmails?: TrashedEmail[];
+  spamEmails?: SpammedEmail[];
+  hiddenEmailIds?: string[];
+  optimisticMoves?: OptimisticMove[];
+  onTrash?: (email: EmailRef) => void;
+  onRestore?: (email: EmailRef) => void;
+  setUnreadCounts?: Dispatch<SetStateAction<UnreadCounts>>;
+  unreadCounts?: UnreadCounts;
+  loginWithGoogle?: () => void;
+  customLabels?: GmailLabel[];
+  userEmail?: string;
+  refreshTriggerList?: number;
+}
+
+interface FolderCacheEntry {
+  emails: ListEmail[];
+  nextPageToken: string | null;
+}
 
 // Globální set pro sledování všech ID zpráv, které už aplikace někdy viděla v tomto spuštění,
 // abychom absolutně spolehlivě zabránili dvojitým notifikacím (např. při ručním označení "Přečíst")
-const globalNotifiedSet = new Set();
+const globalNotifiedSet = new Set<string>();
 let globalHighestEmailDate = 0;
 /** Pevné šířky sloupců seznamu – společné pro hlavičku i řádky */
-const COL_STYLE = { '--col-from': 'clamp(130px, 26%, 230px)', '--col-date': '84px' };
+const COL_STYLE = { '--col-from': 'clamp(130px, 26%, 230px)', '--col-date': '84px' } as CSSProperties;
 
 /** Naposledy zobrazený obsah složek v paměti (klíč: složka + filtr) – návrat do složky je okamžitý,
  *  aktuální stav se pak dotáhne na pozadí */
-const folderMemCache = new Map();
+const folderMemCache = new Map<string, FolderCacheEntry>();
 
-export default function EmailList({ googleToken, activeFolder, selectedEmailId, setSelectedEmailId, onExpand, onDraftClick, trashedEmails = [], spamEmails = [], hiddenEmailIds = [], optimisticMoves = [], onTrash, onRestore, onSpam, setUnreadCounts, unreadCounts, loginWithGoogle, customLabels = [], userEmail, refreshTriggerList }) {
-  const getLabelId = (folderName) => {
+export default function EmailList({ googleToken, activeFolder = 'Doručené', selectedEmailId, setSelectedEmailId, onExpand, onDraftClick, trashedEmails = [], spamEmails = [], hiddenEmailIds = [], optimisticMoves = [], onTrash, onRestore, setUnreadCounts, unreadCounts, loginWithGoogle, customLabels = [], userEmail, refreshTriggerList }: EmailListProps) {
+  const getLabelId = (folderName: string) => {
     if (folderName === 'Doručené') return 'INBOX';
     if (folderName === 'Důležité') return 'STARRED';
     if (folderName === 'Odeslané') return 'SENT';
@@ -32,27 +64,27 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     return custom ? custom.id : 'INBOX';
   };
 
-  const [emails, setEmails] = useState([]);
+  const [emails, setEmails] = useState<ShownEmail[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [displayedEmailLimit, setDisplayedEmailLimit] = useState(10);
-  const [sortField, setSortField] = useState('date');
+  const [sortField, setSortField] = useState<'date' | 'from' | 'subject' | 'size' | 'attachment'>('date');
   const [sortAscending, setSortAscending] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const { showAlert, showConfirm } = useAlert();
 
-  const [mobileDeletePending, setMobileDeletePending] = useState(null);
+  const [mobileDeletePending, setMobileDeletePending] = useState<ListEmail | null>(null);
 
-  const [selectedMailIds, setSelectedMailIds] = useState(new Set());
+  const [selectedMailIds, setSelectedMailIds] = useState<Set<string>>(new Set());
   const [keyboardIndex, setKeyboardIndex] = useState(-1);
-  const visibleEmailsRef = useRef([]);
-  const lastClickRef = useRef({ id: null, time: 0 });
+  const visibleEmailsRef = useRef<ShownEmail[]>([]);
+  const lastClickRef = useRef<{ id: string | null; time: number }>({ id: null, time: 0 });
 
   useEffect(() => {
     if (userEmail && emails.length > 0) {
-      const allContacts = [];
+      const allContacts: string[] = [];
       emails.forEach(e => {
         if (e.originalFromRaw) allContacts.push(e.originalFromRaw);
         if (e.originalToRaw) allContacts.push(e.originalToRaw);
@@ -63,8 +95,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }, [emails, userEmail]);
 
   useEffect(() => {
-    const handleReplySent = (e) => {
-      const { threadId, snippet } = e.detail;
+    const handleReplySent = (e: Event) => {
+      const { threadId, snippet } = (e as CustomEvent<{ threadId: string; snippet: string }>).detail;
 
       // Uložení stavu do localStorage pro dlouhodobou paměť i po reloadu okna / změně složky
       try {
@@ -73,7 +105,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           stored.push(threadId);
           localStorage.setItem('vr-replied-threads', JSON.stringify(stored));
         }
-      } catch (err) {}
+      } catch { /* bez localStorage se značka odpovědi jen nezapamatuje */ }
 
       setEmails(prev => prev.map(msg => {
         if ((msg.threadId || msg.id) === threadId) {
@@ -92,17 +124,18 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }, []);
 
   useEffect(() => {
-    const handleStarToggle = (e) => {
-      const { id, isStarred } = e.detail;
+    const handleStarToggle = (e: Event) => {
+      const { id, isStarred } = (e as CustomEvent<{ id: string; isStarred: boolean }>).detail;
       setEmails(prev => prev.map(m => m.id === id ? { ...m, isStarred } : m));
     };
-    const handleReadToggle = (e) => {
-      const { id, isUnread } = e.detail;
+    const handleReadToggle = (e: Event) => {
+      const { id, isUnread } = (e as CustomEvent<{ id: string; isUnread: boolean }>).detail;
       setEmails(prev => prev.map(m => m.id === id ? { ...m, isUnread } : m));
     };
-    const handleMobileSearch = (e) => {
-      setSearchQuery(e.detail);
-      setSearchInputValue(e.detail);
+    const handleMobileSearch = (e: Event) => {
+      const q = (e as CustomEvent<string>).detail;
+      setSearchQuery(q);
+      setSearchInputValue(q);
     };
     window.addEventListener('vr-email-star-toggle', handleStarToggle);
     window.addEventListener('vr-email-read-toggle', handleReadToggle);
@@ -123,8 +156,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     }
   };
 
-  const toggleSelectEmail = (id, e) => {
-    e.stopPropagation();
+  const toggleSelectEmail = (id: string, e: Stoppable) => {
+    e?.stopPropagation();
     setSelectedMailIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -133,10 +166,10 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     });
   };
 
-  const [draggableEmailId, setDraggableEmailId] = useState(null);
-  const dragTimerRef = React.useRef(null);
+  const [draggableEmailId, setDraggableEmailId] = useState<string | null>(null);
+  const dragTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handlePointerDown = (id) => {
+  const handlePointerDown = (id: string) => {
     dragTimerRef.current = setTimeout(() => {
       setDraggableEmailId(id);
     }, 150);
@@ -156,10 +189,10 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
 
   // Pagination State
-  const [nextPageToken, setNextPageToken] = useState(null);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const performTrash = (email) => {
+  const performTrash = (email: ListEmail) => {
     if (email.isUnread && setUnreadCounts) {
       setUnreadCounts(prev => ({ ...prev, [activeFolder]: Math.max(0, (prev[activeFolder] || 0) - 1) }));
     }
@@ -167,8 +200,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     if (onTrash) onTrash(email);
   };
 
-  const handleTrashEmail = (email, e) => {
-    if (e) e.stopPropagation();
+  const handleTrashEmail = (email: ListEmail, e?: Stoppable) => {
+    e?.stopPropagation();
     if (activeFolder === 'Koš') {
       showConfirm(
         'Tímto trvale odstraníš konverzaci z koše. Tuto akci nelze vzít zpět. Opravdu chceš pokračovat?',
@@ -179,16 +212,6 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     } else {
       performTrash(email);
     }
-  };
-
-  const handleSpamEmail = (email, e) => {
-    if (e) e.stopPropagation();
-    if (email.isUnread && setUnreadCounts) {
-      setUnreadCounts(prev => ({ ...prev, [activeFolder]: Math.max(0, (prev[activeFolder] || 0) - 1) }));
-    }
-
-    setEmails(prev => prev.filter(p => p.id !== email.id));
-    if (onSpam) onSpam(email);
   };
 
   useEffect(() => {
@@ -205,9 +228,9 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }, [searchInputValue]);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       // Zabráníme smazání e-mailu, pokud uživatel zrovna píše text nebo edituje šablonu
-      const activeElement = document.activeElement;
+      const activeElement = document.activeElement as HTMLElement | null;
       const activeTag = activeElement?.tagName;
       if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeElement?.isContentEditable) return;
 
@@ -222,9 +245,9 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedEmailId, googleToken, emails]);
 
-  const fetchedFolderRef = React.useRef(null);
-  const lastAutoSelectedFolderRef = React.useRef(null);
-  const fetchSeqRef = React.useRef(0);
+  const fetchedFolderRef = useRef<string | null>(null);
+  const lastAutoSelectedFolderRef = useRef<string | null>(null);
+  const fetchSeqRef = useRef(0);
   useEffect(() => {
     if (!googleToken) {
       setEmails([]);
@@ -347,7 +370,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     return () => window.removeEventListener('vr-account-switched', clear);
   }, []);
 
-  const emailsRef = React.useRef(emails);
+  const emailsRef = useRef(emails);
   useEffect(() => { emailsRef.current = emails; }, [emails]);
 
   // Změny v seznamu (přečtení, smazání, hvězdička…) se propíšou i do paměti složky
@@ -369,8 +392,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }, [emails, selectedEmailId, setSelectedEmailId]);
 
   // Nový useEffect pro sledování změn nepřečtených zpráv a tiché načtení nových
-  const prevUnreadRef = React.useRef(0);
-  const prevFolderRef = React.useRef(activeFolder);
+  const prevUnreadRef = useRef(0);
+  const prevFolderRef = useRef(activeFolder);
 
   useEffect(() => {
     const currentUnread = unreadCounts?.[activeFolder] || 0;
@@ -428,7 +451,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     }
   }, [unreadCounts, activeFolder, showOnlyUnread, googleToken, searchQuery]);
 
-  const handleEmailClick = async (email) => {
+  const handleEmailClick = async (email: ListEmail) => {
     const now = Date.now();
     const isDoubleClick = lastClickRef.current.id === email.id && (now - lastClickRef.current.time) < 600;
     lastClickRef.current = { id: email.id, time: now };
@@ -449,19 +472,15 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
       }
 
       // Volání Gmail API pro pro odebrání štítku UNREAD
-      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${email.id}/modify`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
-      }).catch(err => console.error("Nepodařilo se označit e-mail jako přečtený:", err));
+      if (googleToken) {
+        modifyMessage(googleToken, email.id, [], ['UNREAD'])
+          .catch(err => console.error("Nepodařilo se označit e-mail jako přečtený:", err));
+      }
     }
   };
 
-  const handleToggleRead = async (emailId, currentIsUnread, e) => {
-    if (e) e.stopPropagation();
+  const handleToggleRead = async (emailId: string, currentIsUnread: boolean, e?: Stoppable) => {
+    e?.stopPropagation();
 
     const isNowUnread = !currentIsUnread;
 
@@ -478,20 +497,9 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     }
 
     try {
-      const endpoint = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/modify`;
-      const payload = currentIsUnread
-        ? { removeLabelIds: ['UNREAD'] }
-        : { addLabelIds: ['UNREAD'] };
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error(res.status);
+      if (!googleToken) throw new Error('Nejste přihlášeni.');
+      if (currentIsUnread) await modifyMessage(googleToken, emailId, [], ['UNREAD']);
+      else await modifyMessage(googleToken, emailId, ['UNREAD']);
     } catch (err) {
       console.error(err);
       // Rollback
@@ -508,8 +516,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     }
   };
 
-  const handleToggleStar = async (emailId, currentIsStarred, e) => {
-    if (e) e.stopPropagation();
+  const handleToggleStar = async (emailId: string, currentIsStarred: boolean, e?: Stoppable) => {
+    e?.stopPropagation();
 
     const isNowStarred = !currentIsStarred;
 
@@ -520,20 +528,9 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     window.dispatchEvent(new CustomEvent('vr-email-star-toggle', { detail: { id: emailId, isStarred: isNowStarred } }));
 
     try {
-      const endpoint = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/modify`;
-      const payload = currentIsStarred
-        ? { removeLabelIds: ['STARRED'] }
-        : { addLabelIds: ['STARRED'] };
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error("Chyba při updatu STARRED stavu");
+      if (!googleToken) throw new Error('Nejste přihlášeni.');
+      if (currentIsStarred) await modifyMessage(googleToken, emailId, [], ['STARRED']);
+      else await modifyMessage(googleToken, emailId, ['STARRED']);
     } catch (err) {
       console.error(err);
       // Revert in case of failure 
@@ -604,7 +601,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
   // Load More Functionality
   const loadMoreEmails = async () => {
-    if (!nextPageToken || loadingMore) return;
+    if (!nextPageToken || loadingMore || !googleToken) return;
     setLoadingMore(true);
     try {
       const listData = await listThreads(googleToken, { labelId: getLabelId(activeFolder), q: [showOnlyUnread ? 'is:unread' : '', searchQuery.trim()].filter(Boolean).join(' ') || undefined, maxResults: 40, pageToken: nextPageToken });
@@ -636,19 +633,19 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     setSelectedMailIds(new Set());
   }, [activeFolder, setSelectedEmailId]);
 
-  const handleSort = (field) => {
+  const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
       setSortAscending(!sortAscending);
     } else {
       setSortField(field);
-      setSortAscending(field === 'sender' || field === 'subject');
+      setSortAscending(field === 'from' || field === 'subject');
     }
   };
 
   const sortedEmails = [...emails].sort((a, b) => {
     let cmp = 0;
     if (sortField === 'date') cmp = a.rawDate - b.rawDate;
-    else if (sortField === 'sender') cmp = a.from.localeCompare(b.from);
+    else if (sortField === 'from') cmp = a.from.localeCompare(b.from);
     else if (sortField === 'subject') cmp = a.subject.localeCompare(b.subject);
     else if (sortField === 'size') cmp = a.rawSize - b.rawSize;
     else if (sortField === 'attachment') cmp = (a.hasAttachment === b.hasAttachment) ? 0 : (a.hasAttachment ? 1 : -1);
@@ -681,11 +678,11 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   if (activeFolder === 'Koš') {
     const newlyTrashedContent = trashedEmails.filter(t => t.trashedFrom !== 'Koš' && !visibleEmails.some(v => v.id === t.id));
     const finalTrashed = showOnlyUnread ? newlyTrashedContent.filter(e => e.isUnread) : newlyTrashedContent;
-    visibleEmails = [...finalTrashed, ...visibleEmails];
+    visibleEmails = [...(finalTrashed as ListEmail[]), ...visibleEmails];
   } else if (activeFolder === 'Spam') {
     const newlySpammedContent = spamEmails.filter(s => s.spammedFrom !== 'Spam' && !visibleEmails.some(v => v.id === s.id));
     const finalSpammed = showOnlyUnread ? newlySpammedContent.filter(e => e.isUnread) : newlySpammedContent;
-    visibleEmails = [...finalSpammed, ...visibleEmails];
+    visibleEmails = [...(finalSpammed as ListEmail[]), ...visibleEmails];
   }
 
   // Přídání zpráv, které byly tažením přesunuty DO této složky
@@ -693,7 +690,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     const incoming = optimisticMoves.filter(m => m.targetFolder === activeFolder && !visibleEmails.some(v => v.id === m.id));
     const finalIncoming = showOnlyUnread ? incoming.filter(e => e.isUnread) : incoming;
     if (finalIncoming.length > 0) {
-      visibleEmails = [...finalIncoming, ...visibleEmails];
+      visibleEmails = [...(finalIncoming as ListEmail[]), ...visibleEmails];
       // Resoring aby příchozí zprávy zapadly na správné datumové místo
       visibleEmails.sort((a, b) => sortAscending ? a.rawDate - b.rawDate : b.rawDate - a.rawDate);
     }
@@ -705,10 +702,10 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   visibleEmailsRef.current = visibleEmails;
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const activeElement = document.activeElement;
-      const activeTag = activeElement.tagName;
-      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeElement.isContentEditable) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement as HTMLElement | null;
+      const activeTag = activeElement?.tagName;
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeElement?.isContentEditable) return;
       if (visibleEmailsRef.current.length === 0) return;
 
       if (e.key === 'ArrowDown') {
@@ -734,7 +731,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
           e.preventDefault();
           const target = visibleEmailsRef.current[keyboardIndex];
           if (setSelectedEmailId) setSelectedEmailId(target.id);
-          if (onExpand) onExpand();
+          if (onExpand) onExpand(target.id);
         }
       }
     };
@@ -758,12 +755,13 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     }
   }, [loading, visibleEmails, activeFolder, setSelectedEmailId]);
 
-  const SortIcon = ({ field }) => {
+  type SortField = typeof sortField;
+  const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <div className="w-4" />;
     return sortAscending ? <ChevronUp size={16} className="text-[#00f3ff]" /> : <ChevronDown size={16} className="text-[#00f3ff]" />;
   };
 
-  const HeaderItem = ({ label, field, className = "" }) => (
+  const HeaderItem = ({ label, field, className = "" }: { label: string; field: SortField; className?: string }) => (
     <div
       className={`flex items-center gap-1 cursor-pointer hover:text-[#00f3ff] transition-colors select-none ${className} ${sortField === field ? 'text-[#00f3ff] font-bold' : 'text-slate-400'}`}
       onClick={() => handleSort(field)}
@@ -813,7 +811,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
 
       {/* Mobilní Nadpis Složky */}
       {(() => {
-        const iconMap = {
+        const iconMap: Record<string, string> = {
           'Doručené': '/vr_inbox.svg',
           'Důležité': '/vr_important.svg',
           'Odeslané': '/vr_sent.svg',
@@ -996,7 +994,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
                 email={email}
                 index={index}
                 activeFolder={activeFolder}
-                selectedEmailId={selectedEmailId}
+                selectedEmailId={selectedEmailId ?? null}
                 selectedMailIds={selectedMailIds}
                 keyboardIndex={keyboardIndex}
                 draggableEmailId={draggableEmailId}
