@@ -725,15 +725,25 @@ function App() {
     return () => { unlisten.then((f) => f()).catch(() => {}); };
   }, []);
 
-  // Android – Zpět: tah od levého okraje vysune menu; jinak se postupně zavře menu, nastavení,
-  // otevřený e-mail (EmailApp přes událost vr-back). Když není co zavřít, pokračuje systém.
-  const backStateRef = useRef({ isMobileMenuOpen, isSettingsOpen, canOpenMenu: !!(googleToken || activeImap) });
-  backStateRef.current = { isMobileMenuOpen, isSettingsOpen, canOpenMenu: !!(googleToken || activeImap) };
+  // Android – Zpět: tah od levého okraje vysune menu, ale jen když je tlačítko menu na obrazovce
+  // vidět (nepřekrývá ho e-mail, psaní, nastavení, událost ani samotné menu). Jinak je to běžné Zpět:
+  // postupně se zavře menu, nastavení, otevřený e-mail (EmailApp přes vr-back), pak pokračuje systém.
+  const backStateRef = useRef({ isMobileMenuOpen, isSettingsOpen });
+  backStateRef.current = { isMobileMenuOpen, isSettingsOpen };
   useEffect(() => {
+    /** Tlačítko menu je vidět a nic ho nepřekrývá (zablokované má pointer-events: none → nepočítá se) */
+    const isHamburgerVisible = () => {
+      const el = document.getElementById('mobile-hamburger');
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return false;
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !!hit && el.contains(hit);
+    };
     window.__vrBack = (edge) => {
       const st = backStateRef.current;
-      if (edge === 'left' && st.canOpenMenu && !st.isSettingsOpen) {
-        if (!st.isMobileMenuOpen) setIsMobileMenuOpen(true);
+      if (edge === 'left' && isHamburgerVisible()) {
+        setIsMobileMenuOpen(true);
         return true;
       }
       if (st.isMobileMenuOpen) { setIsMobileMenuOpen(false); return true; }
