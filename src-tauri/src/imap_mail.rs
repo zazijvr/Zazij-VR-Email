@@ -596,6 +596,21 @@ pub async fn imap_delete(app: AppHandle, email: String, folder: String, uids: Ve
     .await
 }
 
+/// Vysypání složky (koš): všechny zprávy natrvalo smazat. Vrací počet smazaných.
+#[command]
+pub async fn imap_empty_folder(app: AppHandle, email: String, folder: String) -> Result<u32, String> {
+    with_session(&app, &email, move |s| {
+        let mbox = s.select(&folder).map_err(friendly)?;
+        if mbox.exists == 0 {
+            return Ok(0);
+        }
+        s.store("1:*", "+FLAGS.SILENT (\\Deleted)").map_err(friendly)?;
+        s.expunge().map_err(friendly)?;
+        Ok(mbox.exists)
+    })
+    .await
+}
+
 // ───────────── SMTP ─────────────
 
 type Smtp = lettre::AsyncSmtpTransport<lettre::Tokio1Executor>;

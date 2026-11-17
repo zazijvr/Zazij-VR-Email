@@ -4,7 +4,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { open } from '@tauri-apps/plugin-shell';
 import { downloadDir, join } from '@tauri-apps/api/path';
-import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, X, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen, FileText } from 'lucide-react';
+import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, Inbox, X, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen, FileText } from 'lucide-react';
 import ICAL from 'ical.js';
 import { listDrafts } from '../services/gmail';
 import type { EmailDetailData } from '../services/emailDetail';
@@ -27,6 +27,8 @@ export interface EmailDetailProps {
   onExpand?: () => void;
   onTrash?: () => void;
   onSpam?: () => void;
+  /** Ve složce Spam: vrátit do Doručených */
+  onNotSpam?: () => void;
   onActionReply?: (config: ComposerConfig) => void;
   /** Jen u okna přes celou obrazovku */
   onClose?: () => void;
@@ -47,7 +49,7 @@ const subjectSizeClass = (subject?: string) => {
   return 'text-lg md:text-xl';
 };
 
-export default function EmailDetail({ googleToken, selectedEmailId, onExpand, onTrash, onSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed, userEmail }: EmailDetailProps) {
+export default function EmailDetail({ googleToken, selectedEmailId, onExpand, onTrash, onSpam, onNotSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed, userEmail }: EmailDetailProps) {
   const queryClient = useQueryClient();
   const provider = useMailProvider();
   const detailKey = ['emailDetail', userEmail ?? '', selectedEmailId ?? ''] as const;
@@ -670,6 +672,15 @@ ${ccLine}
                 {emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}
               </button>
             )}
+            {onNotSpam && (
+              <button
+                onClick={onNotSpam}
+                title="Není spam – vrátit do Doručených"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-green-500/70 text-green-400 transition-all active:scale-95"
+              >
+                <Inbox size={20} />
+              </button>
+            )}
             {onTrash && (
               <button
                 onClick={handleTrashClick}
@@ -784,6 +795,16 @@ ${ccLine}
                       </button>
                       <div className="w-px h-6 bg-neon-blue/20 mx-1"></div>
                     </>
+                  )}
+
+                  {onNotSpam && (
+                    <button
+                      onClick={onNotSpam}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-green-400/90 bg-green-500/5 border border-green-500/30 hover:text-green-300 hover:bg-green-500/15 hover:border-green-500/60 transition-all text-sm font-bold whitespace-nowrap shadow-[0_0_5px_rgba(74,222,128,0.1)] hover:shadow-[0_0_15px_rgba(74,222,128,0.35)]"
+                      title="Není spam – vrátit do Doručených"
+                    >
+                      <Inbox size={20} /> Není spam
+                    </button>
                   )}
 
                   {onSpam && (

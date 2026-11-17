@@ -4,13 +4,13 @@
 import DOMPurify from 'dompurify';
 import { createContext, useContext } from 'react';
 import {
-  deleteThread, getAttachmentBytes, getThreadsMeta, listThreads, modifyMessage, modifyThread,
+  batchDeleteMessages, deleteThread, getAttachmentBytes, listMessageIds, getThreadsMeta, listThreads, modifyMessage, modifyThread,
   saveDraft as gmailSaveDraft, sendMessage, trashThread, untrashThread,
 } from './gmail';
 import { loadEmailDetail, type EmailDetailData } from './emailDetail';
 import { formatSize, formatThreads, mergeAndGroupEmails, parseDate } from './threads';
 import {
-  imapAppend, imapDelete, imapGetAttachment, imapGetMessage, imapListMessages, imapMove, imapSetFlag, smtpSend,
+  imapAppend, imapDelete, imapEmptyFolder, imapGetAttachment, imapGetMessage, imapListMessages, imapMove, imapSetFlag, smtpSend,
   type ImapFolder, type ImapMessageSummary,
 } from './imap';
 import { encodeBase64Url, type AttachmentInfo } from '../utils/emailParser';
@@ -56,6 +56,10 @@ export interface MailProvider {
   /** Z koše zpět do Doručených */
   restore(ref: EmailRef): Promise<void>;
   markSpam(ref: EmailRef, fromFolder: string): Promise<void>;
+  /** Ze spamu zpět do Doručených */
+  notSpam(ref: EmailRef): Promise<void>;
+  /** Vysypání koše – vše natrvalo smazat; vrací počet smazaných zpráv */
+  emptyTrash(): Promise<number>;
   move(ref: EmailRef, fromFolder: string, toFolder: string): Promise<void>;
   /** Odeslání hotové MIME zprávy (bez hlavičky From – doplní ji server / Rust) */
   send(mime: string, opts: { recipients: string[]; threadId?: string }): Promise<{ id?: string; threadId?: string; unread?: boolean }>;
@@ -105,6 +109,12 @@ export function createGmailProvider(token: string, account: string, customLabels
       await modifyThread(token, thread(ref), ['INBOX']);
     },
     async markSpam(ref) { await modifyThread(token, thread(ref), ['SPAM'], ['INBOX']); },
+    async notSpam(ref) { await modifyThread(token, thread(ref), ['INBOX'], ['SPAM']); },
+    async emptyTrash() {
+      const ids = await listMessageIds(token, 'TRASH');
+      await batchDeleteMessages(token, ids);
+      return ids.length;
+    },
     async move(ref, fromFolder, toFolder) {
       const from = labelId(fromFolder);
       const to = labelId(toFolder);
@@ -290,6 +300,15 @@ export function createImapProvider(account: string, folders: ImapFolder[]): Mail
       const junk = special('junk');
       if (!junk) throw new Error('Účet nemá složku Spam.');
       await imapMove(account, folder, [uid], junk);
+    },
+    async notSpam(r) {
+      const { uid, folder } = ref(r);
+      await imapMove(account, folder, [uid], inbox);
+    },
+    async emptyTrash() {
+      const trash = special('trash');
+      if (!trash) throw new Error('Účet nemá složku Koš.');
+      return imapEmptyFolder(account, trash);
     },
     async move(r, _from, toFolder) {
       const { uid, folder } = ref(r);

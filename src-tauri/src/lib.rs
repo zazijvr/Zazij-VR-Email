@@ -62,6 +62,7 @@ pub fn run() {
         imap_mail::imap_move,
         imap_mail::imap_delete,
         imap_mail::imap_append,
+        imap_mail::imap_empty_folder,
         imap_mail::smtp_send,
         mail_watch::mail_watch_set_google_client
     ]);

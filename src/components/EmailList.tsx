@@ -3,7 +3,7 @@ import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/r
 import { createPortal } from 'react-dom';
 import { db } from '../db/db';
 import EmailListItem from './EmailListItem';
-import { ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, CheckSquare, Square, RotateCcw, RefreshCw, X } from 'lucide-react';
+import { ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, CheckSquare, Square, RotateCcw, RefreshCw, X, Inbox } from 'lucide-react';
 import { useMailProvider } from '../services/mailProvider';
 import { mergeAndGroupEmails } from '../services/threads';
 import { saveNewContacts } from '../utils/contactManager';
@@ -29,6 +29,10 @@ interface EmailListProps {
   optimisticMoves?: OptimisticMove[];
   onTrash?: (email: EmailRef) => void;
   onRestore?: (email: EmailRef) => void;
+  /** Ve složce Spam: vrátit do Doručených */
+  onNotSpam?: (email: EmailRef) => void;
+  /** Vysypat koš (potvrzení je tady v seznamu) */
+  onEmptyTrash?: () => Promise<void>;
   setUnreadCounts?: Dispatch<SetStateAction<UnreadCounts>>;
   unreadCounts?: UnreadCounts;
   loginWithGoogle?: () => void;
@@ -48,7 +52,7 @@ type ThreadPages = InfiniteData<ThreadPage, string | undefined>;
 /** Pevné šířky sloupců seznamu – společné pro hlavičku i řádky */
 const COL_STYLE = { '--col-from': 'clamp(130px, 26%, 230px)', '--col-date': '84px' } as CSSProperties;
 
-export default function EmailList({ googleToken, activeFolder = 'Doručené', selectedEmailId, setSelectedEmailId, onExpand, onDraftClick, trashedEmails = [], spamEmails = [], hiddenEmailIds = [], optimisticMoves = [], onTrash, onRestore, setUnreadCounts, unreadCounts, loginWithGoogle, userEmail, refreshTriggerList }: EmailListProps) {
+export default function EmailList({ googleToken, activeFolder = 'Doručené', selectedEmailId, setSelectedEmailId, onExpand, onDraftClick, trashedEmails = [], spamEmails = [], hiddenEmailIds = [], optimisticMoves = [], onTrash, onRestore, onNotSpam, onEmptyTrash, setUnreadCounts, unreadCounts, loginWithGoogle, userEmail, refreshTriggerList }: EmailListProps) {
   const provider = useMailProvider();
 
 
@@ -505,6 +509,35 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     setSelectedMailIds(new Set());
   };
 
+  const handleBulkNotSpam = () => {
+    const selected = emails.filter(e => selectedMailIds.has(e.id));
+    selected.forEach(email => {
+      setEmails(prev => prev.filter(p => p.id !== email.id));
+      onNotSpam?.(email);
+    });
+    setSelectedMailIds(new Set());
+  };
+
+  const [isEmptyingTrash, setIsEmptyingTrash] = useState(false);
+  const handleEmptyTrash = () => {
+    if (!onEmptyTrash) return;
+    showConfirm(
+      'Všechny zprávy v koši se natrvalo smažou. Tuto akci nelze vzít zpět. Opravdu chceš koš vysypat?',
+      'Vysypat koš',
+      async () => {
+        setIsEmptyingTrash(true);
+        try {
+          await onEmptyTrash();
+          setEmails([]);
+          setSelectedMailIds(new Set());
+        } finally {
+          setIsEmptyingTrash(false);
+        }
+      },
+      { confirmText: 'Vysypat koš', type: 'error' }
+    );
+  };
+
   const handleBulkToggleRead = () => {
     if (selectedMailIds.size === 0) return;
     const firstSelectedId = [...selectedMailIds][0];
@@ -876,6 +909,16 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
                 </button>
               )}
 
+              {activeFolder === 'Spam' && onNotSpam && (
+                <button
+                  onClick={handleBulkNotSpam}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-green-500/20 text-neon-blue hover:text-green-400 border border-transparent hover:border-green-500/50 transition-all font-bold uppercase tracking-wider text-xs"
+                  title="Není spam – vrátit vybrané do Doručených"
+                >
+                  <Inbox size={16} /> Není spam
+                </button>
+              )}
+
               <button
                 onClick={handleBulkTrash}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-red-500/20 text-neon-blue hover:text-red-400 border border-transparent hover:border-red-500/50 transition-all font-bold uppercase tracking-wider text-xs"
@@ -904,6 +947,21 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       </div>
 
       <div className="flex-1 w-full overflow-y-auto custom-scrollbar flex flex-col relative pt-2">
+
+        {/* Koš: vysypání najednou */}
+        {activeFolder === 'Koš' && onEmptyTrash && !loading && visibleEmails.length > 0 && (
+          <div className="mx-3 mt-1 mb-1 flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-danger/25 bg-danger/5">
+            <span className="text-xs sm:text-sm text-slate-400 min-w-0">Zprávy v koši můžeš smazat natrvalo najednou.</span>
+            <button
+              onClick={handleEmptyTrash}
+              disabled={isEmptyingTrash}
+              className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider text-danger border border-danger/50 bg-danger/10 hover:bg-danger/20 hover:border-danger transition-all disabled:opacity-60"
+            >
+              {isEmptyingTrash ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              {isEmptyingTrash ? 'Mažu…' : 'Vysypat koš'}
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-neon-blue/60 min-h-64">
@@ -999,6 +1057,13 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
               <button onClick={handleBulkRestore} className="flex flex-col items-center gap-1.5 text-green-400 hover:text-white transition-colors">
                 <div className="p-3 rounded-xl bg-green-500/10 shadow-[inset_0_0_10px_rgba(74,222,128,0.2)]"><RotateCcw size={20} /></div>
                 <span className="text-[10px] font-bold uppercase tracking-wider">Obnovit</span>
+              </button>
+            )}
+
+            {activeFolder === 'Spam' && onNotSpam && (
+              <button onClick={handleBulkNotSpam} className="flex flex-col items-center gap-1.5 text-green-400 hover:text-white transition-colors">
+                <div className="p-3 rounded-xl bg-green-500/10 shadow-[inset_0_0_10px_rgba(74,222,128,0.2)]"><Inbox size={20} /></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Není spam</span>
               </button>
             )}
 

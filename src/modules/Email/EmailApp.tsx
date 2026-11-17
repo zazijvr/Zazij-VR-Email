@@ -268,6 +268,49 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     }
   };
 
+  /** „Není spam“ – zpráva ze Spamu zpět do Doručených */
+  const handleGlobalNotSpam = async (emailObj: EmailRef | string) => {
+    if (!provider) return;
+    const emailData = await resolveEmail(emailObj);
+    if (provider.kind === 'imap') {
+      await refreshImapAfter([emailData.id], () => provider.notSpam(emailData), 'Nepodařilo se vrátit do Doručených');
+      return;
+    }
+
+    setSpamEmails((prev) => prev.filter((t) => t.id !== emailData.id));
+    setHiddenEmailIds((prev) => (prev.includes(emailData.id) ? prev : [...prev, emailData.id]));
+    setOptimisticMoves((prev) => [...prev.filter((m) => m.id !== emailData.id), { ...emailData, targetFolder: 'Doručené' }]);
+    if (selectedEmailId === emailData.id) setSelectedEmailId(null);
+    if (modalEmailId === emailData.id) setModalEmailId(null);
+
+    try {
+      await provider.notSpam(emailData);
+    } catch (err) {
+      console.error('Chyba při vracení ze spamu: ', err);
+      setHiddenEmailIds((prev) => prev.filter((x) => x !== emailData.id));
+      setOptimisticMoves((prev) => prev.filter((m) => m.id !== emailData.id));
+      showAlert(`Nepodařilo se vrátit do Doručených:\n${errorText(err)}`, null, 'error');
+    }
+  };
+
+  /** Vysypání koše – vše v koši natrvalo smazat (potvrzení řeší seznam) */
+  const handleEmptyTrash = async () => {
+    if (!provider) return;
+    try {
+      const count = await provider.emptyTrash();
+      setTrashedEmails([]);
+      setSelectedEmailId(null);
+      setModalEmailId(null);
+      showAlert(count > 0 ? `Koš je vysypaný – natrvalo smazáno zpráv: ${count}.` : 'Koš už byl prázdný.', 'Koš vysypán', 'success');
+    } catch (err) {
+      showAlert(`Koš se nepodařilo vysypat:\n${errorText(err)}`, null, 'error');
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['threads'] });
+      queryClient.invalidateQueries({ queryKey: ['imapFolders'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadCounts'] });
+    }
+  };
+
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {(provider || googleToken) && (
@@ -328,6 +371,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                 optimisticMoves={optimisticMoves}
                 onTrash={handleGlobalTrash}
                 onRestore={handleGlobalRestore}
+                onNotSpam={handleGlobalNotSpam}
+                onEmptyTrash={handleEmptyTrash}
                 setUnreadCounts={setUnreadCounts}
                 unreadCounts={unreadCounts}
                 loginWithGoogle={loginWithGoogle}
@@ -357,7 +402,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
                 selectedEmailId={selectedEmailId}
                 onExpand={selectedEmailId ? () => setModalEmailId(selectedEmailId) : undefined}
                 onTrash={selectedEmailId ? () => handleGlobalTrash(selectedEmailId) : undefined}
-                onSpam={selectedEmailId ? () => handleGlobalSpam(selectedEmailId) : undefined}
+                onSpam={selectedEmailId && activeFolder !== 'Spam' ? () => handleGlobalSpam(selectedEmailId) : undefined}
+                onNotSpam={selectedEmailId && activeFolder === 'Spam' ? () => handleGlobalNotSpam(selectedEmailId) : undefined}
                 onMobileBack={() => setSelectedEmailId(null)}
                 onActionReply={(config: ComposerConfig) => setComposerConfig(config)}
                 autoResumeDraftId={autoResumeDraftId}
@@ -376,7 +422,8 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               googleToken={googleToken}
               selectedEmailId={modalEmailId}
               onTrash={modalEmailId ? () => handleGlobalTrash(modalEmailId) : undefined}
-              onSpam={modalEmailId ? () => handleGlobalSpam(modalEmailId) : undefined}
+              onSpam={modalEmailId && activeFolder !== 'Spam' ? () => handleGlobalSpam(modalEmailId) : undefined}
+              onNotSpam={modalEmailId && activeFolder === 'Spam' ? () => handleGlobalNotSpam(modalEmailId) : undefined}
               onActionReply={(config: ComposerConfig) => setComposerConfig(config)}
               onClose={() => setModalEmailId(null)}
               userEmail={userEmail}

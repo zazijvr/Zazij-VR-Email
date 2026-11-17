@@ -131,6 +131,30 @@ export const untrashThread = (token: string, id: string) =>
 export const deleteThread = (token: string, id: string) =>
   gmailRequest<void>(token, `/threads/${id}`, { method: 'DELETE' });
 
+/** Id všech zpráv se štítkem (vč. koše a spamu), po stránkách až 500 */
+export const listMessageIds = async (token: string, labelId: string): Promise<string[]> => {
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+  do {
+    const params = new URLSearchParams({ labelIds: labelId, maxResults: '500', includeSpamTrash: 'true' });
+    if (pageToken) params.set('pageToken', pageToken);
+    const res = await gmailRequest<{ messages?: { id: string }[]; nextPageToken?: string }>(token, `/messages?${params}`);
+    ids.push(...(res.messages ?? []).map((m) => m.id));
+    pageToken = res.nextPageToken;
+  } while (pageToken);
+  return ids;
+};
+
+/** Trvalé smazání více zpráv najednou (Gmail povolí max. 1000 v jednom požadavku) */
+export const batchDeleteMessages = async (token: string, ids: string[]) => {
+  for (let i = 0; i < ids.length; i += 1000) {
+    await gmailRequest<void>(token, '/messages/batchDelete', {
+      method: 'POST',
+      body: JSON.stringify({ ids: ids.slice(i, i + 1000) }),
+    });
+  }
+};
+
 // ───────────── Zprávy a přílohy ─────────────
 
 export const getMessage = (token: string, id: string, format: 'full' | 'metadata' | 'minimal' = 'full') =>

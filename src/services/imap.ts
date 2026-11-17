@@ -91,6 +91,9 @@ export const imapMove = (email: string, folder: string, uids: number[], target: 
   invoke<void>('imap_move', { email, folder, uids, target });
 export const imapDelete = (email: string, folder: string, uids: number[], trash: string | null) =>
   invoke<void>('imap_delete', { email, folder, uids, trash });
+/** Vysype složku (natrvalo smaže všechny zprávy); vrací počet smazaných */
+export const imapEmptyFolder = (email: string, folder: string) =>
+  invoke<number>('imap_empty_folder', { email, folder });
 export const smtpSend = (email: string, mime: string, recipients: string[], sentFolder: string | null) =>
   invoke<void>('smtp_send', { input: { email, mime, recipients, sentFolder } });
 
