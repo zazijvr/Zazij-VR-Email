@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { onAction, registerActionTypes, isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 // Vracíme čistý nativní fetch pro přímou podporu WebView Android vrstvy, 
 // jelikož tauriFetch(reqwest) zde občas neověří kořenové certifikáty Googlu z důvodu chybějících Android trust stores.
@@ -22,8 +23,16 @@ import type { GmailLabel } from './types/gmail';
 import type { MoveRequest } from './types/email';
 import { imapListAccounts, imapListFolders } from './services/imap';
 import {
-  MailProviderProvider, createGmailProvider, createImapProvider, imapCustomFolders, imapUnreadCounts,
+  MailProviderProvider, createGmailProvider, createImapProvider, imapCustomFolders, imapId, imapUnreadCounts,
 } from './services/mailProvider';
+
+/** Kliknutí na upozornění o nové poště (posílá Rust – src-tauri/src/mail_watch.rs) */
+interface MailWatchOpen {
+  kind: 'google' | 'imap';
+  account: string;
+  messageId: string;
+  folder: string;
+}
 
 function App() {
   const { showAlert, showConfirm } = useAlert();
@@ -681,6 +690,40 @@ function App() {
       })),
     ];
   }, [savedAccounts, userInfo?.email, imapAccountsQuery.data]);
+
+  // Hlídání nové pošty na pozadí (Rust) potřebuje údaje Google aplikace pro obnovu přihlášení
+  useEffect(() => {
+    if (typeof window.__TAURI_INTERNALS__ === 'undefined') return;
+    invoke('mail_watch_set_google_client', {
+      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP ?? '',
+      clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET ?? '',
+    }).catch(() => { /* mobil – hlídání neběží */ });
+  }, []);
+
+  /** Kliknutí na upozornění: přepnout na účet, otevřít Doručené a zprávu */
+  const openFromNotification = async (req: MailWatchOpen) => {
+    setAppMode('email');
+    setIsSettingsOpen(false);
+    setIsMobileMenuOpen(false);
+    let id = req.messageId;
+    if (req.kind === 'imap') {
+      if (activeImap !== req.account) switchToImap(req.account);
+      else setActiveFolder('Doručené');
+      id = imapId(Number(req.messageId), req.folder);
+    } else {
+      setActiveFolder('Doručené');
+      if (activeImap || userInfo?.email !== req.account) await switchGoogleAccount(req.account);
+    }
+    // Až se po přepnutí účtu vyprázdní výběr a načte seznam
+    setTimeout(() => window.dispatchEvent(new CustomEvent('vr-open-email', { detail: { id } })), 400);
+  };
+  const openFromNotificationRef = useRef(openFromNotification);
+  openFromNotificationRef.current = openFromNotification;
+  useEffect(() => {
+    if (typeof window.__TAURI_INTERNALS__ === 'undefined') return;
+    const unlisten = listen<MailWatchOpen>('mail-watch-open', (e) => { openFromNotificationRef.current(e.payload); });
+    return () => { unlisten.then((f) => f()).catch(() => {}); };
+  }, []);
 
   const selectAccount = (acc: SwitcherAccount) => {
     setIsMobileMenuOpen(false);

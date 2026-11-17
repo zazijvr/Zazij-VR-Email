@@ -95,6 +95,16 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     window.addEventListener('vr-account-switched', reset);
     return () => window.removeEventListener('vr-account-switched', reset);
   }, []);
+
+  // Kliknutí na upozornění o nové poště – otevřít zprávu (App předtím přepne účet a složku)
+  useEffect(() => {
+    const open = (e: Event) => {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id;
+      if (id) setSelectedEmailId(id);
+    };
+    window.addEventListener('vr-open-email', open);
+    return () => window.removeEventListener('vr-open-email', open);
+  }, []);
   const [composerConfig, setComposerConfig] = useState<ComposerConfig | null>(null);
   const { showAlert } = useAlert();
 

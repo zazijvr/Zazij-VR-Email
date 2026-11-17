@@ -211,6 +211,18 @@ pub async fn get_active_refresh_token(app: AppHandle) -> Result<String, String> 
     token_for(&accounts, &active_email).ok_or_else(|| "Token is empty".into())
 }
 
+/// Všechny uložené Google účty s refresh tokenem (pro hlídání pošty na pozadí)
+#[cfg_attr(mobile, allow(dead_code))]
+pub(crate) fn saved_google_tokens(app: &AppHandle) -> Vec<(String, String)> {
+    use tauri_plugin_store::StoreExt;
+    let Ok(store) = app.store(STORE_FILE) else { return vec![] };
+    let accounts = store.get("google_accounts").unwrap_or(serde_json::json!({}));
+    let Some(obj) = accounts.as_object() else { return vec![] };
+    obj.keys()
+        .filter_map(|email| token_for(&accounts, email).map(|t| (email.clone(), t)))
+        .collect()
+}
+
 #[command]
 pub async fn get_saved_accounts(app: tauri::AppHandle) -> Result<Vec<String>, String> {
     use tauri_plugin_store::StoreExt;

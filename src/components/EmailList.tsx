@@ -3,7 +3,6 @@ import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/r
 import { createPortal } from 'react-dom';
 import { db } from '../db/db';
 import EmailListItem from './EmailListItem';
-import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import { ChevronUp, ChevronDown, Loader2, Trash2, Mail, MailOpen, Search, CheckSquare, Square, RotateCcw, RefreshCw, X } from 'lucide-react';
 import { useMailProvider } from '../services/mailProvider';
 import { mergeAndGroupEmails } from '../services/threads';
@@ -45,10 +44,6 @@ interface ThreadPage {
 }
 type ThreadPages = InfiniteData<ThreadPage, string | undefined>;
 
-// Globální set pro sledování všech ID zpráv, které už aplikace někdy viděla v tomto spuštění,
-// abychom absolutně spolehlivě zabránili dvojitým notifikacím (např. při ručním označení "Přečíst")
-const globalNotifiedSet = new Set<string>();
-let globalHighestEmailDate = 0;
 
 /** Pevné šířky sloupců seznamu – společné pro hlavičku i řádky */
 const COL_STYLE = { '--col-from': 'clamp(130px, 26%, 230px)', '--col-date': '84px' } as CSSProperties;
@@ -114,8 +109,6 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       formatted.forEach(e => {
         e.folderLabel = activeFolder; // Nutné pro DB Index
         e.account = userEmail;
-        globalNotifiedSet.add(e.id);
-        globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
       });
       db.emails.bulkPut(formatted).catch(e => console.warn('Chyba při cachování:', e));
       return { emails: formatted, nextPageToken: page.nextPageToken };
@@ -388,37 +381,8 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       const silentFetch = async () => {
         try {
           // nová pošta je vždy nahoře – stačí první stránka
+          // Upozornění na novou poštu posílá hlídání na pozadí (src-tauri/src/mail_watch.rs) pro všechny účty
           const formattedEmails = (await provider.listPage(activeFolder, { unreadOnly: showOnlyUnread, query: searchQuery })).emails;
-
-          let permissionGranted = await isPermissionGranted();
-          if (!permissionGranted) {
-            const permission = await requestPermission();
-            permissionGranted = permission === 'granted';
-          }
-
-          const trulyNewEmails = formattedEmails.filter(newEm => {
-            if (globalNotifiedSet.has(newEm.id)) return false;
-            // Vlastní odeslaná zpráva (i poslaná sám sobě) není nová pošta
-            if (newEm.labelIds?.includes('SENT')) return false;
-            // The email must actually be newer than the newest email we've seen so far in this session!
-            return (newEm.rawDate || 0) > globalHighestEmailDate;
-          });
-
-          if (permissionGranted && trulyNewEmails.length > 0) {
-            const latest = trulyNewEmails[0];
-            sendNotification({
-              title: 'ZažijVR E-mail',
-              body: `Nová zpráva od: ${latest.from}\n${latest.subject}`,
-              actionTypeId: 'new_email',
-              sound: 'message-new-instant'
-            });
-          }
-
-          formattedEmails.forEach(e => {
-            globalNotifiedSet.add(e.id);
-            globalHighestEmailDate = Math.max(globalHighestEmailDate, e.rawDate || 0);
-          });
-
           setEmails(prev => mergeAndGroupEmails(prev, formattedEmails, true));
         } catch (err) {
           console.error("Chyba tichého načítání pošty:", err);

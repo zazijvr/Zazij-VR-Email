@@ -110,7 +110,7 @@ pub struct ImapMessageDetail {
 
 // ───────────── Uložení účtů ─────────────
 
-fn load_accounts(app: &AppHandle) -> Vec<ImapAccount> {
+pub(crate) fn load_accounts(app: &AppHandle) -> Vec<ImapAccount> {
     use tauri_plugin_store::StoreExt;
     app.store(STORE_FILE)
         .ok()
@@ -132,7 +132,7 @@ fn password_for(email: &str) -> Result<String, String> {
         .map_err(|_| format!("Heslo k účtu {email} není uložené – přidejte účet znovu."))
 }
 
-fn account(app: &AppHandle, email: &str) -> Result<(ImapAccount, String), String> {
+pub(crate) fn account(app: &AppHandle, email: &str) -> Result<(ImapAccount, String), String> {
     let acc = load_accounts(app)
         .into_iter()
         .find(|a| a.email.eq_ignore_ascii_case(email))
@@ -159,7 +159,7 @@ fn friendly(e: impl std::fmt::Display) -> String {
     }
 }
 
-fn connect(acc: &ImapAccount, password: &str) -> Result<TlsSession, String> {
+pub(crate) fn connect(acc: &ImapAccount, password: &str) -> Result<TlsSession, String> {
     let tls = native_tls::TlsConnector::builder().build().map_err(friendly)?;
     let addr = (acc.imap_host.as_str(), acc.imap_port);
     let client = match acc.imap_security {

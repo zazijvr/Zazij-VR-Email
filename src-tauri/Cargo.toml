@@ -48,3 +48,7 @@ base64 = "0.22"
 
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 tauri-plugin-deep-link = "2"
+
+# Upozornění na novou poštu s reakcí na kliknutí (D-Bus; plugin pro upozornění kliknutí na Linuxu nepředává)
+[target.'cfg(target_os = "linux")'.dependencies]
+notify-rust = "4"

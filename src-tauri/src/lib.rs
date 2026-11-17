@@ -1,6 +1,8 @@
 mod oauth;
 #[cfg(desktop)]
 mod imap_mail;
+#[cfg(desktop)]
+mod mail_watch;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -60,7 +62,8 @@ pub fn run() {
         imap_mail::imap_move,
         imap_mail::imap_delete,
         imap_mail::imap_append,
-        imap_mail::smtp_send
+        imap_mail::smtp_send,
+        mail_watch::mail_watch_set_google_client
     ]);
     #[cfg(mobile)]
     let builder = builder.invoke_handler(tauri::generate_handler![
@@ -112,6 +115,9 @@ pub fn run() {
                         }
                     })
                     .build(app)?;
+
+                // Hlídání nové pošty ve všech účtech (i se schovaným oknem)
+                mail_watch::start(app.handle().clone());
             }
 
             Ok(())
