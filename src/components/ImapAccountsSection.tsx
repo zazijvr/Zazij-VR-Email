@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Mail, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, EyeOff, Loader2, Mail, X } from 'lucide-react';
 import {
   imapAddAccount, imapListAccounts, imapRemoveAccount, parseWedosServer, presetFor, providerOf, wedosPreset,
   type ImapAccount, type Security,
@@ -31,6 +31,7 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [server, setServer] = useState(() => presetFor(''));
   /** Hosting vlastní domény: Wedos má servery wesX-…, jinak odhad imap./smtp. + doména */
@@ -72,7 +73,7 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
   };
 
   const resetForm = () => {
-    setEmail(''); setPassword(''); setDisplayName(''); setServer(presetFor('')); setError(''); setShowAdvanced(false);
+    setEmail(''); setPassword(''); setShowPassword(false); setDisplayName(''); setServer(presetFor('')); setError(''); setShowAdvanced(false);
     setHosting('other'); setWedosInput('');
   };
 
@@ -176,8 +177,15 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
               </label>
               <label className="flex flex-col gap-2">
                 <span className={LABEL}>Heslo</span>
-                <input type="password" autoComplete="new-password" value={password} placeholder="••••••••"
-                  onChange={(e) => setPassword(e.target.value)} className={INPUT} />
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} autoComplete="new-password" spellCheck={false} value={password} placeholder="••••••••"
+                    onChange={(e) => setPassword(e.target.value)} className={`${INPUT} pr-12`} />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)}
+                    title={showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'} aria-label={showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-slate-400 hover:text-neon-blue transition-colors">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </label>
               <label className="flex flex-col gap-2 sm:col-span-2">
                 <span className={LABEL}>Jméno odesílatele (nepovinné)</span>
