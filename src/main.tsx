@@ -25,7 +25,8 @@ ReactDOM.createRoot(root).render(
 );
 
 /** Úvodní animace z index.html: zmizí, až je aplikace vykreslená – nejdřív ale po dohrání (min. 1,5 s) */
-const SPLASH_MIN_MS = 1500;
+// Na telefonu kratší – po každém návratu, kdy Android aplikaci mezitím ukončil, se ukazuje znovu
+const SPLASH_MIN_MS = /Android|iPhone|iPad/i.test(navigator.userAgent) ? 900 : 1500;
 const hideSplash = () => {
   const splash = document.getElementById('splash');
   if (!splash) return;

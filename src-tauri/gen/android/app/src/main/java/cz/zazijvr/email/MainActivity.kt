@@ -13,38 +13,41 @@ class MainActivity : TauriActivity() {
   }
 
   /**
-   * Gesto / tlačítko Zpět předá aplikaci i s okrajem, od kterého gesto začalo:
-   * window.__vrBack('left' | 'right' | 'none') vrátí true, když ho aplikace zpracovala
-   * (tah od levého okraje vysune menu, jinak zavře otevřený e-mail, menu, nastavení…).
-   * Když ho nezpracuje, pokračuje se výchozím chováním (Tauri / systém).
-   * Okraj gesta Android hlásí od verze 14 (prediktivní zpět); starší → 'none'.
+   * Zpět:
+   *  - tah od LEVÉHO okraje → window.__vrOpenMenu() vysune menu (jen když je tlačítko menu vidět);
+   *  - vše ostatní (i když menu otevřít nejde) → výchozí Zpět Tauri: webView.goBack() v historii.
+   *    Aplikace si při otevření detailu / menu / nastavení přidává krok do historie (useHistoryBack),
+   *    takže Zpět okno zavře; když v historii nic není, aplikace odejde na pozadí.
+   * Okraj gesta Android hlásí od verze 14 (prediktivní Zpět); starší verze → vždy běžné Zpět.
    */
   override fun onWebViewCreate(webView: WebView) {
     val callback = object : OnBackPressedCallback(true) {
-      private var edge = "none"
+      private var fromLeftEdge = false
 
       override fun handleOnBackStarted(backEvent: BackEventCompat) {
-        edge = when (backEvent.swipeEdge) {
-          BackEventCompat.EDGE_LEFT -> "left"
-          BackEventCompat.EDGE_RIGHT -> "right"
-          else -> "none"
-        }
+        fromLeftEdge = backEvent.swipeEdge == BackEventCompat.EDGE_LEFT
       }
 
       override fun handleOnBackCancelled() {
-        edge = "none"
+        fromLeftEdge = false
       }
 
       override fun handleOnBackPressed() {
-        val side = edge
-        edge = "none"
-        webView.evaluateJavascript("(window.__vrBack ? window.__vrBack('$side') : false)") { result ->
-          if (result != "true") {
-            isEnabled = false
-            onBackPressedDispatcher.onBackPressed()
-            isEnabled = true
-          }
+        val left = fromLeftEdge
+        fromLeftEdge = false
+        if (!left) {
+          defaultBack()
+          return
         }
+        webView.evaluateJavascript("(window.__vrOpenMenu ? window.__vrOpenMenu() : false)") { result ->
+          if (result != "true") defaultBack()
+        }
+      }
+
+      private fun defaultBack() {
+        isEnabled = false
+        onBackPressedDispatcher.onBackPressed()
+        isEnabled = true
       }
     }
     onBackPressedDispatcher.addCallback(this, callback)

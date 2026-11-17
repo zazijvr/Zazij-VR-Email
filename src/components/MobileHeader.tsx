@@ -80,9 +80,10 @@ export default function MobileHeader({
 
   return (
     // Odsazení pod stavový řádek už má celá aplikace (App) – tady se nepřidává, jinak vznikl prázdný pás
-    <div className="md:hidden flex items-center justify-between px-4 py-2 bg-navy-card/70 border-b border-neon-blue/20 z-40 relative overflow-hidden">
+    // Hlavička sama nic neořezává – jinak by ořízla i rozbalovací okno účtů pod ikonou
+    <div className="md:hidden flex items-center justify-between px-4 py-2 bg-navy-card/70 border-b border-neon-blue/20 z-40 relative">
       {/* Motiv desky plošných spojů – vedle ikony uživatele, oříznutý výškou hlavičky */}
-      <div className="absolute right-0 top-0 h-full w-[250px] pointer-events-none opacity-60 z-0">
+      <div className="absolute right-0 top-0 h-full w-[250px] pointer-events-none opacity-60 z-0 overflow-hidden">
          <img src="/neon_corner.png" alt="" draggable="false" className="absolute right-0 top-0 w-[170px] h-auto max-w-none" />
       </div>
       <button 

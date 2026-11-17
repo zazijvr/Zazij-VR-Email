@@ -2,6 +2,8 @@ mod oauth;
 mod imap_mail;
 #[cfg(desktop)]
 mod mail_watch;
+#[cfg(desktop)]
+mod open_file;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -63,7 +65,8 @@ pub fn run() {
         imap_mail::imap_append,
         imap_mail::imap_empty_folder,
         imap_mail::smtp_send,
-        mail_watch::mail_watch_set_google_client
+        mail_watch::mail_watch_set_google_client,
+        open_file::open_attachment_externally
     ]);
     #[cfg(mobile)]
     let builder = builder.invoke_handler(tauri::generate_handler![

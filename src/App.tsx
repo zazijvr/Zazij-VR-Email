@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -12,11 +12,10 @@ import { useAlert } from './components/AlertProvider';
 import { checkForUpdate } from './utils/updater';
 import Sidebar from './components/Sidebar';
 import AccountSwitcher, { type SwitcherAccount } from './components/AccountSwitcher';
-import SettingsModal from './components/SettingsModal';
 import MobileHeader from './components/MobileHeader';
 import EmailApp from './modules/Email/EmailApp';
-import CalendarApp from './modules/Calendar/CalendarApp';
 import { useCustomLabels, useProfile, useUnreadCounts } from './hooks/useMailboxQueries';
+import { useHistoryBack } from './hooks/useHistoryBack';
 import type { AppMode } from './components/Sidebar';
 import type { UnreadCounts, UserInfo } from './types/account';
 import type { GmailLabel } from './types/gmail';
@@ -34,6 +33,10 @@ interface MailWatchOpen {
   folder: string;
 }
 
+// Načtou se až při prvním otevření – rychlejší start (hlavně na telefonu)
+const SettingsModal = lazy(() => import('./components/SettingsModal'));
+const CalendarApp = lazy(() => import('./modules/Calendar/CalendarApp'));
+
 function App() {
   const { showAlert, showConfirm } = useAlert();
   const [activeFolder, setActiveFolder] = useState('Doručené');
@@ -41,6 +44,8 @@ function App() {
   const [appMode, setAppMode] = useState<AppMode>('email');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  /** Nastavení se načte (lazy) při prvním otevření a pak zůstane připravené */
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [isVerticalLayout, setIsVerticalLayout] = useState(() => {
     const saved = localStorage.getItem('zazijvr_layout_vertical');
     return saved !== null ? JSON.parse(saved) : false;
@@ -725,34 +730,26 @@ function App() {
     return () => { unlisten.then((f) => f()).catch(() => {}); };
   }, []);
 
-  // Android – Zpět: tah od levého okraje vysune menu, ale jen když je tlačítko menu na obrazovce
-  // vidět (nepřekrývá ho e-mail, psaní, nastavení, událost ani samotné menu). Jinak je to běžné Zpět:
-  // postupně se zavře menu, nastavení, otevřený e-mail (EmailApp přes vr-back), pak pokračuje systém.
-  const backStateRef = useRef({ isMobileMenuOpen, isSettingsOpen });
-  backStateRef.current = { isMobileMenuOpen, isSettingsOpen };
+  useEffect(() => { if (isSettingsOpen) setSettingsLoaded(true); }, [isSettingsOpen]);
+
+  // Android – Zpět: menu a nastavení se zavírají systémovým Zpět přes historii (useHistoryBack).
+  useHistoryBack(isMobileMenuOpen, () => setIsMobileMenuOpen(false));
+  useHistoryBack(isSettingsOpen, () => setIsSettingsOpen(false));
+  // Tah od levého okraje (MainActivity.kt → __vrOpenMenu) vysune menu, ale jen když je tlačítko
+  // menu na obrazovce vidět. Jinak (nebo při chybě) je to běžné Zpět.
   useEffect(() => {
-    /** Tlačítko menu je vidět a nic ho nepřekrývá (zablokované má pointer-events: none → nepočítá se) */
-    const isHamburgerVisible = () => {
+    window.__vrOpenMenu = () => {
       const el = document.getElementById('mobile-hamburger');
       if (!el) return false;
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) return false;
+      // Překryté tlačítko (e-mail, psaní, nastavení, menu) nebo zablokované (pointer-events: none) se nepočítá
       const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      return !!hit && el.contains(hit);
+      if (!hit || !el.contains(hit)) return false;
+      setIsMobileMenuOpen(true);
+      return true;
     };
-    window.__vrBack = (edge) => {
-      const st = backStateRef.current;
-      if (edge === 'left' && isHamburgerVisible()) {
-        setIsMobileMenuOpen(true);
-        return true;
-      }
-      if (st.isMobileMenuOpen) { setIsMobileMenuOpen(false); return true; }
-      if (st.isSettingsOpen) { setIsSettingsOpen(false); return true; }
-      const ev = new CustomEvent<{ handled: boolean }>('vr-back', { detail: { handled: false } });
-      window.dispatchEvent(ev);
-      return ev.detail.handled;
-    };
-    return () => { delete window.__vrBack; };
+    return () => { delete window.__vrOpenMenu; };
   }, []);
 
   const selectAccount = (acc: SwitcherAccount) => {
@@ -845,17 +842,19 @@ function App() {
               />
             </MailProviderProvider>
           ) : (
-            <CalendarApp
-              activeCalendarView={activeCalendarView}
-              googleToken={googleToken}
-              triggerCreateEvent={triggerCreateEvent}
-              userEmail={userInfo?.email}
-            />
+            <Suspense fallback={null}>
+              <CalendarApp
+                activeCalendarView={activeCalendarView}
+                googleToken={googleToken}
+                triggerCreateEvent={triggerCreateEvent}
+                userEmail={userInfo?.email}
+              />
+            </Suspense>
           )}
         </div>
 
-        {/* Skryté modální okno pro nastavení */}
-        <SettingsModal
+        {/* Modální okno pro nastavení – načte se při prvním otevření, pak zůstává připravené */}
+        {settingsLoaded && <Suspense fallback={null}><SettingsModal
           isSettingsOpen={isSettingsOpen}
           setIsSettingsOpen={setIsSettingsOpen}
           googleToken={googleToken}
@@ -872,7 +871,7 @@ function App() {
           onSwitchImap={switchToImap}
           onImapAccountsChanged={() => { imapFoldersQuery.refetch(); imapAccountsQuery.refetch(); }}
           onImapAccountRemoved={(email) => { if (email === activeImap) setActiveImap(null); }}
-        />
+        /></Suspense>}
       </div>
     </div>
   );

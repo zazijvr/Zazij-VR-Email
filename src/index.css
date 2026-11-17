@@ -201,6 +201,14 @@ html.composer-open #root {
     radial-gradient(900px 700px at 0% 100%, rgba(247,37,133, 0.045), transparent 60%);
 }
 
+/* Telefon: filtry (drop-shadow) v položkách seznamu se při posouvání pořád překreslují a berou
+   paměť grafiky – v seznamu e-mailů se vypnou (stíny box-shadow zůstávají) */
+@media (pointer: coarse) {
+  .mail-list [class*="drop-shadow"] {
+    filter: none !important;
+  }
+}
+
 [class*="backdrop-blur"] {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;

@@ -5,21 +5,33 @@ import { writeFile } from '@tauri-apps/plugin-fs';
 import { open } from '@tauri-apps/plugin-shell';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, Inbox, X, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen, FileText } from 'lucide-react';
-import ICAL from 'ical.js';
+// ical.js je velká knihovna – načte se až u e-mailu s pozvánkou (.ics), ne při startu aplikace
+import type ICAL from 'ical.js';
+const loadIcal = async () => (await import('ical.js')).default;
 import { listDrafts } from '../services/gmail';
 import type { EmailDetailData } from '../services/emailDetail';
 import { useMailProvider } from '../services/mailProvider';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { invoke } from '@tauri-apps/api/core';
 import { createEvent, type GoogleEventTime } from '../services/calendar';
 
 import type { AttachmentInfo } from '../utils/emailParser';
 import type { ComposerAttachment, ComposerConfig } from '../types/composer';
 
+const IS_MOBILE = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
 interface PreviewBlob {
   url: string;
   type: string;
   filename: string;
+  /** Obsah pro otevření v aplikaci systému (počítač) */
+  base64: string;
 }
+
+/** Počítač: příloha se otevře výchozí aplikací systému (PDF v Okularu…) – rychlejší než náhled v okně */
+const canOpenExternally = () => !!window.__TAURI_INTERNALS__ && !IS_MOBILE;
+const openExternally = (p: PreviewBlob) =>
+  invoke('open_attachment_externally', { filename: p.filename, dataBase64: p.base64 });
 
 export interface EmailDetailProps {
   googleToken: string | null;
@@ -227,11 +239,12 @@ export default function EmailDetail({ googleToken, selectedEmailId, onExpand, on
                 const binaryString = file.binary;
                 let utf8String = binaryString;
                 try { utf8String = decodeURIComponent(escape(binaryString)); } catch { /* není UTF-8 – použije se jak je */ }
-                const jcalData = ICAL.parse(utf8String);
-                const comp = new ICAL.Component(jcalData);
+                const ical = await loadIcal();
+                const jcalData = ical.parse(utf8String);
+                const comp = new ical.Component(jcalData);
                 const eventComp = comp.getFirstSubcomponent('vevent');
                 if (eventComp) {
-                  const ev = new ICAL.Event(eventComp);
+                  const ev = new ical.Event(eventComp);
                   let dateStr = '';
                   if (ev.startDate) {
                     const formatTime = (icalTime: ICAL.Time) => icalTime.toJSDate().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
@@ -304,7 +317,7 @@ export default function EmailDetail({ googleToken, selectedEmailId, onExpand, on
         const url = URL.createObjectURL(blob);
 
         if (action === 'open') {
-          setPreviewBlob({ url, type: safeMimeType, filename: attach.filename });
+          setPreviewBlob({ url, type: safeMimeType, filename: attach.filename, base64: file.base64 });
         } else {
           let suggestedPath = attach.filename;
           try {
@@ -345,16 +358,17 @@ export default function EmailDetail({ googleToken, selectedEmailId, onExpand, on
           utf8String = decodeURIComponent(escape(file.binary));
         } catch { /* není UTF-8 – použije se jak je */ }
 
+        const ical = await loadIcal();
         let jcalData;
         try {
-          jcalData = ICAL.parse(utf8String);
+          jcalData = ical.parse(utf8String);
         } catch {
           showAlert('Nepodařilo se rozšifrovat událost z této pozvánky.', 'Chyba parsování', 'error');
           setDownloadingAttachId(null);
           return;
         }
 
-        const comp = new ICAL.Component(jcalData);
+        const comp = new ical.Component(jcalData);
         // Find first vevent
         const eventComp = comp.getFirstSubcomponent('vevent');
         if (!eventComp) {
@@ -363,7 +377,7 @@ export default function EmailDetail({ googleToken, selectedEmailId, onExpand, on
           return;
         }
 
-        const ev = new ICAL.Event(eventComp);
+        const ev = new ical.Event(eventComp);
 
         const buildGoogleTime = (icalTime: ICAL.Time | null | undefined): GoogleEventTime | null => {
           if (!icalTime) return null;
@@ -587,6 +601,9 @@ ${ccLine}
     queryKey: detailKey,
     queryFn: () => provider!.loadDetail(selectedEmailId as string),
     enabled: !!selectedEmailId && !!provider,
+    // Detail (HTML s vloženými obrázky) umí být velký – na telefonu ho v paměti nedržet dlouho,
+    // jinak Android aplikaci na pozadí kvůli paměti ukončí a po návratu se načítá znovu
+    gcTime: IS_MOBILE ? 60_000 : 10 * 60_000,
   });
   const loading = detailQuery.isLoading;
 
@@ -1286,9 +1303,23 @@ ${ccLine}
         >
           <div className="flex justify-between items-center mb-4 text-neon-blue" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 bg-navy-card px-6 py-3 rounded-xl border border-neon-blue/20">
-              <Eye size={24} className="animate-pulse" />
+              <Eye size={24} />
               <h2 className="text-xl font-bold tracking-wide truncate max-w-md">{previewBlob.filename}</h2>
             </div>
+            <div className="flex items-center gap-2">
+            {canOpenExternally() && (
+              <button
+                onClick={() => {
+                  openExternally(previewBlob)
+                    .then(() => { URL.revokeObjectURL(previewBlob.url); setPreviewBlob(null); })
+                    .catch((err) => showAlert(String(err), 'Otevření souboru', 'error'));
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-navy-card hover:bg-neon-blue/15 text-neon-blue rounded-xl border border-neon-blue/30 hover:border-neon-blue/60 font-bold text-sm transition-colors"
+                title="Otevřít ve výchozí aplikaci systému (rychlejší, s tiskem a vyhledáváním)"
+              >
+                <FileText size={18} /> Otevřít v aplikaci
+              </button>
+            )}
             <button
               onClick={() => {
                 URL.revokeObjectURL(previewBlob.url);
@@ -1299,8 +1330,9 @@ ${ccLine}
             >
               <X size={24} strokeWidth={2.5} />
             </button>
+            </div>
           </div>
-          <div className="flex-1 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,243,255,0.15)] bg-black border border-neon-blue/20 flex items-center justify-center preview-checkered" onClick={(e) => e.stopPropagation()}>
+          <div className="flex-1 rounded-2xl overflow-hidden bg-black border border-neon-blue/20 flex items-center justify-center preview-checkered" onClick={(e) => e.stopPropagation()}>
             {previewBlob.type.startsWith('image/') ? (
               <img src={previewBlob.url} className="max-w-full max-h-full object-contain p-2 drop-shadow-2xl" alt="Preview" />
             ) : previewBlob.type === 'application/pdf' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (

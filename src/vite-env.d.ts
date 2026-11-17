@@ -14,8 +14,8 @@ interface Window {
   /** Přítomné jen uvnitř Tauri aplikace (ne v prohlížeči) */
   __TAURI_INTERNALS__?: unknown;
   /**
-   * Android: gesto / tlačítko Zpět (volá MainActivity.kt). edge = okraj, od kterého gesto začalo.
-   * Vrací true, když ho aplikace zpracovala; jinak pokračuje systém.
+   * Android: tah Zpět od levého okraje (volá MainActivity.kt). Vysune menu, když je tlačítko menu
+   * vidět, a vrátí true; jinak false a provede se běžné Zpět.
    */
-  __vrBack?: (edge: 'left' | 'right' | 'none') => boolean;
+  __vrOpenMenu?: () => boolean;
 }

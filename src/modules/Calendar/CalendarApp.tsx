@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useHistoryBack } from '../../hooks/useHistoryBack';
 import EventModal from './components/EventModal';
 import AgendaView from './components/AgendaView';
 import MonthView from './components/MonthView';
@@ -54,6 +55,8 @@ export default function CalendarApp({
   const [, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  // Android – Zpět zavře detail události
+  useHistoryBack(!!selectedEvent, () => setSelectedEvent(null));
   const [previewRecurrenceText, setPreviewRecurrenceText] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [displayedAgendaCount, setDisplayedAgendaCount] = useState(7);

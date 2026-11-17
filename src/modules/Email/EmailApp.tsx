@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, type CSSProperties, type Dispatch, type MouseEvent, type SetStateAction } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense, type CSSProperties, type Dispatch, type MouseEvent, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
 import EmailList from '../../components/EmailList';
 import EmailDetail from '../../components/EmailDetail';
-import EmailComposer from '../../components/EmailComposer';
+// Okno pro psaní se načte až při prvním otevření
+const EmailComposer = lazy(() => import('../../components/EmailComposer'));
 import { useAlert } from '../../components/AlertProvider';
 import { getMessage } from '../../services/gmail';
 import { useMailProvider } from '../../services/mailProvider';
@@ -11,6 +12,7 @@ import type { EmailRef, MoveRequest } from '../../types/email';
 import type { GmailLabel } from '../../types/gmail';
 import type { UnreadCounts } from '../../types/account';
 import type { ComposerConfig, ComposerSuccess } from '../../types/composer';
+import { useHistoryBack } from '../../hooks/useHistoryBack';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
@@ -96,19 +98,9 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     return () => window.removeEventListener('vr-account-switched', reset);
   }, []);
 
-  // Android – Zpět (App → vr-back): zavřít okno přes celou obrazovku, pak otevřený e-mail
-  const backRef = useRef({ selectedEmailId, modalEmailId });
-  backRef.current = { selectedEmailId, modalEmailId };
-  useEffect(() => {
-    const onBack = (e: Event) => {
-      const detail = (e as CustomEvent<{ handled: boolean }>).detail;
-      if (detail.handled) return;
-      if (backRef.current.modalEmailId) { setModalEmailId(null); detail.handled = true; }
-      else if (backRef.current.selectedEmailId) { setSelectedEmailId(null); detail.handled = true; }
-    };
-    window.addEventListener('vr-back', onBack);
-    return () => window.removeEventListener('vr-back', onBack);
-  }, []);
+  // Android – Zpět zavře okno přes celou obrazovku, pak otevřený e-mail (návrat na seznam)
+  useHistoryBack(!!selectedEmailId, () => setSelectedEmailId(null));
+  useHistoryBack(!!modalEmailId, () => setModalEmailId(null));
 
   // Kliknutí na upozornění o nové poště – otevřít zprávu (App předtím přepne účet a složku)
   useEffect(() => {
@@ -448,7 +440,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
       )}
 
       {composerConfig && createPortal(
-        <EmailComposer
+        <Suspense fallback={null}><EmailComposer
           googleToken={googleToken}
           config={composerConfig}
           onClose={() => setComposerConfig(null)}
@@ -462,7 +454,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
             }
             setRefreshTriggerList(prev => prev + 1);
           }}
-        />,
+        /></Suspense>,
         document.body
       )}
     </div>
