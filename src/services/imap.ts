@@ -108,6 +108,30 @@ export const providerOf = (email: string): ProviderKind => {
   return 'custom';
 };
 
+/**
+ * Číslo serveru Wedos z toho, co uživatel zadal: „3“, „wes3“ i celá adresa
+ * „wes3-imap.wedos.net“ z administrace. Vrací null, když v tom číslo není.
+ */
+export const parseWedosServer = (input: string): number | null => {
+  const m = input.trim().toLowerCase().match(/^(?:wes)?(\d{1,3})(?:[-.](?:imap|smtp)\.wedos\.net)?$/);
+  return m ? Number(m[1]) : null;
+};
+
+/**
+ * Wedos: každá služba má svůj server wesX-imap / wesX-smtp.wedos.net,
+ * přihlašovací jméno je vždy celá adresa (kb.wedos.com – Emails: SMTP, POP3, IMAP).
+ */
+export const wedosPreset = (email: string, server: number): Omit<ImapAccount, 'displayName'> => ({
+  email,
+  username: email,
+  imapHost: `wes${server}-imap.wedos.net`,
+  imapPort: 993,
+  imapSecurity: 'tls',
+  smtpHost: `wes${server}-smtp.wedos.net`,
+  smtpPort: 465,
+  smtpSecurity: 'tls',
+});
+
 /** Výchozí nastavení serverů podle adresy (u vlastní domény odhad imap./smtp. + doména) */
 export const presetFor = (email: string): Omit<ImapAccount, 'displayName'> => {
   const domain = email.split('@')[1]?.trim().toLowerCase() || '';

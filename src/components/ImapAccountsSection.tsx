@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ChevronDown, ChevronRight, Loader2, Mail, X } from 'lucide-react';
 import {
-  imapAddAccount, imapListAccounts, imapRemoveAccount, presetFor, providerOf,
+  imapAddAccount, imapListAccounts, imapRemoveAccount, parseWedosServer, presetFor, providerOf, wedosPreset,
   type ImapAccount, type Security,
 } from '../services/imap';
 import { useAlert } from './AlertProvider';
@@ -33,6 +33,9 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [server, setServer] = useState(() => presetFor(''));
+  /** Hosting vlastní domény: Wedos má servery wesX-…, jinak odhad imap./smtp. + doména */
+  const [hosting, setHosting] = useState<'wedos' | 'other'>('other');
+  const [wedosInput, setWedosInput] = useState('');
 
   const reload = () => imapListAccounts().then(setAccounts).catch(() => setAccounts([]));
   useEffect(() => { if (isDesktopApp()) reload(); }, []);
@@ -41,8 +44,14 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
 
   const provider = providerOf(email);
 
+  const wedosNum = parseWedosServer(wedosInput);
+
   // Po zadání adresy doplnit servery (jen dokud je uživatel ručně nezměnil)
   const applyPreset = (value: string) => {
+    if (hosting === 'wedos' && providerOf(value) === 'custom') {
+      setServer(wedosPreset(value.trim(), wedosNum ?? 1));
+      return;
+    }
     const p = presetFor(value.trim());
     setServer((prev) => {
       const untouched = !prev.imapHost || prev.imapHost === presetFor(prev.email).imapHost;
@@ -50,8 +59,21 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
     });
   };
 
+  const chooseHosting = (h: 'wedos' | 'other') => {
+    setHosting(h);
+    if (h === 'wedos' && !wedosInput) setWedosInput('wes1');
+    setServer(h === 'wedos' ? wedosPreset(email.trim(), wedosNum ?? 1) : presetFor(email.trim()));
+  };
+
+  const changeWedos = (value: string) => {
+    setWedosInput(value);
+    const n = parseWedosServer(value);
+    if (n !== null) setServer(wedosPreset(email.trim(), n));
+  };
+
   const resetForm = () => {
     setEmail(''); setPassword(''); setDisplayName(''); setServer(presetFor('')); setError(''); setShowAdvanced(false);
+    setHosting('other'); setWedosInput('');
   };
 
   const submit = async (e: FormEvent) => {
@@ -59,6 +81,10 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
     setError('');
     if (!email.includes('@') || !password) {
       setError('Vyplňte e-mail a heslo.');
+      return;
+    }
+    if (provider === 'custom' && hosting === 'wedos' && wedosNum === null) {
+      setError('Zadejte server Wedos (např. wes1 nebo wes1-imap.wedos.net) – najdete ho v administraci Wedosu.');
       return;
     }
     if (provider === 'outlook') {
@@ -163,6 +189,41 @@ export default function ImapAccountsSection({ onAccountsChanged, activeEmail, on
               <p className="text-xs text-slate-400 leading-relaxed">
                 Seznam: stačí běžné heslo ke schránce, nic se nemusí zapínat. Servery se doplní samy (imap.seznam.cz / smtp.seznam.cz).
               </p>
+            )}
+            {provider === 'custom' && email.includes('@') && (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <span className={LABEL}>Kde máte poštu na doméně</span>
+                  <div className="flex flex-wrap gap-2">
+                    {([['wedos', 'WEDOS'], ['other', 'Jiný hosting']] as const).map(([key, label]) => (
+                      <button key={key} type="button" onClick={() => chooseHosting(key)}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${hosting === key
+                          ? 'bg-neon-blue/15 text-neon-blue border-neon-blue/50'
+                          : 'bg-white/5 text-slate-400 border-neon-blue/[0.15] hover:text-white'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {hosting === 'wedos' ? (
+                  <>
+                    <label className="flex flex-col gap-2">
+                      <span className={LABEL}>Server Wedos</span>
+                      <input value={wedosInput} placeholder="např. wes1 nebo wes1-imap.wedos.net"
+                        onChange={(e) => changeWedos(e.target.value)} className={INPUT} />
+                    </label>
+                    <p className={`text-xs leading-relaxed ${wedosInput && wedosNum === null ? 'text-neon-amber' : 'text-slate-400'}`}>
+                      {wedosInput && wedosNum === null
+                        ? 'Tohle nevypadá jako server Wedos. Zadejte např. wes1 nebo wes1-imap.wedos.net.'
+                        : <>Heslo je heslo ke schránce. Server wes1 platí pro běžné schránky u Wedosu. Kdyby se připojení nepovedlo, ověřte ho v administraci Wedosu: detail služby → tabulka <b>Adresy služby</b>.{wedosNum !== null && <> Použije se {server.imapHost} a {server.smtpHost}.</>}</>}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Servery odhadneme jako {server.imapHost || 'imap.<doména>'} / {server.smtpHost || 'smtp.<doména>'}. Pokud se připojení nepovede, opravte je v části Pokročilé podle návodu vašeho hostingu.
+                  </p>
+                )}
+              </div>
             )}
             {provider === 'outlook' && (
               <p className="text-xs text-neon-amber leading-relaxed">
