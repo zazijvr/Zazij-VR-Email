@@ -304,6 +304,28 @@ pub async fn imap_remove_account(app: AppHandle, email: String) -> Result<(), St
 
 // ───────────── Příkazy: složky a zprávy ─────────────
 
+/// Počet nepřečtených ve složce (STATUS … (UNSEEN)).
+/// Knihovna imap 2.4 odpověď STATUS do vráceného Mailboxu nezapíše – pošle ji do fronty
+/// nevyžádaných odpovědí (unsolicited_responses), takže se číslo čte odtamtud.
+fn unseen_count(s: &mut TlsSession, path: &str) -> u32 {
+    // Vyprázdnit staré záznamy, ať se nepřičte odpověď k jiné složce
+    while s.unsolicited_responses.try_recv().is_ok() {}
+    if s.status(path, "(UNSEEN)").is_err() {
+        return 0;
+    }
+    let mut unseen = 0;
+    while let Ok(resp) = s.unsolicited_responses.try_recv() {
+        if let imap::types::UnsolicitedResponse::Status { attributes, .. } = resp {
+            for attr in attributes {
+                if let imap::types::StatusAttribute::Unseen(n) = attr {
+                    unseen = n;
+                }
+            }
+        }
+    }
+    unseen
+}
+
 #[command]
 pub async fn imap_list_folders(app: AppHandle, email: String) -> Result<Vec<ImapFolder>, String> {
     with_session(&app, &email, |s| {
@@ -314,10 +336,7 @@ pub async fn imap_list_folders(app: AppHandle, email: String) -> Result<Vec<Imap
                 continue;
             }
             let path = n.name().to_string();
-            let unseen = s
-                .status(&path, "(UNSEEN)")
-                .map(|m| m.unseen.unwrap_or(0))
-                .unwrap_or(0);
+            let unseen = unseen_count(s, &path);
             out.push(ImapFolder {
                 name: decode_folder(&path),
                 special: special_use(&path, n.attributes()),
