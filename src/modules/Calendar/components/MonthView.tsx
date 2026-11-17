@@ -108,12 +108,12 @@ export default function MonthView({
         }}
         className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] p-1 sm:p-2 border border-[#00f3ff]/10 transition-all relative group flex flex-col cursor-pointer overflow-hidden
           ${isPrevMonth || isNextMonth ? 'opacity-30 bg-[#0a1630]' : 'bg-[#00f3ff]/5 hover:bg-[#00f3ff]/10 hover:border-[#00f3ff]/30'}
-          ${isToday && !isSelected ? 'ring-2 ring-inset ring-[#f72585]' : ''}
+          ${isToday && !isSelected ? 'ring-2 ring-inset ring-[#ff7ab8]' : ''}
           ${isSelected ? 'bg-[#00f3ff]/20 border border-[#00f3ff]/60 shadow-[inset_0_0_20px_rgba(0,243,255,0.3)] z-10 scale-[1.02] ring-2 ring-[#00f3ff]' : ''}
         `}
       >
         <div className="flex justify-between items-start z-10 pointer-events-none mb-1">
-          <span className={`text-sm sm:text-lg font-black tracking-widest ${isToday ? 'text-[#f72585] drop-shadow-[0_0_8px_rgba(247,37,133,1)]' : 'text-slate-400 group-hover:text-white transition-colors'}`}>
+          <span className={`text-sm sm:text-lg font-black tracking-widest ${isToday ? 'text-[#ff7ab8] drop-shadow-[0_0_8px_rgba(255,122,184,1)]' : 'text-slate-400 group-hover:text-white transition-colors'}`}>
             {dayNumber}
           </span>
           {(!isPrevMonth && !isNextMonth) && (
@@ -131,7 +131,7 @@ export default function MonthView({
         {!isPrevMonth && !isNextMonth && cellSpecialDays.length > 0 && (
            <div className="flex flex-col gap-0.5 mb-1 z-10">
                {cellSpecialDays.map((holiday, idx) => (
-                   <span key={idx} className="text-[7.5px] sm:text-[9.5px] text-[#f72585] font-bold tracking-widest uppercase truncate pointer-events-none drop-shadow-[0_0_3px_#f72585]">
+                   <span key={idx} className="text-[7.5px] sm:text-[9.5px] text-[#ff7ab8] font-bold tracking-widest uppercase truncate pointer-events-none drop-shadow-[0_0_3px_#ff7ab8]">
                        {holiday}
                    </span>
                ))}
@@ -213,12 +213,12 @@ export default function MonthView({
                </defs>
                <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#00f3ff" strokeWidth="2" filter="url(#rightGlowSVG)" />
                <path d="M 50 -20 L 50 10 L 80 40 L 150 40 L 200 80 L 400 80" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5" filter="url(#rightGlowSVG)" />
-               <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#f72585" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#rightGlowSVG)" />
+               <path d="M 20 -20 L 20 0 L 35 15 L 180 15 L 220 50 L 400 50" stroke="#ff7ab8" strokeWidth="1.5" strokeOpacity="0.8" filter="url(#rightGlowSVG)" />
                <path d="M 90 -20 L 90 60 L 130 100 L 250 100 L 280 65 L 400 65" stroke="#00f3ff" strokeWidth="1" strokeOpacity="0.5" filter="url(#rightGlowSVG)" />
                <circle cx="80" cy="40" r="4" fill="#050B14" stroke="#00f3ff" strokeWidth="1.5" filter="url(#rightGlowSVG)" />
                <circle cx="200" cy="80" r="3" fill="#00f3ff" filter="url(#rightGlowSVG)" />
-               <circle cx="35" cy="15" r="3" fill="#f72585" filter="url(#rightGlowSVG)" />
-               <circle cx="220" cy="50" r="5" fill="#050B14" stroke="#f72585" strokeWidth="1.5" filter="url(#rightGlowSVG)" />
+               <circle cx="35" cy="15" r="3" fill="#ff7ab8" filter="url(#rightGlowSVG)" />
+               <circle cx="220" cy="50" r="5" fill="#050B14" stroke="#ff7ab8" strokeWidth="1.5" filter="url(#rightGlowSVG)" />
                <circle cx="130" cy="100" r="2" fill="#00f3ff" filter="url(#rightGlowSVG)" />
              </svg>
          </div>
@@ -233,7 +233,7 @@ export default function MonthView({
                {/* MOBILE VIEW */}
                <div className="md:hidden flex flex-col">
                  <h1 className="text-3xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] leading-tight flex items-center gap-2">
-                   {currentMonthName} <span className="text-[#f72585] drop-shadow-[0_0_10px_#f72585]">{currentYear}</span>
+                   {currentMonthName} <span className="text-[#ff7ab8] drop-shadow-[0_0_10px_#ff7ab8]">{currentYear}</span>
                  </h1>
                  <div className="text-[10px] uppercase tracking-widest text-[#00f3ff]/60 mt-1">
                    System // Timeline // {activeCalendarView}
@@ -243,7 +243,7 @@ export default function MonthView({
                {/* DESKTOP VIEW */}
                <div className="hidden md:flex flex-col justify-center w-full">
                  <div className="flex items-center gap-3 ml-2 mb-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#f72585] shadow-[0_0_8px_rgba(247,37,133,0.8)]"></div>
+                   <div className="w-1.5 h-1.5 rounded-full bg-[#ff7ab8] shadow-[0_0_8px_rgba(255,122,184,0.8)]"></div>
                    <span className="text-[#00f3ff] text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
                      System // Timeline // 0xE9
                    </span>
@@ -251,7 +251,7 @@ export default function MonthView({
                  <div className="flex flex-row items-baseline">
                    <span className="text-[#00f3ff] text-5xl font-light mr-4 opacity-70">[</span>
                    <h1 className="text-5xl font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal">
-                     {currentMonthName} <span className="text-[#f72585] drop-shadow-[0_0_15px_rgba(247,37,133,0.8)]">{currentYear}</span>
+                     {currentMonthName} <span className="text-[#ff7ab8] drop-shadow-[0_0_15px_rgba(255,122,184,0.8)]">{currentYear}</span>
                    </h1>
                    <span className="text-[#00f3ff] text-5xl font-light ml-4 opacity-70">]</span>
                  </div>
@@ -281,7 +281,7 @@ export default function MonthView({
                  <button onClick={() => handleDateChange('prev')} className="p-1 sm:p-2 hover:bg-[#00f3ff]/20 rounded-lg text-[#00f3ff] transition-all"><ChevronLeft size={18} className="sm:w-5 sm:h-5" /></button>
                  <button 
                    onClick={() => handleDateChange('today')} 
-                   className="px-3 sm:px-6 py-1 sm:py-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] bg-[#f72585]/10 hover:bg-[#f72585]/20 rounded-lg text-[#f72585] transition-all border border-[#f72585]/50 shadow-[0_0_15px_rgba(247,37,133,0.3)] hover:shadow-[0_0_25px_rgba(247,37,133,0.6)] mx-1 md:mx-2 whitespace-nowrap drop-shadow-[0_0_5px_rgba(247,37,133,0.8)] focus:outline-none hover:scale-105"
+                   className="px-3 sm:px-6 py-1 sm:py-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] bg-[#ff7ab8]/10 hover:bg-[#ff7ab8]/20 rounded-lg text-[#ff7ab8] transition-all border border-[#ff7ab8]/50 shadow-[0_0_15px_rgba(255,122,184,0.3)] hover:shadow-[0_0_25px_rgba(255,122,184,0.6)] mx-1 md:mx-2 whitespace-nowrap drop-shadow-[0_0_5px_rgba(255,122,184,0.8)] focus:outline-none hover:scale-105"
                  >
                    Dnes
                  </button>
@@ -304,7 +304,7 @@ export default function MonthView({
                    >✕</button>
                 )}
              </div>
-             {specialCalsLoading && <Loader2 size={16} className="text-[#f72585] animate-spin hidden sm:block mx-4 shrink-0" />}
+             {specialCalsLoading && <Loader2 size={16} className="text-[#ff7ab8] animate-spin hidden sm:block mx-4 shrink-0" />}
           </div>
 
           <div className="grid grid-cols-7 border-b border-[#00f3ff]/20 bg-[#0a1120] shrink-0">
@@ -323,7 +323,7 @@ export default function MonthView({
            <div className="hidden lg:flex w-80 flex-col bg-[#061026] border-l border-[#00f3ff]/20 animate-in slide-in-from-right duration-300 transform-gpu z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
                
                <div className="p-6 border-b border-[#00f3ff]/10 bg-gradient-to-br from-[#020817]/60 to-transparent relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff] opacity-5 rounded-full blur-2xl transform translate-x-10 -translate-y-10 group-hover:bg-[#f72585] transition-colors duration-1000"></div>
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff] opacity-5 rounded-full blur-2xl transform translate-x-10 -translate-y-10 group-hover:bg-[#ff7ab8] transition-colors duration-1000"></div>
                    
                    <div className="flex justify-between items-start mb-6 relative">
                        <h3 className="text-4xl font-black text-[#00f3ff] tracking-widest drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] flex flex-col">
@@ -363,10 +363,10 @@ export default function MonthView({
                    return (
                        <>
                            {daySpecials.map((holiday, idx) => (
-                               <div key={`hol-${idx}`} className="p-3 bg-[#f72585]/10 border border-[#f72585]/30 rounded-xl relative overflow-hidden group">
-                                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#f72585] shadow-[0_0_10px_#f72585]"></div>
+                               <div key={`hol-${idx}`} className="p-3 bg-[#ff7ab8]/10 border border-[#ff7ab8]/30 rounded-xl relative overflow-hidden group">
+                                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ff7ab8] shadow-[0_0_10px_#ff7ab8]"></div>
                                    <div className="pl-2">
-                                       <span className="text-[10px] font-black uppercase text-[#f72585] tracking-[0.25em] drop-shadow-[0_0_5px_#f72585]">Svátek</span>
+                                       <span className="text-[10px] font-black uppercase text-[#ff7ab8] tracking-[0.25em] drop-shadow-[0_0_5px_#ff7ab8]">Svátek</span>
                                        <p className="text-sm font-bold text-white mt-1 truncation">{holiday}</p>
                                    </div>
                                </div>

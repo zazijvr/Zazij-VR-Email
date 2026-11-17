@@ -811,9 +811,12 @@ ${ccLine}
     );
   }
 
-  const slideAnimationClass = isVerticalLayout
-    ? 'anim-email-slide-down'
-    : 'anim-email-slide-right';
+  // V okně přes celou obrazovku (má onClose) jen prolnutí – vysouvání patří k panelu vedle seznamu
+  const slideAnimationClass = onClose
+    ? 'anim-ui-fade-in'
+    : isVerticalLayout
+      ? 'anim-email-slide-down'
+      : 'anim-email-slide-right';
 
   // Samotný E-mail čtecí panel
   return (

@@ -35,27 +35,27 @@ export default function EventDetailView({
            </button>
            <div className="flex items-center gap-3 pr-0 anim-slide-in-right-overlay" style={{ '--delay': '150ms' } as CSSProperties}>
              <button onClick={handleEditSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#00f3ff]/40 text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.6)] shadow-[inset_0_0_15px_rgba(0,243,255,0.2)] transition-all active:scale-95 hover:bg-[#00f3ff]/20"><Edit2 size={18} /></button>
-             <button onClick={handleDeleteSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#ef4444]/60 text-[#ef4444] drop-shadow-[0_0_10px_rgba(239,68,68,0.8)] shadow-[inset_0_0_15px_rgba(239,68,68,0.3)] transition-all active:scale-95 hover:bg-red-500/20">{isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}</button>
+             <button onClick={handleDeleteSelectedEvent} className="w-10 h-10 flex items-center justify-center rounded-full bg-[#020817]/90 backdrop-blur-md border-[1.5px] border-[#fb7185]/60 text-[#fb7185] drop-shadow-[0_0_10px_rgba(251,113,133,0.8)] shadow-[inset_0_0_15px_rgba(251,113,133,0.3)] transition-all active:scale-95 hover:bg-rose-400/20">{isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}</button>
            </div>
         </div>,
         document.body
       )}
 
-      <div className="fixed pt-[calc(4rem+env(safe-area-inset-top,2rem))] md:pt-0 inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4 animate-in slide-in-from-right duration-300 md:animate-in md:fade-in md:zoom-in md:slide-in-from-left-0 bg-[#061026] md:bg-transparent shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none pointer-events-auto">
+      <div className="fixed pt-[calc(4rem+env(safe-area-inset-top,2rem))] md:pt-0 inset-0 z-[200] flex items-start md:items-center justify-center p-0 md:p-4 max-md:animate-in max-md:slide-in-from-right max-md:duration-300 md:animate-in md:fade-in md:duration-150 bg-[#061026] md:bg-transparent shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none pointer-events-auto">
         <div className="hidden md:block absolute inset-0 bg-[#020817]/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)}></div>
         
-        <div className="relative bg-[#061026] md:border border-[#00f3ff]/40 md:shadow-[0_0_50px_rgba(0,243,255,0.2)] md:rounded-3xl rounded-none w-full h-full md:h-auto max-w-3xl md:max-h-[90vh] flex flex-col p-0 md:p-8 shrink-0 overflow-hidden md:z-10 box-border pointer-events-auto">
+        <div className="md:animate-in md:zoom-in-95 md:duration-200 relative bg-[#061026] md:border border-[#00f3ff]/40 md:shadow-[0_0_50px_rgba(0,243,255,0.2)] md:rounded-3xl rounded-none w-full h-full md:h-auto max-w-3xl md:max-h-[90vh] flex flex-col p-0 md:p-8 shrink-0 overflow-hidden md:z-10 box-border pointer-events-auto">
            
            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 md:p-0 relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f3ff]/10 blur-[50px] pointer-events-none rounded-full" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#f72585]/10 blur-[50px] pointer-events-none rounded-full" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#ff7ab8]/10 blur-[50px] pointer-events-none rounded-full" />
             
             <div className="hidden md:flex absolute top-0 right-0 items-center gap-1 z-20">
                <button onClick={handleEditSelectedEvent} className="p-2 text-[#00f3ff] hover:bg-[#00f3ff]/20 hover:shadow-[0_0_10px_rgba(0,243,255,0.3)] rounded-full transition-all" title="Upravit">
                  <Edit2 size={18} />
                </button>
-               <button onClick={handleDeleteSelectedEvent} disabled={isDeleting} className="p-2 text-red-500 hover:bg-red-500/20 hover:shadow-[0_0_10px_rgba(239,68,68,0.3)] rounded-full transition-all" title="Smazat">
-                 {isDeleting ? <Loader2 size={18} className="animate-spin text-red-500" /> : <Trash2 size={18} />}
+               <button onClick={handleDeleteSelectedEvent} disabled={isDeleting} className="p-2 text-rose-400 hover:bg-rose-400/20 hover:shadow-[0_0_10px_rgba(251,113,133,0.3)] rounded-full transition-all" title="Smazat">
+                 {isDeleting ? <Loader2 size={18} className="animate-spin text-rose-400" /> : <Trash2 size={18} />}
                </button>
                <div className="w-px h-5 bg-white/10 mx-1"></div>
                <button onClick={() => setSelectedEvent(null)} className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-full transition-all" title="Zavřít">

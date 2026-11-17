@@ -55,12 +55,12 @@ export default function EventModal({
 
         <div className="fixed inset-0 pt-[calc(4rem+env(safe-area-inset-top,2rem))] md:pt-0 z-[1000] flex items-start md:items-center justify-center p-0 md:p-4 bg-black/100 md:bg-[#020817]/80 backdrop-blur-md" onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
           <div 
-             className="relative bg-[#061026] md:border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] md:rounded-3xl w-full h-full md:h-auto max-w-5xl md:max-h-[90vh] overflow-hidden flex flex-col p-4 pt-6 md:p-8 animate-in fade-in zoom-in duration-200 pointer-events-auto"
+             className="relative bg-[#061026] md:border border-[#00f3ff]/60 shadow-[0_0_80px_rgba(0,243,255,0.3)] md:rounded-3xl w-full h-full md:h-auto max-w-5xl md:max-h-[90vh] overflow-hidden flex flex-col p-4 pt-6 md:p-8 animate-in fade-in zoom-in-95 duration-200 pointer-events-auto"
              onMouseDown={(e) => e.stopPropagation()}
           >
             {/* Ornamenty */}
             <div className="hidden md:block absolute top-0 right-0 w-40 h-40 bg-[#00f3ff]/10 blur-[60px] pointer-events-none rounded-full" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#f72585]/10 blur-[60px] pointer-events-none rounded-full" />
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#ff7ab8]/10 blur-[60px] pointer-events-none rounded-full" />
             
             <button 
                onClick={handleAttemptCloseCreateModal}

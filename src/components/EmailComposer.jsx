@@ -772,7 +772,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       </div>
         {showCloseWarning && (
         <div className="absolute inset-0 z-[200] flex items-center justify-center bg-[#020817]/60 backdrop-blur-sm p-4">
-          <div className="bg-[#061026] border border-[#00f3ff]/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in duration-200">
+          <div className="bg-[#061026] border border-[#00f3ff]/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-white tracking-wide mb-2">Zahodit rozepsanou zprávu?</h3>
             <p className="text-slate-400 text-sm mb-6">Máte neuložené změny. Opravdu chcete okno zavřít a změny zahodit?</p>
             <div className="flex justify-end gap-3">
@@ -795,7 +795,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
 
       {showTemplateNamePrompt && (
         <div className="absolute inset-0 z-[200] flex items-center justify-center bg-[#020817]/60 backdrop-blur-sm p-4">
-          <div className="bg-[#061026] border border-[#00f3ff]/50 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in duration-200">
+          <div className="bg-[#061026] border border-[#00f3ff]/50 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-white tracking-wide mb-2">Nová Šablona</h3>
             <p className="text-slate-400 text-sm mb-4">Zadejte název, pod kterým se má tento e-mail uložit do rychlých šablon.</p>
             <input 

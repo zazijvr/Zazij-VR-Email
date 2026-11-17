@@ -222,7 +222,11 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
     if (!googleToken) return;
     const emailData = await resolveEmail(emailObj);
 
+    const trashedEntry = trashedEmails.find((t) => t.id === emailData.id);
     setTrashedEmails((prev) => prev.filter((t) => t.id !== emailData.id));
+    // E-mail přetažený do koše byl schovaný a „přesunutý“ do Koše – po obnovení patří do Doručených
+    setHiddenEmailIds((prev) => prev.filter((t) => t !== emailData.id));
+    setOptimisticMoves((prev) => [...prev.filter((m) => m.id !== emailData.id), { ...emailData, targetFolder: 'Doručené' }]);
     if (selectedEmailId === emailData.id) setSelectedEmailId(null);
     if (modalEmailId === emailData.id) setModalEmailId(null);
 
@@ -233,7 +237,9 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
       await modifyThread(googleToken, threadId, ['INBOX']);
     } catch (err) {
       console.error('Chyba z API: ', err);
-      setHiddenEmailIds((prev) => prev.filter((t) => t !== emailData.id));
+      // Nepovedlo se – e-mail zůstává v koši
+      setOptimisticMoves((prev) => prev.filter((m) => m.id !== emailData.id));
+      setTrashedEmails((prev) => [...prev.filter((t) => t.id !== emailData.id), trashedEntry ?? { ...emailData, trashedFrom: 'Doručené' }]);
       showAlert(`Nelze obnovit:\n${errorText(err)}`, null, 'error');
     }
   };
