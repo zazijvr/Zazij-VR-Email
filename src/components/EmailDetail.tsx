@@ -749,9 +749,11 @@ ${ccLine}
 
               </div>
 
-              <div className="flex items-center gap-3 group w-full min-w-0 pr-4">
+              {/* Předmět: delší menším písmem, vyvážené zalomení řádků; na desktopu max. 2 řádky
+                  (tělo zprávy začíná na pevné pozici) – celý je v bublině a jde zkopírovat */}
+              <div className="flex items-start gap-2 group w-full min-w-0 pr-4">
                 <h1
-                  className="text-2xl md:text-3xl font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-tight break-words"
+                  className={`min-w-0 font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-snug [overflow-wrap:anywhere] [text-wrap:balance] md:line-clamp-2 ${(emailData?.subject?.length ?? 0) > 60 ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}`}
                   title={emailData?.subject}
                 >
                   {emailData?.subject}
@@ -759,7 +761,7 @@ ${ccLine}
                 {emailData?.subject && (
                   <button
                     onClick={() => handleCopyToClipboard(emailData.subject, 'subject')}
-                    className="opacity-20 hover:opacity-100 hover:bg-white/10 transition-all p-1 md:p-2 rounded-lg text-white shrink-0"
+                    className="opacity-20 hover:opacity-100 hover:bg-white/10 transition-all p-1 md:p-1.5 mt-0.5 rounded-lg text-white shrink-0"
                     title="Kopírovat předmět"
                   >
                     {copiedId === 'subject' ? <Check size={14} className="md:w-5 md:h-5 text-green-400" /> : <Copy size={14} className="md:w-5 md:h-5" />}
