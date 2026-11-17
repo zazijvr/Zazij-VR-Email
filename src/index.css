@@ -175,3 +175,10 @@ html.composer-open #root {
     .mcol-size { display: block; }
   }
 }
+
+/* Zástupný text prázdného editoru (RichTextEditor) */
+.rich-text-content[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: rgb(100 116 139); /* slate-500 */
+  pointer-events: none;
+}

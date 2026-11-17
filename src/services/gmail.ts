@@ -172,3 +172,24 @@ export const renameLabel = (token: string, id: string, name: string) =>
 
 export const deleteLabel = (token: string, id: string) =>
   gmailRequest<void>(token, `/labels/${id}`, { method: 'DELETE' });
+
+// ───────────── Koncepty ─────────────
+
+export interface GmailDraft {
+  id: string;
+  message?: GmailMessage;
+}
+
+/** Uloží koncept – nový (bez draftId), nebo přepíše existující */
+export const saveDraft = (token: string, raw: string, opts: { draftId?: string | null; threadId?: string } = {}) => {
+  const body = JSON.stringify({ message: opts.threadId ? { raw, threadId: opts.threadId } : { raw } });
+  return opts.draftId
+    ? gmailRequest<GmailDraft>(token, `/drafts/${opts.draftId}`, { method: 'PUT', body })
+    : gmailRequest<GmailDraft>(token, '/drafts', { method: 'POST', body });
+};
+
+export const deleteDraft = (token: string, draftId: string) =>
+  gmailRequest<void>(token, `/drafts/${draftId}`, { method: 'DELETE' });
+
+export const listDrafts = async (token: string) =>
+  (await gmailRequest<{ drafts?: GmailDraft[] }>(token, '/drafts')).drafts ?? [];

@@ -27,7 +27,7 @@ export interface ComposerConfig {
   initialCc?: string;
   initialSubject?: string;
   initialBody?: string;
-  initialAttachments?: unknown[];
+  initialAttachments?: ComposerAttachment[];
   /** Citovaná původní zpráva (odpověď, přeposlání) */
   htmlBody?: string;
   messageId?: string;
@@ -37,4 +37,19 @@ export interface ComposerConfig {
   originalTo?: string;
   originalCc?: string;
   draftId?: string;
+  /** Id zprávy konceptu v seznamu – po odeslání se schová */
+  draftMessageId?: string;
 }
+
+/** Příloha v okně pro psaní (obsah jako data URL „data:…;base64,…“) */
+export interface ComposerAttachment {
+  name: string;
+  type: string;
+  content: string;
+}
+
+/** Co okno pro psaní hlásí rodiči po úspěšné akci */
+export type ComposerSuccess =
+  | { action: 'draft'; meta: { draftId?: string } }
+  | { action: 'send'; meta: { draftMessageId?: string } }
+  | { action: 'save_template'; meta: EmailTemplate };

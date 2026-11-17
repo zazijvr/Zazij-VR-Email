@@ -374,7 +374,6 @@ export default function EventModal({
                  <RichTextEditor 
                    value={newEventForm.description} 
                    onChange={(desc: string) => setNewEventForm((prev: EventForm) => ({...prev, description: desc}))} 
-                   placeholder={undefined}
                    className="flex-1 w-full"
                    hideImageUpload={true}
                  />

@@ -2,19 +2,18 @@ import { useState, useEffect, useRef, type ComponentType, type CSSProperties, ty
 import { createPortal } from 'react-dom';
 import EmailListJs from '../../components/EmailList';
 import EmailDetailJs from '../../components/EmailDetail';
-import EmailComposerJs from '../../components/EmailComposer';
+import EmailComposer from '../../components/EmailComposer';
 import { useAlert } from '../../components/AlertProvider';
 import { deleteThread, getMessage, modifyThread, trashThread, untrashThread } from '../../services/gmail';
 import type { EmailRef, MoveRequest } from '../../types/email';
 import type { GmailLabel } from '../../types/gmail';
 import type { UnreadCounts } from '../../types/account';
-import type { ComposerConfig } from '../../types/composer';
+import type { ComposerConfig, ComposerSuccess } from '../../types/composer';
 
 // DOČASNÉ: tyto komponenty jsou zatím v JavaScriptu – po jejich převodu na TSX se obal odstraní
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const EmailList = EmailListJs as ComponentType<any>;
 const EmailDetail = EmailDetailJs as ComponentType<any>;
-const EmailComposer = EmailComposerJs as ComponentType<any>;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const SYSTEM_FOLDERS: Record<string, string> = {
@@ -388,12 +387,12 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
           config={composerConfig}
           onClose={() => setComposerConfig(null)}
           userEmail={userEmail}
-          onSuccessAction={(action: string, meta: { draftMessageId?: string }) => {
-            const draftId = meta.draftMessageId;
+          onSuccessAction={(action: ComposerSuccess['action'], meta: ComposerSuccess['meta']) => {
+            const draftId = action === 'send' ? (meta as { draftMessageId?: string }).draftMessageId : undefined;
             if (action === 'send' && draftId) {
               setHiddenEmailIds(prev => [...prev, draftId]);
-              if (selectedEmailId === meta.draftMessageId) setSelectedEmailId(null);
-              if (modalEmailId === meta.draftMessageId) setModalEmailId(null);
+              if (selectedEmailId === draftId) setSelectedEmailId(null);
+              if (modalEmailId === draftId) setModalEmailId(null);
             }
             setRefreshTriggerList(prev => prev + 1);
           }}

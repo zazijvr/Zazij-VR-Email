@@ -1,11 +1,24 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, type ChangeEvent, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo } from 'lucide-react';
 import { open as openUrl } from '@tauri-apps/plugin-shell';
 
-const EditorDropdown = ({ defaultLabel, icon, options, onSelect }) => {
+interface DropdownOption {
+  label: string;
+  value: string;
+  style?: CSSProperties;
+}
+
+interface EditorDropdownProps {
+  defaultLabel?: string;
+  icon?: ReactNode;
+  options: DropdownOption[];
+  onSelect: (value: string) => void;
+}
+
+const EditorDropdown = ({ defaultLabel, icon, options, onSelect }: EditorDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentLabel, setCurrentLabel] = useState(defaultLabel);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -52,19 +65,24 @@ const EditorDropdown = ({ defaultLabel, icon, options, onSelect }) => {
   );
 };
 
-const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) => {
+interface ColorPickerProps {
+  onSelectForeground: (color: string) => void;
+  onSelectBackground: (color: string) => void;
+}
+
+const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }: ColorPickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [customColors, setCustomColors] = useState([]);
+  const [customColors, setCustomColors] = useState<string[]>([]);
   const [currentBg, setCurrentBg] = useState('transparent');
   const [currentFg, setCurrentFg] = useState('default');
   const [showMixer, setShowMixer] = useState(false);
   const [mixR, setMixR] = useState(0);
   const [mixG, setMixG] = useState(243);
   const [mixB, setMixB] = useState(255);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const toHex = (n) => {
-    const hex = parseInt(n, 10).toString(16);
+  const toHex = (n: number) => {
+    const hex = Math.round(n).toString(16);
     return hex.length === 1 ? '0' + hex : hex;
   };
   const mixedColorHex = `#${toHex(mixR)}${toHex(mixG)}${toHex(mixB)}`;
@@ -74,7 +92,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
     setHexInput(mixedColorHex.toUpperCase());
   }, [mixedColorHex]);
 
-  const handleHexChange = (e) => {
+  const handleHexChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setHexInput(val);
     const clean = val.replace('#', '');
@@ -92,7 +110,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
 
   const presetColors = ['#ffffff', '#000000', '#01daf6', '#e425a5', '#f7c89f'];
 
-  const getLabelColor = (hex) => {
+  const getLabelColor = (hex: string) => {
     if (!hex || hex === 'transparent' || hex === 'default') return '#fff';
     const c = hex.substring(1);
     const rgb = parseInt(c, 16);
@@ -101,13 +119,6 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
     const b = (rgb >>  0) & 0xff;
     const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
     return luma < 128 ? '#ffffff' : '#000000';
-  };
-
-  const addCustomColor = (e) => {
-    const color = e.target.value;
-    if (!presetColors.includes(color) && !customColors.includes(color)) {
-      setCustomColors([...customColors, color]);
-    }
   };
 
   return (
@@ -282,15 +293,15 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
                  <div className="flex flex-col gap-1.5">
                    <div className="flex items-center gap-2">
                      <span className="text-red-500 font-bold text-[9px] w-2">R</span>
-                     <input type="range" min="0" max="255" value={mixR} onChange={e=>setMixR(e.target.value)} className="flex-1 accent-red-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" />
+                     <input type="range" min="0" max="255" value={mixR} onChange={e=>setMixR(Number(e.target.value))} className="flex-1 accent-red-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" />
                    </div>
                    <div className="flex items-center gap-2">
                      <span className="text-green-500 font-bold text-[9px] w-2">G</span>
-                     <input type="range" min="0" max="255" value={mixG} onChange={e=>setMixG(e.target.value)} className="flex-1 accent-green-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" />
+                     <input type="range" min="0" max="255" value={mixG} onChange={e=>setMixG(Number(e.target.value))} className="flex-1 accent-green-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" />
                    </div>
                    <div className="flex items-center gap-2">
                      <span className="text-[#00f3ff] font-bold text-[9px] w-2">B</span>
-                     <input type="range" min="0" max="255" value={mixB} onChange={e=>setMixB(e.target.value)} className="flex-1 accent-[#00f3ff] h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" />
+                     <input type="range" min="0" max="255" value={mixB} onChange={e=>setMixB(Number(e.target.value))} className="flex-1 accent-[#00f3ff] h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" />
                    </div>
                  </div>
                  
@@ -325,7 +336,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }) 
   );
 };
 
-const fontOptions = [
+const fontOptions: DropdownOption[] = [
   { label: 'Exo 2 Bold', value: '"Exo 2", sans-serif', style: { fontFamily: '"Exo 2", sans-serif', fontWeight: 700 } },
   { label: 'Open Sans', value: '"Open Sans", sans-serif', style: { fontFamily: '"Open Sans", sans-serif' } },
   { label: 'Arial', value: 'Arial', style: { fontFamily: 'Arial' } },
@@ -335,30 +346,62 @@ const fontOptions = [
   { label: 'Georgia', value: 'Georgia', style: { fontFamily: 'Georgia' } }
 ];
 
-const sizeOptions = [
+const sizeOptions: DropdownOption[] = [
   { label: 'Malé', value: '1' },
   { label: 'Normální', value: '3' },
   { label: 'Velké', value: '5' },
   { label: 'Obrovské', value: '7' }
 ];
 
-const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hideImageUpload = false }) => {
-  const editorRef = useRef(null);
-  const fileInputRef = useRef(null);
+export interface RichTextEditorProps {
+  /** HTML */
+  value?: string;
+  onChange: (html: string) => void;
+  placeholder?: string;
+  className?: string;
+  hideImageUpload?: boolean;
+}
+
+interface FormatState {
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  insertUnorderedList?: boolean;
+  insertOrderedList?: boolean;
+  justifyLeft?: boolean;
+  justifyCenter?: boolean;
+  justifyRight?: boolean;
+}
+
+interface LinkModalState {
+  isOpen: boolean;
+  text: string;
+  url: string;
+  /** Výběr v editoru v okamžiku otevření dialogu (dialog si fokus vezme) */
+  savedRange: Range | null;
+  htmlContent: string;
+  existingAnchor: HTMLAnchorElement | null;
+}
+
+const CLOSED_LINK_MODAL: LinkModalState = { isOpen: false, text: '', url: 'https://', savedRange: null, htmlContent: '', existingAnchor: null };
+
+const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hideImageUpload = false }: RichTextEditorProps) => {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const [formatState, setFormatState] = useState({});
-  const [linkModal, setLinkModal] = useState({ isOpen: false, text: '', url: 'https://', savedRange: null, htmlContent: '', existingAnchor: null });
+  const [formatState, setFormatState] = useState<FormatState>({});
+  const [linkModal, setLinkModal] = useState<LinkModalState>(CLOSED_LINK_MODAL);
   // Stav Ctrl se drží jen jako data atribut na DOM (kvůli kurzoru nad odkazy) – bez re-renderu editoru
-  const rootRef = useRef(null);
-  const [selectedImage, setSelectedImage] = useState(null); // { el, rect }
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
   const [customWidth, setCustomWidth] = useState('');
 
   useEffect(() => {
-    const setCtrl = (on) => { if (rootRef.current) rootRef.current.dataset.ctrl = on ? 'true' : 'false'; };
-    const handleKeyDown = (e) => {
+    const setCtrl = (on: boolean) => { if (rootRef.current) rootRef.current.dataset.ctrl = on ? 'true' : 'false'; };
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Control' || e.key === 'Meta') setCtrl(true);
     };
-    const handleKeyUp = (e) => {
+    const handleKeyUp = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Control' || e.key === 'Meta') setCtrl(false);
     };
     const handleBlur = () => setCtrl(false);
@@ -410,8 +453,8 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     }
   }, [value]);
 
-  const debounceTimerRef = useRef(null);
-  const formatThrottleRef = useRef(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formatThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Throttlovaná verze - spustí se max 1× za 200ms aby se při rychlém psaní
   // nevolalo 8× queryCommandState() pro každé písmeno
@@ -462,7 +505,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     if (formatThrottleRef.current) clearTimeout(formatThrottleRef.current);
   }, []);
 
-  const execCommand = (cmd, val = null) => {
+  const execCommand = (cmd: string, val?: string) => {
     document.execCommand(cmd, false, val);
     if (editorRef.current) {
       editorRef.current.focus();
@@ -475,12 +518,12 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
   const inactiveBtnClass = "hover:bg-white/10 text-slate-300 hover:text-white border-transparent";
   const btnBaseClass = "p-1.5 rounded transition-colors border";
 
-  const insertImage = (e) => {
-    const file = e.target.files[0];
+  const insertImage = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file && (file.type.startsWith('image/') || file.name.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|bmp)$/i))) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-         execCommand('insertImage', event.target.result);
+      reader.onload = () => {
+         if (typeof reader.result === 'string') execCommand('insertImage', reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -488,7 +531,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
   };
 
   const performUndo = () => {
-    document.execCommand('undo', false, null);
+    document.execCommand('undo');
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
       updateFormatState();
@@ -496,14 +539,14 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
   };
 
   const performRedo = () => {
-    document.execCommand('redo', false, null);
+    document.execCommand('redo');
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
       updateFormatState();
     }
   };
 
-  const handleKeyDownEditing = (e) => {
+  const handleKeyDownEditing = (e: KeyboardEvent<HTMLDivElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       if (e.shiftKey) {
@@ -521,17 +564,17 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     const selection = window.getSelection();
     let text = '';
     let url = 'https://';
-    let range = null;
-    let existingAnchor = null;
+    let range: Range | null = null;
+    let existingAnchor: HTMLAnchorElement | null = null;
     let htmlContent = '';
 
     if (selection && selection.rangeCount > 0) {
       range = selection.getRangeAt(0);
       
-      let node = selection.anchorNode;
+      let node: Node | null = selection.anchorNode;
       while (node && node !== editorRef.current) {
         if (node.nodeName === 'A') {
-          existingAnchor = node;
+          existingAnchor = node as HTMLAnchorElement;
           break;
         }
         node = node.parentNode;
@@ -553,8 +596,8 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
   };
 
   const submitLink = () => {
-    if (linkModal.savedRange) {
-      const selection = window.getSelection();
+    const selection = window.getSelection();
+    if (linkModal.savedRange && selection) {
       selection.removeAllRanges();
       selection.addRange(linkModal.savedRange);
     }
@@ -578,7 +621,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
         onChange(editorRef.current.innerHTML);
       }
     }
-    setLinkModal({ isOpen: false, text: '', url: 'https://', savedRange: null, htmlContent: '', existingAnchor: null });
+    setLinkModal(CLOSED_LINK_MODAL);
   };
 
   // Image click handler – zobraz toolbar pro resize
@@ -586,8 +629,8 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     const editor = editorRef.current;
     if (!editor) return;
 
-    const handleImageClick = (e) => {
-      const img = e.target.closest('img');
+    const handleImageClick = (e: globalThis.MouseEvent) => {
+      const img = (e.target as Element | null)?.closest('img') ?? null;
       if (img) {
         e.preventDefault();
         setSelectedImage(img);
@@ -601,7 +644,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     return () => editor.removeEventListener('click', handleImageClick);
   }, []);
 
-  const resizeImage = (width) => {
+  const resizeImage = (width: number | 'auto') => {
     if (!selectedImage) return;
     if (width === 'auto') {
       selectedImage.style.width = '';
@@ -611,7 +654,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     } else {
       selectedImage.style.width = `${width}px`;
       selectedImage.style.height = 'auto';
-      selectedImage.setAttribute('width', width);
+      selectedImage.setAttribute('width', String(width));
       selectedImage.removeAttribute('height');
     }
     if (editorRef.current) onChange(editorRef.current.innerHTML);
@@ -621,14 +664,14 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     const editor = editorRef.current;
     if (!editor) return;
 
-    const handleNativeClick = (e) => {
-      const target = e.target.closest('a');
+    const handleNativeClick = (e: globalThis.MouseEvent) => {
+      const target = (e.target as Element | null)?.closest('a') ?? null;
       if (target) {
         e.preventDefault();
         e.stopPropagation();
         
         if (e.ctrlKey || e.metaKey) {
-          openUrl(target.href).catch(err => {
+          openUrl(target.href).catch((err: unknown) => {
              console.error("Failed to open URL:", err);
              window.open(target.href, '_blank');
           });
@@ -722,7 +765,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
 
             <div className="flex justify-end gap-2 mt-2">
               <button 
-                onClick={() => setLinkModal({ isOpen: false, text: '', url: 'https://', savedRange: null })}
+                onClick={() => setLinkModal(CLOSED_LINK_MODAL)}
                 className="px-4 py-2 rounded text-xs font-bold text-slate-400 hover:text-white transition-colors"
               >
                 ZRUŠIT
@@ -752,7 +795,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
         autoCorrect="off"
         autoCapitalize="off"
         className="flex-1 w-full p-4 text-white custom-scrollbar outline-none overflow-y-auto rich-text-content"
-        placeholder={placeholder}
+        data-placeholder={placeholder}
       ></div>
 
       {/* Image Resize Toolbar */}

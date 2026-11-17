@@ -1,12 +1,28 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, type ChangeEvent } from 'react';
 import { Send, X, AlertTriangle, Paperclip, Save, File, Trash2, FileText, PenTool, ReplyAll } from 'lucide-react';
 import { encodeBase64Url, encodeHeaderName } from '../utils/emailParser';
 import RichTextEditor from './RichTextEditor';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import AutofillInput from './AutofillInput';
 import { saveNewContacts } from '../utils/contactManager';
+import { deleteDraft, modifyThread, saveDraft, sendMessage } from '../services/gmail';
+import type { ComposerAttachment, ComposerConfig, ComposerSuccess, EmailSignature, EmailTemplate } from '../types/composer';
 
-const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmail }) => {
+export interface EmailComposerProps {
+  googleToken: string | null;
+  config: ComposerConfig;
+  onClose?: () => void;
+  onSuccessAction?: (action: ComposerSuccess['action'], meta: ComposerSuccess['meta']) => void;
+  userEmail?: string;
+}
+
+const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+const readStored = <T,>(key: string): T[] => {
+  try { return JSON.parse(localStorage.getItem(key) || '[]') || []; } catch { return []; }
+};
+
+const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmail }: EmailComposerProps) => {
   const [to, setTo] = useState(config?.initialTo || '');
   const [cc, setCc] = useState(config?.initialCc || '');
   const [showCc, setShowCc] = useState(!!config?.initialCc);
@@ -15,13 +31,10 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   const getInitialBody = () => {
     let text = config?.initialBody || config?.templateData?.body || '';
     if (!config?.draftId && (config?.type !== 'reply' && config?.type !== 'replyAll' && config?.type !== 'forward')) {
-        try {
-            const signatures = JSON.parse(localStorage.getItem('zazijvr_signatures')) || [];
-            const defSig = signatures.find(s => s.isDefault);
-            if (defSig && !text.includes(defSig.body)) {
-                text = text + (text ? '<br><br>' : '') + defSig.body;
-            }
-        } catch(e) {}
+        const defSig = readStored<EmailSignature>('zazijvr_signatures').find(s => s.isDefault);
+        if (defSig && !text.includes(defSig.body)) {
+            text = text + (text ? '<br><br>' : '') + defSig.body;
+        }
     }
     if (config?.htmlBody && !text.includes('class="gmail_quote"')) {
         text = text + `<br><br><div class="gmail_quote" dir="auto"><blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">${config.htmlBody}</blockquote></div>`;
@@ -34,11 +47,11 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   const [body, setBody] = useState(getInitialBody);
   const bodyRef = useRef(body);
   const initialBodyRef = useRef(body);
-  const handleBodyChange = useCallback((html) => { bodyRef.current = html; }, []);
+  const handleBodyChange = useCallback((html: string) => { bodyRef.current = html; }, []);
   /** Nahradí obsah editoru (šablona, podpis) – editor si novou hodnotu převezme */
   // Klíč editoru – po vložení šablony / podpisu se editor načte znovu i se stejným textem
   const [bodyVersion, setBodyVersion] = useState(0);
-  const replaceBody = (html) => {
+  const replaceBody = (html: string) => {
     bodyRef.current = html;
     setBody(html);
     setBodyVersion((v) => v + 1);
@@ -53,20 +66,20 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   const [templateTitle, setTemplateTitle] = useState(config?.templateData?.title || '');
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
-  const [attachments, setAttachments] = useState(config?.initialAttachments || []);
-  const [draftId, setDraftId] = useState(config?.draftId || null);
-  const fileInputRef = useRef(null);
-  const modalRef = useRef(null);
+  const [attachments, setAttachments] = useState<ComposerAttachment[]>(config?.initialAttachments || []);
+  const [draftId, setDraftId] = useState<string | null>(config?.draftId || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   
-  const templateMenuRef = useRef(null);
-  const signatureMenuRef = useRef(null);
+  const templateMenuRef = useRef<HTMLDivElement>(null);
+  const signatureMenuRef = useRef<HTMLDivElement>(null);
   
   useFocusTrap(modalRef, true);
 
-  const [savedTemplates, setSavedTemplates] = useState([]);
-  const [savedSignatures, setSavedSignatures] = useState([]);
+  const [savedTemplates, setSavedTemplates] = useState<EmailTemplate[]>([]);
+  const [savedSignatures, setSavedSignatures] = useState<EmailSignature[]>([]);
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [showSignatureMenu, setShowSignatureMenu] = useState(false);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
@@ -75,12 +88,8 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   const [newTemplateName, setNewTemplateName] = useState("");
 
   useEffect(() => {
-    try {
-      const templates = JSON.parse(localStorage.getItem('zazijvr_templates')) || [];
-      const signatures = JSON.parse(localStorage.getItem('zazijvr_signatures')) || [];
-      setSavedTemplates(templates);
-      setSavedSignatures(signatures);
-    } catch(e) {}
+    setSavedTemplates(readStored<EmailTemplate>('zazijvr_templates'));
+    setSavedSignatures(readStored<EmailSignature>('zazijvr_signatures'));
   }, []);
 
   const handleSaveCurrentAsTemplate = () => {
@@ -93,8 +102,8 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     if (!title) return;
 
     try {
-      const templates = JSON.parse(localStorage.getItem('zazijvr_templates')) || [];
-      const newTemplate = {
+      const templates = readStored<EmailTemplate>('zazijvr_templates');
+      const newTemplate: EmailTemplate = {
         id: Date.now().toString(),
         title: title.trim(),
         subject: subject,
@@ -120,7 +129,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
      if (userEmail) {
         const userEmailClean = userEmail.trim().toLowerCase();
         // Odstranění vlastního emailu ze seznamu přes RegExp s respektem k okolním znakům
-        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapeRegExp = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const emailRegex = new RegExp(`([^,]*${escapeRegExp(userEmailClean)}[^,]*)`, 'gi');
         
         allTo = allTo.replace(emailRegex, '').replace(/,\s*,/g, ',').trim().replace(/^,|,$/g, '');
@@ -142,7 +151,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     let isDirty = false;
     
     // Pomocná funkce pro vyhodnocení jestli je HTML text editoru reálně prázdný
-    const isEditorEmpty = (html) => {
+    const isEditorEmpty = (html: string) => {
         if (!html) return true;
         const stripped = html.replace(/<[^>]*>?/gm, '').trim();
         return stripped === '';
@@ -175,7 +184,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   };
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showCloseWarning) {
             setShowCloseWarning(false);
@@ -189,21 +198,18 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   }, [to, cc, subject, attachments, showCloseWarning, config, isSending, isSaving, templateTitle]);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: MouseEvent) => {
       // Capture fází odchycený klik mimo otevřené menu. 
       // Zastaví propagaci a nevznikne žádný následný ghost click.
-      let didClose = false;
-      if (showTemplateMenu && templateMenuRef.current && !templateMenuRef.current.contains(e.target)) {
+      if (showTemplateMenu && templateMenuRef.current && !templateMenuRef.current.contains(e.target as Node)) {
         e.stopPropagation();
         e.preventDefault();
         setShowTemplateMenu(false);
-        didClose = true;
       }
-      if (showSignatureMenu && signatureMenuRef.current && !signatureMenuRef.current.contains(e.target)) {
+      if (showSignatureMenu && signatureMenuRef.current && !signatureMenuRef.current.contains(e.target as Node)) {
         e.stopPropagation();
         e.preventDefault();
         setShowSignatureMenu(false);
-        didClose = true;
       }
     };
 
@@ -215,15 +221,17 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     };
   }, [showTemplateMenu, showSignatureMenu]);
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
     files.forEach(file => {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = () => {
+        const content = reader.result;
+        if (typeof content !== 'string') return;
         setAttachments(prev => [...prev, {
            name: file.name,
            type: file.type || 'application/octet-stream',
-           content: event.target.result // looks like data:image/png;base64,iVBORw0...
+           content, // data:image/png;base64,iVBORw0...
         }]);
       };
       reader.readAsDataURL(file);
@@ -232,7 +240,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const removeAttachment = (idx) => {
+  const removeAttachment = (idx: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== idx));
   };
 
@@ -251,10 +259,10 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
 
     // Zpracování Base64 obrázků vložených napřímo do HTML (např. skrze RichTextEditor)
     let processedHtmlBody = `<div dir="ltr">${bodyRef.current}</div>`;
-    const inlineImages = [];
+    const inlineImages: { cid: string; mimeType: string; base64Data: string }[] = [];
     let imgCounter = 0;
 
-    processedHtmlBody = processedHtmlBody.replace(/<img[^>]+src="data:(image\/[^;]+);base64,([^"]+)"[^>]*>/gi, (match, mimeType, base64Data) => {
+    processedHtmlBody = processedHtmlBody.replace(/<img[^>]+src="data:(image\/[^;]+);base64,([^"]+)"[^>]*>/gi, (match: string, mimeType: string, base64Data: string) => {
       imgCounter++;
       const cid = `inline_img_${Date.now()}_${imgCounter}@zazijvr`;
       
@@ -326,52 +334,18 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
   };
 
   const handleSaveDraft = async () => {
+    if (!googleToken) return;
     setIsSaving(true);
     setErrorMsg(null);
     try {
-      const mimeStr = buildMimeString();
-      const raw = encodeBase64Url(mimeStr);
-      
-      let url = 'https://gmail.googleapis.com/gmail/v1/users/me/drafts';
-      let method = 'POST';
-      let requestBody = { message: { raw } };
-      if (config?.threadId) {
-        requestBody.message.threadId = config.threadId;
-      }
-      
-      if (draftId) {
-        url = `https://gmail.googleapis.com/gmail/v1/users/me/drafts/${draftId}`;
-        method = 'PUT';
-      }
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-      
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`${res.status} - ${errText}`);
-      }
-      
-      const data = await res.json();
-      if (!draftId && data.id) {
-        setDraftId(data.id);
-      }
-      
-      if (onSuccessAction) {
-        onSuccessAction('draft', { draftId: data.id || draftId });
-      }
-      
-      onClose && onClose();
-      
+      const raw = encodeBase64Url(buildMimeString());
+      const data = await saveDraft(googleToken, raw, { draftId, threadId: config?.threadId });
+      if (!draftId && data.id) setDraftId(data.id);
+      onSuccessAction?.('draft', { draftId: data.id || draftId || undefined });
+      onClose?.();
     } catch (err) {
       console.error("Chyba při ukládání draftu:", err);
-      setErrorMsg(`Chyba při ukládání: ${err.message}`);
+      setErrorMsg(`Chyba při ukládání: ${errorText(err)}`);
     } finally {
       setIsSaving(false);
     }
@@ -389,37 +363,14 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
          saveNewContacts(userEmail, [to, cc]);
       }
 
-      const mimeStr = buildMimeString();
-      const raw = encodeBase64Url(mimeStr);
-
-      const requestBody = { raw };
-      if (config?.threadId) {
-        requestBody.threadId = config.threadId;
-      }
-
-      const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`${res.status} - ${errText}`);
-      }
+      if (!googleToken) throw new Error('Nejste přihlášeni.');
+      const raw = encodeBase64Url(buildMimeString());
+      const sentData = await sendMessage(googleToken, raw, config?.threadId);
 
       if (draftId) {
-        await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/drafts/${draftId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${googleToken}` }
-        });
+        await deleteDraft(googleToken, draftId).catch((e) => console.warn('Koncept se nepodařilo smazat:', e));
       }
 
-      const sentData = await res.json();
-      
       const threadIdOut = sentData.threadId || config?.threadId;
 
       // ---- CLOUD SYNC: Označit originální THREAD tajným štítkem VR-Replied -----
@@ -428,16 +379,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
         const repliedLabelId = localStorage.getItem('vr-replied-label-id');
         if (repliedLabelId && threadIdOut) {
            try {
-              await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadIdOut}/modify`, {
-                 method: 'POST',
-                 headers: {
-                    'Authorization': `Bearer ${googleToken}`,
-                    'Content-Type': 'application/json'
-                 },
-                 body: JSON.stringify({
-                    addLabelIds: [repliedLabelId]
-                 })
-              });
+              await modifyThread(googleToken, threadIdOut, [repliedLabelId]);
               console.log("Thread označen cloud sync štítkem VR-Replied.");
            } catch(e) {
               console.error("Cloud Sync Reply Label Failed", e);
@@ -464,7 +406,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       onClose && onClose();
     } catch (err) {
       console.error(err);
-      setErrorMsg(`Chyba při odesílání: ${err.message}`);
+      setErrorMsg(`Chyba při odesílání: ${errorText(err)}`);
     } finally {
       setIsSending(false);
     }

@@ -2,7 +2,7 @@ import { useState, useEffect, type MouseEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, Edit3, FileText } from 'lucide-react';
 import EmailComposer from './EmailComposer';
-import type { ComposerConfig, EmailTemplate } from '../types/composer';
+import type { ComposerConfig, ComposerSuccess, EmailTemplate } from '../types/composer';
 
 export default function TemplateSettings({ googleToken }: { googleToken: string | null }) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -32,8 +32,9 @@ export default function TemplateSettings({ googleToken }: { googleToken: string 
     });
   };
 
-  const handleSaveTemplate = (action: string, meta: EmailTemplate) => {
+  const handleSaveTemplate = (action: ComposerSuccess['action'], payload: ComposerSuccess['meta']) => {
     if (action === 'save_template') {
+       const meta = payload as EmailTemplate;
        let newTemplates;
        const exists = templates.find(t => t.id === meta.id);
        if (exists) {
@@ -111,7 +112,6 @@ export default function TemplateSettings({ googleToken }: { googleToken: string 
       {composerConfig && createPortal(
         <EmailComposer
            googleToken={googleToken}
-           userEmail={undefined}
            config={composerConfig}
            onClose={() => setComposerConfig(null)}
            onSuccessAction={handleSaveTemplate}
