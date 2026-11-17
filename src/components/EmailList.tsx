@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../db/db';
 import EmailListItem from './EmailListItem';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
@@ -1050,7 +1051,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
       </div>
 
       {/* Mobile Multiselect Floating Bar */}
-      {selectedMailIds.size > 0 && (
+      {selectedMailIds.size > 0 && createPortal(
         <div className="md:hidden fixed bottom-4 left-4 right-4 z-[90] bg-navy/95 backdrop-blur-xl border border-neon-blue/40 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,243,255,0.2)] animate-in slide-in-from-bottom-5 duration-300">
           <div className="flex items-center justify-between mb-4 border-b border-neon-blue/20 pb-3">
             <div className="flex items-center gap-3">
@@ -1092,11 +1093,12 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
               <span className="text-[10px] font-bold uppercase tracking-wider">Smazat</span>
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Mobile Delete Confirmation Modal */}
-      {mobileDeletePending && (
+      {/* Potvrzení smazání – přes portál, aby překrylo celé okno (seznam má container-type, které by „fixed“ omezilo na seznam) */}
+      {mobileDeletePending && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-deep/80 backdrop-blur-sm p-4">
           <div className="bg-navy border-2 border-neon-red/50 rounded-2xl p-6 w-full max-w-sm shadow-[0_0_40px_rgba(255,51,102,0.3)]">
             <h3 className="text-xl font-black text-neon-red tracking-widest uppercase mb-2">Potvrdit smazání</h3>
@@ -1119,7 +1121,8 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
