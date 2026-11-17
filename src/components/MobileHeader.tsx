@@ -73,17 +73,18 @@ export default function MobileHeader({
   }, [isDropdownOpen]);
 
   return (
-    <div className="md:hidden flex items-center justify-between px-3 pb-1 pt-[calc(0.25rem+env(safe-area-inset-top,1.5rem))] bg-navy-card/70 border-b border-neon-blue/20 z-40 relative">
-      {/* Motiv desky plošných spojů – jen ořezaný roh, ať hlavička zbytečně nenarůstá */}
-      <div className="absolute right-0 top-0 h-full w-[120px] pointer-events-none opacity-45 z-0 overflow-hidden">
-         <img src="/neon_corner.png" alt="" draggable="false" className="absolute right-0 top-0 w-[110px] h-auto max-w-none" />
+    // Odsazení pod stavový řádek už má celá aplikace (App) – tady se nepřidává, jinak vznikl prázdný pás
+    <div className="md:hidden flex items-center justify-between px-4 py-2 bg-navy-card/70 border-b border-neon-blue/20 z-40 relative overflow-hidden">
+      {/* Motiv desky plošných spojů – vedle ikony uživatele, oříznutý výškou hlavičky */}
+      <div className="absolute right-0 top-0 h-full w-[250px] pointer-events-none opacity-60 z-0">
+         <img src="/neon_corner.png" alt="" draggable="false" className="absolute right-0 top-0 w-[170px] h-auto max-w-none" />
       </div>
       <button 
         id="mobile-hamburger"
         onClick={toggleSidebar}
-        className={`relative z-10 p-1.5 -ml-1.5 text-neon-blue rounded-xl transition-all ${userEmail ? 'hover:bg-neon-blue/10 active:scale-95' : 'blur-[3px] opacity-30 pointer-events-none'}`}
+        className={`relative z-10 p-2 -ml-2 text-neon-blue rounded-xl transition-all ${userEmail ? 'hover:bg-neon-blue/10 active:scale-95' : 'blur-[3px] opacity-30 pointer-events-none'}`}
       >
-        <Menu size={24} strokeWidth={2.5} />
+        <Menu size={26} strokeWidth={2.5} />
       </button>
 
       <div id="mobile-logo" className="relative z-10 flex-1 flex items-center justify-center h-full">
@@ -117,20 +118,20 @@ export default function MobileHeader({
           aria-label="Otevřít web ZažijVR"
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 transition-all duration-500 ease-out active:scale-95 ${isSearchActive ? 'opacity-0 invisible scale-50' : 'opacity-100 visible scale-100'}`}
         >
-          <img src="/cropped-logo-neon-pruhledna-150x50.png" alt="ZažijVR" draggable="false" className="vr-neon-logo h-6 w-auto object-contain" />
+          <img src="/cropped-logo-neon-pruhledna-150x50.png" alt="ZažijVR" draggable="false" className="vr-neon-logo h-7 w-auto object-contain" />
         </button>
       </div>
 
       <div id="mobile-user" ref={dropdownRef} className={`relative z-50 transition-all duration-500 ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
         <button 
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-9 h-9 rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/60 flex items-center justify-center font-extrabold text-neon-blue drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-transform active:scale-95 hover:border-neon-blue"
+          className="w-10 h-10 rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/60 flex items-center justify-center font-extrabold text-neon-blue drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-transform active:scale-95 hover:border-neon-blue"
         >
           {getAvatarInitial(userEmail)}
         </button>
 
         {isDropdownOpen && (
-          <div className="absolute right-0 top-12 w-64 bg-navy border border-neon-blue/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.9)] z-50 overflow-hidden flex flex-col">
+          <div className="absolute right-0 top-14 w-64 bg-navy border border-neon-blue/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.9)] z-50 overflow-hidden flex flex-col">
             <div className="px-4 py-4 bg-neon-blue/5 border-b border-neon-blue/10 flex flex-col items-center">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 border border-neon-blue/40 flex items-center justify-center font-black text-2xl text-neon-blue mb-3 shadow-[0_0_15px_rgba(0,243,255,0.3)]">
                 {getAvatarInitial(userEmail)}
