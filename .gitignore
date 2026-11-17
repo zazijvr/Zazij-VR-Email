@@ -36,3 +36,6 @@ src-tauri/target
 # Připravená vydání (AppImage, latest.json)
 release/
 *.AppImage
+
+# Lokální nastavení Claude Code (oprávnění)
+.claude/settings.local.json
