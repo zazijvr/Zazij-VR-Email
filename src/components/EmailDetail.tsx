@@ -749,11 +749,11 @@ ${ccLine}
 
               </div>
 
-              {/* Předmět: delší menším písmem, vyvážené zalomení řádků; na desktopu max. 2 řádky
+              {/* Předmět: zabírá celou šířku řádku (flex-1), delší menším písmem; na desktopu max. 2 řádky
                   (tělo zprávy začíná na pevné pozici) – celý je v bublině a jde zkopírovat */}
-              <div className="flex items-start gap-2 group w-full min-w-0 pr-4">
+              <div className="flex items-start gap-2 group w-full min-w-0">
                 <h1
-                  className={`min-w-0 font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-snug [overflow-wrap:anywhere] [text-wrap:balance] md:line-clamp-2 ${(emailData?.subject?.length ?? 0) > 60 ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}`}
+                  className={`flex-1 min-w-0 font-black md:font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] md:drop-shadow-md tracking-wide leading-snug break-words md:line-clamp-2 ${(emailData?.subject?.length ?? 0) > 60 ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}`}
                   title={emailData?.subject}
                 >
                   {emailData?.subject}
