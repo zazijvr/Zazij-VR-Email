@@ -5,7 +5,7 @@ import RichTextEditor from './RichTextEditor';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import AutofillInput from './AutofillInput';
 import { saveNewContacts } from '../utils/contactManager';
-import { deleteDraft, modifyThread, saveDraft, sendMessage } from '../services/gmail';
+import { deleteDraft, modifyMessage, modifyThread, saveDraft, sendMessage } from '../services/gmail';
 import type { ComposerAttachment, ComposerConfig, ComposerSuccess, EmailSignature, EmailTemplate } from '../types/composer';
 
 export interface EmailComposerProps {
@@ -366,6 +366,12 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       if (!googleToken) throw new Error('Nejste přihlášeni.');
       const raw = encodeBase64Url(buildMimeString());
       const sentData = await sendMessage(googleToken, raw, config?.threadId);
+
+      // Zpráva poslaná sobě (nebo s vlastní adresou v kopii) dostane od Gmailu UNREAD –
+      // odeslaná pošta se ale nemá tvářit jako nová; nepřečtenou si ji uživatel může označit sám
+      if (sentData.labelIds?.includes('UNREAD')) {
+        await modifyMessage(googleToken, sentData.id, [], ['UNREAD']).catch((e) => console.warn('Odeslanou zprávu se nepodařilo označit jako přečtenou:', e));
+      }
 
       if (draftId) {
         await deleteDraft(googleToken, draftId).catch((e) => console.warn('Koncept se nepodařilo smazat:', e));

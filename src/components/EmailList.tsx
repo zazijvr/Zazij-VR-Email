@@ -423,6 +423,8 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
           const trulyNewEmails = formattedEmails.filter(newEm => {
             if (globalNotifiedSet.has(newEm.id)) return false;
+            // Vlastní odeslaná zpráva (i poslaná sám sobě) není nová pošta
+            if (newEm.labelIds?.includes('SENT')) return false;
             // The email must actually be newer than the newest email we've seen so far in this session!
             return (newEm.rawDate || 0) > globalHighestEmailDate;
           });
@@ -642,16 +644,19 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     }
   };
 
-  const sortedEmails = [...emails].sort((a, b) => {
+  // V Odeslaných je v prvním sloupci příjemce – řadí se podle toho, co je vidět
+  const personOf = (e: ListEmail) => ((activeFolder === 'Odeslané' ? e.to : e.from) || '').replace(/^["'\s]+/, '');
+  const compareEmails = (a: ListEmail, b: ListEmail) => {
     let cmp = 0;
     if (sortField === 'date') cmp = a.rawDate - b.rawDate;
-    else if (sortField === 'from') cmp = a.from.localeCompare(b.from);
-    else if (sortField === 'subject') cmp = a.subject.localeCompare(b.subject);
+    else if (sortField === 'from') cmp = personOf(a).localeCompare(personOf(b), 'cs', { sensitivity: 'base' });
+    else if (sortField === 'subject') cmp = (a.subject || '').localeCompare(b.subject || '', 'cs', { sensitivity: 'base' });
     else if (sortField === 'size') cmp = a.rawSize - b.rawSize;
     else if (sortField === 'attachment') cmp = (a.hasAttachment === b.hasAttachment) ? 0 : (a.hasAttachment ? 1 : -1);
 
     return sortAscending ? cmp : -cmp;
-  });
+  };
+  const sortedEmails = [...emails].sort(compareEmails);
 
   let visibleEmails = [...sortedEmails];
 
@@ -691,10 +696,10 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     const finalIncoming = showOnlyUnread ? incoming.filter(e => e.isUnread) : incoming;
     if (finalIncoming.length > 0) {
       visibleEmails = [...(finalIncoming as ListEmail[]), ...visibleEmails];
-      // Resoring aby příchozí zprávy zapadly na správné datumové místo
-      visibleEmails.sort((a, b) => sortAscending ? a.rawDate - b.rawDate : b.rawDate - a.rawDate);
     }
   }
+  // Optimisticky přidané zprávy (koš, spam, přesuny) zařadit podle zvoleného řazení
+  visibleEmails.sort(compareEmails);
 
   const fullVisibleEmailsLength = visibleEmails.length;
   visibleEmails = visibleEmails.slice(0, displayedEmailLimit);
