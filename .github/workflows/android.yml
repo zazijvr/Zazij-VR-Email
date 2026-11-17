@@ -36,7 +36,6 @@ jobs:
           echo "VITE_GOOGLE_CLIENT_ID_DESKTOP=${VITE_GOOGLE_CLIENT_ID}" > .env
           echo "VITE_GOOGLE_CLIENT_ID_MOBILE=998474655983-jq4t5k74j14rav8jhehlrmj7qa0fr07v.apps.googleusercontent.com" >> .env
           echo "VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}" >> .env
-          echo "VITE_GITHUB_UPDATE_TOKEN=${{ secrets.VITE_GITHUB_UPDATE_TOKEN }}" >> .env
           npx tauri android init || true
           npx tauri icon "public/applogo_android .png"
           npx tauri android build --apk

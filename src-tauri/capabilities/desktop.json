@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desktop-updater",
+  "description": "Automatické aktualizace (jen desktop)",
+  "windows": ["main"],
+  "platforms": ["linux", "windows", "macOS"],
+  "permissions": [
+    "updater:default",
+    "process:allow-restart"
+  ]
+}

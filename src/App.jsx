@@ -9,6 +9,7 @@ const apiFetch = (...args) => fetch(...args);
 
 
 import { useAlert } from './components/AlertProvider';
+import { checkForUpdate } from './utils/updater';
 import Sidebar from './components/Sidebar';
 import SettingsModal from './components/SettingsModal';
 import MobileHeader from './components/MobileHeader';
@@ -77,6 +78,27 @@ function App() {
   useEffect(() => {
     loadSavedAccounts();
   }, [loadSavedAccounts, googleToken]);
+
+  // Tichá kontrola aktualizací chvíli po startu – při nové verzi nabídne otevřít Nastavení
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      try {
+        const update = await checkForUpdate();
+        if (update) {
+          showConfirm(
+            `Je k dispozici nová verze ${update.version}.${update.body ? `\n\n${update.body}` : ''}\n\nInstalace trvá pár vteřin, pak se aplikace sama restartuje.`,
+            'Nová verze aplikace',
+            () => setIsSettingsOpen(true),
+            { type: 'info', confirmText: 'Zobrazit', cancelText: 'Později' }
+          );
+        }
+      } catch (e) {
+        console.warn('Kontrola aktualizací selhala', e);
+      }
+    }, 8000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Uložené přihlášení k účtu už u Googlu neplatí – nabídne nové přihlášení */
   const offerRelogin = (email) => {

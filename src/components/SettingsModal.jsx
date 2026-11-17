@@ -5,7 +5,7 @@ import SignatureSettings from './SignatureSettings';
 import FolderSettings from './FolderSettings';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { getVersion } from '@tauri-apps/api/app';
-import { open } from '@tauri-apps/plugin-shell';
+import { checkForUpdate, installUpdate, isUpdaterSupported } from '../utils/updater';
 
 export default function SettingsModal({
   isSettingsOpen,
@@ -27,6 +27,11 @@ export default function SettingsModal({
   const [cloudVersion, setCloudVersion] = useState('');
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState(null);
+  // idle | downloading | restarting | error
+  const [updateState, setUpdateState] = useState('idle');
+  const [updateProgress, setUpdateProgress] = useState(null);
+  const [updateError, setUpdateError] = useState('');
 
   useFocusTrap(modalRef, isSettingsOpen);
 
@@ -38,51 +43,38 @@ export default function SettingsModal({
 
   const checkUpdates = async () => {
     setIsCheckingUpdate(true);
+    setUpdateError('');
     try {
-      const vLocal = await getVersion();
-      setLocalVersion(vLocal);
-
-      // Token jen pro čtení se doplní při sestavení z .env / GitHub Secrets – v kódu ani v gitu není
-      const updateToken = import.meta.env.VITE_GITHUB_UPDATE_TOKEN;
-      const response = await fetch('https://raw.githubusercontent.com/zazijvr/Zazij-VR-Email/main/package.json', {
-        headers: {
-          ...(updateToken ? { Authorization: `token ${updateToken}` } : {}),
-          'Accept': 'application/vnd.github.v3.raw'
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const vCloud = data.version;
-        setCloudVersion(vCloud);
-
-        const vLocalParts = vLocal.split('.').map(Number);
-        const vCloudParts = vCloud.split('.').map(Number);
-        let updateFound = false;
-        
-        for (let i = 0; i < 3; i++) {
-          if ((vCloudParts[i] || 0) > (vLocalParts[i] || 0)) {
-            updateFound = true;
-            break;
-          } else if ((vCloudParts[i] || 0) < (vLocalParts[i] || 0)) {
-            break;
-          }
-        }
-        setIsUpdateAvailable(updateFound);
-      }
+      setLocalVersion(await getVersion());
+      const update = await checkForUpdate();
+      setPendingUpdate(update);
+      setCloudVersion(update?.version || '');
+      setIsUpdateAvailable(!!update);
+      if (updateState === 'error') setUpdateState('idle');
     } catch (error) {
       console.error('Failed to check updates', error);
+      setUpdateError('Nepodařilo se ověřit aktualizace. Zkontrolujte připojení k internetu.');
     } finally {
       setIsCheckingUpdate(false);
     }
   };
 
   const handleDownloadUpdate = async () => {
+    if (!pendingUpdate) return;
+    setUpdateState('downloading');
+    setUpdateProgress(null);
+    setUpdateError('');
     try {
-      await open('https://github.com/zazijvr/Zazij-VR-Email/releases/latest');
+      await installUpdate(pendingUpdate, (p) => setUpdateProgress(p));
+      setUpdateState('restarting');
     } catch (e) {
-      console.error("Failed to open URL", e);
+      console.error('Aktualizace selhala', e);
+      setUpdateState('error');
+      setUpdateError(`Aktualizaci se nepodařilo nainstalovat: ${String(e?.message || e)}`);
     }
   };
+
+  const progressPct = updateProgress?.total ? Math.min(100, Math.round((updateProgress.downloaded / updateProgress.total) * 100)) : null;
 
   if (!isSettingsOpen) return null;
 
@@ -132,31 +124,48 @@ export default function SettingsModal({
                   <span className="px-2 py-0.5 bg-white/10 text-slate-300 rounded text-xs font-mono border border-[#00f3ff]/10">{localVersion || '...'}</span>
                 </span>
                 
-                {isCheckingUpdate ? (
+                {!isUpdaterSupported() ? (
+                  <span className="text-sm text-slate-400 mt-1">Aktualizace se na tomto zařízení instalují ručně.</span>
+                ) : isCheckingUpdate ? (
                   <span className="text-sm text-slate-400 flex items-center gap-1.5 mt-1">
                     <Loader2 size={14} className="animate-spin text-[#00f3ff]" />
-                    Ověřuji dostupnost aktualizací v cloudu...
+                    Ověřuji dostupnost aktualizací...
                   </span>
+                ) : updateError ? (
+                  <span className="text-sm text-red-400 mt-1">{updateError}</span>
                 ) : isUpdateAvailable ? (
-                  <span className="text-sm text-[#f72585] font-semibold flex items-center gap-1.5 mt-1 drop-shadow-[0_0_5px_rgba(247,37,133,0.4)]">
-                    <Sparkles size={14} className="animate-pulse" />
-                    K dispozici je nová verze ({cloudVersion})!
+                  <span className="text-sm text-[#f72585] font-semibold flex items-center gap-1.5 mt-1">
+                    <Sparkles size={14} />
+                    K dispozici je nová verze {cloudVersion}
                   </span>
                 ) : (
                   <span className="text-sm text-[#00f3ff] flex items-center gap-1.5 mt-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse shadow-[0_0_5px_rgba(0,243,255,1)]"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00f3ff] shadow-[0_0_5px_rgba(0,243,255,1)]"></span>
                     Používáte nejnovější verzi.
                   </span>
+                )}
+                {pendingUpdate?.body && updateState === 'idle' && (
+                  <span className="text-xs text-slate-400 mt-1 whitespace-pre-line max-w-md">{pendingUpdate.body}</span>
                 )}
               </div>
               
               {isUpdateAvailable && (
                 <button 
                   onClick={handleDownloadUpdate}
+                  disabled={updateState === 'downloading' || updateState === 'restarting'}
                   className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-2 bg-[#f72585]/20 hover:bg-[#f72585]/30 text-[#f72585] border border-[#f72585]/50 hover:border-[#f72585] px-5 py-2.5 rounded-xl font-black tracking-wider transition-all shadow-[0_0_15px_rgba(247,37,133,0.3)] hover:shadow-[0_0_25px_rgba(247,37,133,0.6)] hover:scale-105 group whitespace-nowrap"
                 >
-                  <Download size={18} className="group-hover:-translate-y-0.5 transition-transform" />
-                  STÁHNOUT AKTUALIZACI
+                  {updateState === 'downloading' || updateState === 'restarting' ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      {updateState === 'restarting' ? 'RESTARTUJI…' : progressPct !== null ? `STAHUJI ${progressPct} %` : 'STAHUJI…'}
+                    </>
+                  ) : (
+                    <>
+                      <Download size={18} className="group-hover:-translate-y-0.5 transition-transform" />
+                      {updateState === 'error' ? 'ZKUSIT ZNOVU' : 'NAINSTALOVAT A RESTARTOVAT'}
+                    </>
+                  )}
                 </button>
               )}
             </div>

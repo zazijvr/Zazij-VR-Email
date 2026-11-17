@@ -1,6 +1,6 @@
 [package]
 name = "zazijvr-email"
-version = "1.2.1"
+version = "1.3.0"
 description = "Zazij VR Email Client"
 authors = ["Sefin"]
 license = "MIT"
@@ -35,6 +35,7 @@ tauri-plugin-http = "2.5.8"
 [target.'cfg(any(windows, target_os = "linux", target_os = "macos"))'.dependencies]
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 # Refresh tokeny Google účtů v systémové klíčence (KWallet / GNOME Keyring, Windows Credential Manager, macOS Keychain)
 keyring = { version = "3", features = ["sync-secret-service", "crypto-rust", "windows-native", "apple-native"] }
 

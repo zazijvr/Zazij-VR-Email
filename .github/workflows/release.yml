@@ -33,12 +33,14 @@ jobs:
           echo "VITE_GOOGLE_CLIENT_ID_DESKTOP=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > .env
           echo "VITE_GOOGLE_CLIENT_ID_MOBILE=998474655983-jq4t5k74j14rav8jhehlrmj7qa0fr07v.apps.googleusercontent.com" >> .env
           echo "VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}" >> .env
-          echo "VITE_GITHUB_UPDATE_TOKEN=${{ secrets.VITE_GITHUB_UPDATE_TOKEN }}" >> .env
 
       - name: Stažení NPM balíčků
         run: npm install
 
       - name: Sestavení produkční verze uzevřené aplikace
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npx tauri build --bundles deb
           mv src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/deb/zazijvr-email-latest.deb
@@ -78,12 +80,14 @@ jobs:
           echo "VITE_GOOGLE_CLIENT_ID_DESKTOP=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > .env
           echo "VITE_GOOGLE_CLIENT_ID_MOBILE=998474655983-jq4t5k74j14rav8jhehlrmj7qa0fr07v.apps.googleusercontent.com" >> .env
           echo "VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}" >> .env
-          echo "VITE_GITHUB_UPDATE_TOKEN=${{ secrets.VITE_GITHUB_UPDATE_TOKEN }}" >> .env
 
       - name: Stažení NPM balíčků
         run: npm install
 
       - name: Sestavení produkční verze uzevřené aplikace
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         shell: bash
         run: |
           npx tauri build --bundles nsis
