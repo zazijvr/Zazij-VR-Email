@@ -25,7 +25,20 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline' https:",
+        "font-src": "'self' data: https:",
+        "img-src": "'self' data: blob: https: http:",
+        "media-src": "'self' data: blob: https:",
+        "connect-src": "'self' ipc: http://ipc.localhost https://*.googleapis.com data: blob:",
+        "frame-src": "'self' blob: data:",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'none'"
+      },
+      "devCsp": null
     }
   },
   "bundle": {

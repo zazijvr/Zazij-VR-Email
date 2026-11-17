@@ -3,6 +3,12 @@ use tauri_plugin_shell::ShellExt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
+/// PKCE challenge a state jsou base64url (jen A–Z a–z 0–9 - _) – nic jiného do adresy nepustit
+fn check_pkce_params(code_challenge: &str, state: &str) -> Result<(), String> {
+    let ok = |s: &str, min: usize| s.len() >= min && s.len() <= 128 && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+    if ok(code_challenge, 43) && ok(state, 16) { Ok(()) } else { Err("Neplatné parametry přihlášení".into()) }
+}
+
 /// Vrátí OAuth URL pro mobilní platformy (bez TCP serveru).
 /// Frontend si sám vyčká na deep-link callback a provede token exchange.
 #[cfg(mobile)]
@@ -10,7 +16,11 @@ use tokio::net::TcpListener;
 pub async fn start_google_login(
     app: AppHandle,
     client_id: String,
+    code_challenge: String,
+    state: String,
 ) -> Result<String, String> {
+    check_pkce_params(&code_challenge, &state)?;
+    // PKCE (code_challenge) + state ověřuje frontend při návratu přes deep link
     let url = format!(
         "https://accounts.google.com/o/oauth2/v2/auth\
          ?client_id={}\
@@ -18,8 +28,11 @@ pub async fn start_google_login(
          &response_type=code\
          &scope=https://mail.google.com/%20https://www.googleapis.com/auth/calendar\
          &access_type=offline\
-         &prompt=consent",
-        client_id
+         &prompt=consent\
+         &code_challenge={}\
+         &code_challenge_method=S256\
+         &state={}",
+        client_id, code_challenge, state
     );
 
     // Otevře Chrome Custom Tab (Android) nebo Safari View Controller (iOS)
@@ -36,14 +49,18 @@ pub async fn start_google_login(
 pub async fn start_google_login(
     app: AppHandle,
     client_id: String,
+    code_challenge: String,
+    state: String,
 ) -> Result<String, String> {
+    check_pkce_params(&code_challenge, &state)?;
     let listener = TcpListener::bind("127.0.0.1:3456")
         .await
         .map_err(|e| e.to_string())?;
 
+    // PKCE: Google vydá token jen tomu, kdo zná ověřovač (zůstává ve frontendu); state se ověří níže
     let url = format!(
-        "https://accounts.google.com/o/oauth2/v2/auth?client_id={}&redirect_uri=http://localhost:3456/callback&response_type=code&scope=https://mail.google.com/%20https://www.googleapis.com/auth/calendar&access_type=offline&prompt=consent",
-        client_id
+        "https://accounts.google.com/o/oauth2/v2/auth?client_id={}&redirect_uri=http://localhost:3456/callback&response_type=code&scope=https://mail.google.com/%20https://www.googleapis.com/auth/calendar&access_type=offline&prompt=consent&code_challenge={}&code_challenge_method=S256&state={}",
+        client_id, code_challenge, state
     );
 
     #[cfg(target_os = "linux")]
@@ -67,6 +84,18 @@ pub async fn start_google_login(
                 auth_code = line[offset..offset + end].to_string();
             }
         }
+    }
+
+    // Odpověď musí nést náš state – jinak ji poslal někdo jiný (podvržené přihlášení)
+    let returned_state = request_str
+        .lines()
+        .next()
+        .and_then(|line| line.split(['?', '&', ' ']).find_map(|p| p.strip_prefix("state=")))
+        .unwrap_or("");
+    if returned_state != state {
+        let response = "HTTP/1.1 400 Bad Request\r\n\r\nLogin failed (state mismatch).";
+        let _ = stream.write_all(response.as_bytes()).await;
+        return Err("Odpověď přihlášení nepatří k této žádosti (state) – zkuste to znovu.".into());
     }
 
     if auth_code.is_empty() {

@@ -16,6 +16,7 @@ import MobileHeader from './components/MobileHeader';
 import EmailApp from './modules/Email/EmailApp';
 import { useCustomLabels, useProfile, useUnreadCounts } from './hooks/useMailboxQueries';
 import { useHistoryBack } from './hooks/useHistoryBack';
+import { createPkceSession } from './utils/pkce';
 import type { AppMode } from './components/Sidebar';
 import type { UnreadCounts, UserInfo } from './types/account';
 import type { GmailLabel } from './types/gmail';
@@ -307,7 +308,6 @@ function App() {
         const data = await res.json();
         if (data.access_token) {
           console.log("Automatické přihlášení na pozadí proběhlo úspěšně!");
-          console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${data.access_token}`);
           setGoogleToken(data.access_token);
         } else if (data.error === 'invalid_grant') {
           const email = await invoke<string>('get_active_account').catch(() => '');
@@ -414,6 +414,7 @@ function App() {
       }
 
       console.log('Navazuji zabezpečené oAuth spojení...');
+      const pkce = await createPkceSession();
 
       // Detekujeme Android/iOS pomocí platformy – Tauri na mobile nemá tray-icon ani window events
       const isMobile = !('__TAURI_INTERNALS__' in window) || 
@@ -443,6 +444,7 @@ function App() {
               const error = url.searchParams.get('error');
               
               if (error) reject(new Error(`Google odmítl přihlášení: ${error}`));
+              else if (url.searchParams.get('state') !== pkce.state) reject(new Error('Odpověď přihlášení nepatří k této žádosti (state) – zkuste to znovu.'));
               else if (code) resolve(code);
               else reject(new Error('V callback URL nebyl nalezen kód.'));
             } catch {
@@ -456,6 +458,8 @@ function App() {
         // Otevřeme prohlížeč pro mobil - ten používá GCloud iOS Client ID!
         await invoke('start_google_login', {
           clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE,
+          codeChallenge: pkce.challenge,
+          state: pkce.state,
         });
         
         console.log('Prohlížeč otevřen, čekám na deep-link callback...');
@@ -472,6 +476,7 @@ function App() {
           body: new URLSearchParams({
             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE,
             code: String(authCode),
+            code_verifier: pkce.verifier,
             grant_type: 'authorization_code',
             redirect_uri: 'cz.zazijvr.email:/oauth2redirect'
           }).toString()
@@ -497,6 +502,8 @@ function App() {
         // === DESKTOP FLOW: TCP localhost server (beze změny) ===
         const authCode = await invoke('start_google_login', {
           clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
+          codeChallenge: pkce.challenge,
+          state: pkce.state,
         });
         console.log('Kód přijat. Měním kód za token přístupů...');
         
@@ -507,6 +514,7 @@ function App() {
              client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP,
              client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
              code: String(authCode),
+             code_verifier: pkce.verifier,
              grant_type: "authorization_code",
              redirect_uri: "http://localhost:3456/callback"
            }).toString()
@@ -525,7 +533,6 @@ function App() {
 
         await invoke('save_google_account', { email: userEmail, refreshToken: refreshToken || "" });
 
-        console.log(`[DEV TESTING] Pro testování na mobilu mimo Tauri zkopíruj tohle URL:\nhttp://${window.location.hostname}:5173/?devToken=${accessToken}`);
         setUserInfo(null);
         window.dispatchEvent(new Event('vr-account-switched'));
         setGoogleToken(accessToken);

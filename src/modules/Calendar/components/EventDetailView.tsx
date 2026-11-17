@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import type { CalendarEvent } from '../../../types/calendar';
 import { createPortal } from 'react-dom';
+import DOMPurify from 'dompurify';
+import { open as openUrl } from '@tauri-apps/plugin-shell';
 import { ArrowLeft, Edit2, Trash2, Loader2, X, Clock, Bell, Repeat } from 'lucide-react';
 
 interface EventDetailViewProps {
@@ -145,9 +147,18 @@ export default function EventDetailView({
              <div className="flex flex-col gap-1.5 mt-2 shrink-0">
               <span className="text-neon-blue text-[10px] font-bold uppercase tracking-widest block ml-1 drop-shadow-[0_0_8px_rgba(0,243,255,0.6)]">Popis</span>
               <div className="bg-navy-card border border-neon-blue/10 p-4 rounded-xl shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
+                {/* Popis pozvánky může poslat kdokoli – vždy přes DOMPurify; odkazy se otevřou v prohlížeči,
+                    nikdy v okně aplikace */}
                 <div 
                   className="text-slate-200 text-base leading-relaxed rich-text-content break-words"
-                  dangerouslySetInnerHTML={{ __html: selectedEvent.description }} 
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEvent.description) }}
+                  onClick={(e) => {
+                    const a = (e.target as HTMLElement).closest('a');
+                    if (!a?.href) return;
+                    e.preventDefault();
+                    if (window.__TAURI_INTERNALS__) openUrl(a.href).catch(() => {});
+                    else window.open(a.href, '_blank', 'noopener,noreferrer');
+                  }}
                 />
               </div>
              </div>
