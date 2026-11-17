@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, type CSSProperties, type Dispatch, type SetStateAction, type TouchEvent as ReactTouchEvent } from 'react';
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { db } from '../db/db';
@@ -167,6 +167,43 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     return queryClient.refetchQueries({ queryKey: threadsKey, exact: true });
   }, [provider, userEmail, queryClient, threadsKey]);
   const isRefreshing = threadsQuery.isFetching && !threadsQuery.isFetchingNextPage && folderLoaded;
+
+  // ───── Mobil: stažení seznamu dolů = obnovit složku (pull to refresh) ─────
+  const PULL_THRESHOLD = 64;
+  const PULL_MAX = 110;
+  const listScrollRef = useRef<HTMLDivElement>(null);
+  const pullStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [pullDistance, setPullDistance] = useState(0);
+  /** Obnovení spuštěné stažením – jen tehdy se ukazuje „Obnovuji…“ (ne při obnovení na pozadí) */
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const onPullStart = (e: ReactTouchEvent<HTMLDivElement>) => {
+    const el = listScrollRef.current;
+    pullStartRef.current = el && el.scrollTop <= 0 && !pullRefreshing
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      : null;
+  };
+  const onPullMove = (e: ReactTouchEvent<HTMLDivElement>) => {
+    const start = pullStartRef.current;
+    if (!start) return;
+    const dx = e.touches[0].clientX - start.x;
+    const dy = e.touches[0].clientY - start.y;
+    // Vodorovný tah (smazání e-mailu přejetím) nebo posun nahoru – není to stažení
+    if ((listScrollRef.current?.scrollTop ?? 0) > 0 || (pullDistance === 0 && Math.abs(dx) > Math.abs(dy))) {
+      pullStartRef.current = null;
+      setPullDistance(0);
+      return;
+    }
+    setPullDistance(dy > 0 ? Math.min(PULL_MAX, dy * 0.5) : 0);
+  };
+  const onPullEnd = () => {
+    if (pullStartRef.current && pullDistance >= PULL_THRESHOLD) {
+      setPullRefreshing(true);
+      Promise.resolve(refreshFolder()).catch(() => {}).finally(() => setPullRefreshing(false));
+    }
+    pullStartRef.current = null;
+    setPullDistance(0);
+  };
+  const pullReady = pullDistance >= PULL_THRESHOLD;
 
   useEffect(() => {
     const onRefresh = () => { refreshFolder(); };
@@ -946,7 +983,32 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
         )}
       </div>
 
-      <div className="flex-1 w-full overflow-y-auto custom-scrollbar flex flex-col relative pt-2">
+      <div
+        ref={listScrollRef}
+        onTouchStart={onPullStart}
+        onTouchMove={onPullMove}
+        onTouchEnd={onPullEnd}
+        onTouchCancel={onPullEnd}
+        className="flex-1 w-full overflow-y-auto custom-scrollbar flex flex-col relative pt-2"
+      >
+
+        {/* Stažení dolů pro obnovení (mobil) – při tažení roste, při obnovování ukazuje točící se ikonu */}
+        <div
+          className={`md:hidden shrink-0 flex items-end justify-center overflow-hidden ${pullDistance === 0 ? 'transition-[height] duration-200' : ''}`}
+          style={{ height: pullDistance > 0 ? pullDistance : pullRefreshing ? 44 : 0 }}
+          aria-hidden={pullDistance === 0 && !pullRefreshing}
+        >
+          <div className="flex items-center gap-2 pb-2.5 text-xs font-bold uppercase tracking-widest text-neon-blue">
+            <RefreshCw
+              size={18}
+              className={pullRefreshing && pullDistance === 0 ? 'animate-spin' : 'transition-transform'}
+              style={pullDistance > 0 ? { transform: `rotate(${pullDistance * 3}deg)`, opacity: Math.min(1, pullDistance / PULL_THRESHOLD) } : undefined}
+            />
+            <span className={pullDistance > 0 && !pullReady ? 'opacity-60' : ''}>
+              {pullDistance === 0 ? 'Obnovuji…' : pullReady ? 'Pusťte pro obnovení' : 'Stáhněte pro obnovení'}
+            </span>
+          </div>
+        </div>
 
         {/* Koš: vysypání najednou */}
         {activeFolder === 'Koš' && onEmptyTrash && !loading && visibleEmails.length > 0 && (
