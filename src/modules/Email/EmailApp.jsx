@@ -61,6 +61,17 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
   };
   const [modalEmailId, setModalEmailId] = useState(null);
   const [autoResumeDraftId, setAutoResumeDraftId] = useState(null);
+
+  // Přepnutí účtu – zavřít otevřený e-mail předchozího účtu
+  useEffect(() => {
+    const reset = () => {
+      setSelectedEmailId(null);
+      setModalEmailId(null);
+      setAutoResumeDraftId(null);
+    };
+    window.addEventListener('vr-account-switched', reset);
+    return () => window.removeEventListener('vr-account-switched', reset);
+  }, []);
   const [composerConfig, setComposerConfig] = useState(null);
   const { showAlert } = useAlert();
 

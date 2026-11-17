@@ -223,6 +223,7 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }, [selectedEmailId, googleToken, emails]);
 
   const fetchedFolderRef = React.useRef(null);
+  const lastAutoSelectedFolderRef = React.useRef(null);
   const fetchSeqRef = React.useRef(0);
   useEffect(() => {
     if (!googleToken) {
@@ -339,6 +340,8 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
     const clear = () => {
       folderMemCache.clear();
       fetchedFolderRef.current = null; // tiché dotahování nové pošty počká na první načtení
+      lastAutoSelectedFolderRef.current = null; // po načtení se vybere první e-mail nového účtu
+      setSelectedEmailId?.(null); // náhled nesmí ukazovat e-mail předchozího účtu
     };
     window.addEventListener('vr-account-switched', clear);
     return () => window.removeEventListener('vr-account-switched', clear);
@@ -740,7 +743,6 @@ export default function EmailList({ googleToken, activeFolder, selectedEmailId, 
   }, [keyboardIndex, onExpand, setSelectedEmailId]);
 
   // Defaultní chování: Autovýběr prvního e-mailu po úspěšném načtení složky
-  const lastAutoSelectedFolderRef = React.useRef(null);
   useEffect(() => {
     if (
       !loading &&
