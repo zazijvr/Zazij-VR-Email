@@ -219,7 +219,8 @@ export default function Sidebar({
         </div>
       </div>
 
-      {appMode === 'email' && accountSwitcher}
+      {/* Na mobilu se účty přepínají v horní hlavičce (MobileHeader) */}
+      {appMode === 'email' && <div className="hidden md:block">{accountSwitcher}</div>}
 
       <div className="px-4 mb-4 md:mb-8">
         {appMode === 'email' ? (

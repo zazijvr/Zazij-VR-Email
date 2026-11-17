@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, type ChangeEvent } from 'react';
-import { Menu, LogOut, Search, Settings, X } from 'lucide-react';
+import { Check, Mail, Menu, LogOut, Search, Settings, X } from 'lucide-react';
 import { getAvatarInitial } from '../utils/emailParser';
 import { openZazijvrWeb } from '../utils/zazijvrWeb';
+import type { SwitcherAccount } from './AccountSwitcher';
 
 interface MobileHeaderProps {
   toggleSidebar: () => void;
@@ -10,6 +11,9 @@ interface MobileHeaderProps {
   /** Otevřený je jiný (IMAP) účet – místo odhlášení Googlu nabídnout správu účtů */
   isImapAccount?: boolean;
   onManageAccounts?: () => void;
+  /** Všechny účty (Google i IMAP) – v rozbalovacím okně u ikony účtu se mezi nimi přepíná */
+  accounts?: SwitcherAccount[];
+  onSelectAccount?: (account: SwitcherAccount) => void;
 }
 
 export default function MobileHeader({
@@ -18,6 +22,8 @@ export default function MobileHeader({
   logoutGoogleAccount,
   isImapAccount = false,
   onManageAccounts,
+  accounts = [],
+  onSelectAccount,
 }: MobileHeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -138,6 +144,30 @@ export default function MobileHeader({
               </div>
               <span className="text-sm font-bold text-white truncate max-w-full text-center w-full">{userEmail || 'Nepřihlášen'}</span>
             </div>
+
+            {/* Přepnutí na jiný účet */}
+            {accounts.length > 1 && (
+              <div className="flex flex-col py-1.5 border-b border-neon-blue/10 max-h-72 overflow-y-auto">
+                <span className="px-4 pt-1 pb-1.5 text-[10px] font-bold tracking-widest uppercase text-slate-500">Přepnout účet</span>
+                {accounts.map((acc) => {
+                  const isActive = acc.email === userEmail;
+                  return (
+                    <button
+                      key={`${acc.kind}:${acc.email}`}
+                      onClick={() => { setIsDropdownOpen(false); if (!isActive) onSelectAccount?.(acc); }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isActive ? 'bg-neon-blue/10' : 'active:bg-white/5'}`}
+                    >
+                      <Mail size={16} className={isActive ? 'text-neon-blue shrink-0' : 'text-slate-500 shrink-0'} />
+                      <span className="flex flex-col min-w-0 flex-1">
+                        <span className={`text-sm truncate ${isActive ? 'text-neon-blue font-bold' : 'text-slate-200'}`}>{acc.email}</span>
+                        <span className="text-[11px] text-slate-500">{acc.provider || (acc.kind === 'google' ? 'Google' : 'Jiný účet')}</span>
+                      </span>
+                      {isActive && <Check size={16} className="text-neon-blue shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             
             {isImapAccount ? (
               <button

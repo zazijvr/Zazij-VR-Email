@@ -785,6 +785,8 @@ function App() {
         logoutGoogleAccount={logoutGoogleAccount}
         isImapAccount={!!activeImap}
         onManageAccounts={() => setIsSettingsOpen(true)}
+        accounts={switcherAccounts}
+        onSelectAccount={selectAccount}
       />
 
 
