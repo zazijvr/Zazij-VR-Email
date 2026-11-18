@@ -28,6 +28,28 @@ interface PreviewBlob {
   base64: string;
 }
 
+/**
+ * Android: WebView PDF zobrazit neumí – příloha se předá aplikaci v telefonu (prohlížeč PDF…)
+ * přes most MainActivity.kt. Vrací důvod neúspěchu, nebo null při úspěchu.
+ */
+const openOnAndroid = (base64: string, name: string, mime: string): Promise<string | null> =>
+  new Promise((resolve) => {
+    const bridge = window.VrAndroid;
+    if (!bridge?.addEventListener) { resolve('bridge'); return; }
+    const timer = setTimeout(() => { bridge.removeEventListener?.('message', onReply); resolve('timeout'); }, 15000);
+    function onReply(e: { data: string }) {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type !== 'openFileResult') return;
+        clearTimeout(timer);
+        bridge?.removeEventListener?.('message', onReply);
+        resolve(msg.ok ? null : msg.reason || 'error');
+      } catch { /* jiná zpráva */ }
+    }
+    bridge.addEventListener('message', onReply);
+    bridge.postMessage(JSON.stringify({ type: 'openFile', name, mime, data: base64 }));
+  });
+
 /** Počítač: příloha se otevře výchozí aplikací systému (PDF v Okularu…) – rychlejší než náhled v okně */
 const canOpenExternally = () => !!window.__TAURI_INTERNALS__ && !IS_MOBILE;
 const openExternally = (p: PreviewBlob) =>
@@ -319,7 +341,14 @@ export default function EmailDetail({ googleToken, selectedEmailId, onExpand, on
         const blob = new Blob([bytes], { type: safeMimeType });
         const url = URL.createObjectURL(blob);
 
-        if (action === 'open') {
+        if (action === 'open' && IS_MOBILE && window.VrAndroid && !safeMimeType.startsWith('image/')) {
+          // Android: obrázky v aplikaci, ostatní (PDF…) v aplikaci telefonu
+          URL.revokeObjectURL(url);
+          const failure = await openOnAndroid(file.base64, attach.filename, safeMimeType);
+          if (failure === 'noapp') showAlert('V telefonu není aplikace, která tento typ souboru otevře (např. prohlížeč PDF).', 'Otevření přílohy', 'info');
+          else if (failure === 'type') showAlert('Tento typ souboru se z bezpečnostních důvodů neotevírá.', 'Otevření přílohy', 'info');
+          else if (failure) showAlert('Přílohu se nepodařilo otevřít.', 'Otevření přílohy', 'error');
+        } else if (action === 'open') {
           setPreviewBlob({ url, type: safeMimeType, filename: attach.filename, base64: file.base64 });
         } else {
           let suggestedPath = attach.filename;

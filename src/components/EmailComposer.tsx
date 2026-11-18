@@ -7,6 +7,7 @@ import AutofillInput from './AutofillInput';
 import { saveNewContacts } from '../utils/contactManager';
 import { deleteDraft, modifyThread } from '../services/gmail';
 import { useMailProvider } from '../services/mailProvider';
+import { useHistoryBack } from '../hooks/useHistoryBack';
 import type { ComposerAttachment, ComposerConfig, ComposerSuccess, EmailSignature, EmailTemplate } from '../types/composer';
 
 export interface EmailComposerProps {
@@ -188,6 +189,14 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       onClose?.();
     }
   };
+
+  // Android – Zpět: zavřít dotaz na zahození, jinak se zeptat (rozepsaný e-mail) nebo zavřít.
+  // Vždy false: okno zavírá až handleAttemptClose / potvrzení, krok v historii se zatím obnoví.
+  useHistoryBack(true, () => {
+    if (showCloseWarning) setShowCloseWarning(false);
+    else handleAttemptClose();
+    return false;
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

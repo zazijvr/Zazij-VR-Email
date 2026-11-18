@@ -19,8 +19,10 @@ const installDeadStepSkipper = () => {
  * Při otevření přidá krok do historie WebView. Android Zpět historii vrátí (Tauri: webView.goBack())
  * a tady se okno zavře. Když už v historii nic není, Zpět aplikaci pošle na pozadí jako obvykle.
  * Zavře-li se okno jinak (tlačítkem), jeho krok se odebere. Víc oken naráz: Zpět zavře to poslední.
+ * close může vrátit false = okno zůstává otevřené (např. psaní se nejdřív zeptá na zahození
+ * konceptu) – krok v historii se pak obnoví a další Zpět ho zase najde.
  */
-export function useHistoryBack(open: boolean, close: () => void) {
+export function useHistoryBack(open: boolean, close: () => boolean | void) {
   const closeRef = useRef(close);
   closeRef.current = close;
 
@@ -33,8 +35,11 @@ export function useHistoryBack(open: boolean, close: () => void) {
     const onPop = () => {
       // Po Zpět je aktuální krok pořád náš → zavřelo se jiné (novější) okno
       if (window.history.state?.vrBack === token) return;
+      if (closeRef.current() === false) {
+        window.history.pushState({ vrBack: token }, '');
+        return;
+      }
       popped = true;
-      closeRef.current();
     };
     window.addEventListener('popstate', onPop);
     return () => {

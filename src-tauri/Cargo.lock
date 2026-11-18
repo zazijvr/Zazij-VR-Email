@@ -7021,6 +7021,7 @@ version = "1.5.4"
 dependencies = [
  "base64 0.22.1",
  "imap",
+ "jni",
  "keyring",
  "lettre",
  "log",

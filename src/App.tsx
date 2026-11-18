@@ -762,6 +762,25 @@ function App() {
   // Android – Zpět: menu a nastavení se zavírají systémovým Zpět přes historii (useHistoryBack).
   useHistoryBack(isMobileMenuOpen, () => setIsMobileMenuOpen(false));
   useHistoryBack(isSettingsOpen, () => setIsSettingsOpen(false));
+  // Android: Zpět by aplikaci zavřelo → nejdřív potvrdit (MainActivity.kt → __vrConfirmExit).
+  // Plus údaje pro kontrolu pošty na pozadí a povolení upozornění.
+  useEffect(() => {
+    const bridge = window.VrAndroid;
+    if (!bridge) return;
+    bridge.postMessage(JSON.stringify({ type: 'config', googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE ?? '' }));
+    isPermissionGranted()
+      .then((granted) => (granted ? undefined : requestPermission()))
+      .catch(() => { /* bez povolení jen nebudou chodit upozornění */ });
+    window.__vrConfirmExit = () => {
+      showConfirm('Opravdu chceš aplikaci zavřít?', 'Zavřít aplikaci', () => bridge.postMessage(JSON.stringify({ type: 'exit' })), {
+        type: 'warning', confirmText: 'Zavřít', cancelText: 'Zůstat',
+      });
+      return true;
+    };
+    return () => { delete window.__vrConfirmExit; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- jednou po startu
+  }, []);
+
   // Tah od levého okraje (MainActivity.kt → __vrOpenMenu) vysune menu, ale jen když je tlačítko
   // menu na obrazovce vidět. Jinak (nebo při chybě) je to běžné Zpět.
   useEffect(() => {

@@ -1,6 +1,8 @@
 mod oauth;
 mod imap_mail;
 mod account_counts;
+#[cfg(target_os = "android")]
+mod android_mail_check;
 #[cfg(desktop)]
 mod mail_watch;
 #[cfg(desktop)]

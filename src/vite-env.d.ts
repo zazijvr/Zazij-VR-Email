@@ -18,4 +18,12 @@ interface Window {
    * vidět, a vrátí true; jinak false a provede se běžné Zpět.
    */
   __vrOpenMenu?: () => boolean;
+  /** Android: Zpět by aplikaci zavřelo – zeptat se (vrátí true, když se dotaz zobrazil) */
+  __vrConfirmExit?: () => boolean;
+  /** Android: most do MainActivity.kt (jen hlavní stránka aplikace) */
+  VrAndroid?: {
+    postMessage: (message: string) => void;
+    addEventListener?: (type: 'message', listener: (e: { data: string }) => void) => void;
+    removeEventListener?: (type: 'message', listener: (e: { data: string }) => void) => void;
+  };
 }
