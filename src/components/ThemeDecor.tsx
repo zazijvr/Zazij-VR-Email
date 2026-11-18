@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useId, useMemo } from 'react';
 import { Check } from 'lucide-react';
 import { ThemeInfo } from '../theme';
 
@@ -171,5 +171,65 @@ export const ThemeTile: React.FC<{ theme: ThemeInfo; selected: boolean; onSelect
         </span>
       )}
     </button>
+  );
+};
+
+// ───────── Sakura: kvetoucí větev v hlavičce (stejná jako v Moje Káře) ─────────
+
+/** Pětilistý květ sakury (střed x, y; velikost s) */
+const Blossom: React.FC<{ x: number; y: number; s?: number; rot?: number; fill: string }> = ({ x, y, s = 1, rot = 0, fill }) => (
+  <g transform={`translate(${x} ${y}) rotate(${rot}) scale(${s})`}>
+    {[0, 72, 144, 216, 288].map((a) => (
+      <ellipse key={a} cx="0" cy="-4.2" rx="3.1" ry="4.4" fill={fill} transform={`rotate(${a})`} />
+    ))}
+    <circle r="1.7" fill="#d6336c" />
+    {[0, 72, 144, 216, 288].map((a) => (
+      <circle key={`s${a}`} cx="0" cy="-2.6" r="0.45" fill="#a61e4d" transform={`rotate(${a + 36})`} />
+    ))}
+  </g>
+);
+
+/**
+ * Kvetoucí větev – visí shora z rohu hlavičky a jemně se houpe. Jen v motivu Sakura (.vr-sakura-only).
+ * flip = větev vyrůstá z pravého horního rohu.
+ */
+export const SakuraBranch: React.FC<{ className?: string; flip?: boolean }> = ({ className = '', flip = false }) => {
+  // Vlastní id přechodu – jinak by větev sahala na přechod ze skryté hlavičky (mobil / desktop)
+  const gid = `vr-petal-${useId().replace(/:/g, '')}`;
+  const petal = `url(#${gid})`;
+  return (
+  <svg
+    viewBox="0 0 130 60"
+    className={`vr-sakura-only overflow-visible ${className}`}
+    preserveAspectRatio={flip ? 'xMaxYMin meet' : 'xMinYMin meet'}
+    style={flip ? { transform: 'scaleX(-1)' } : undefined}
+    aria-hidden="true"
+  >
+    <defs>
+      <radialGradient id={gid} cx="50%" cy="80%" r="80%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="55%" stopColor="#ffd6e5" />
+        <stop offset="100%" stopColor="#f48fb1" />
+      </radialGradient>
+    </defs>
+    <g className="vr-sakura-sway">
+      <path d="M2 -6 C18 6 34 12 58 18 C80 24 98 32 126 40" stroke="#6d4c41" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      <path d="M40 14 C44 24 48 30 56 36" stroke="#6d4c41" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      <path d="M84 27 C90 18 96 14 104 10" stroke="#6d4c41" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+      <path d="M100 33 C104 42 108 48 116 54" stroke="#6d4c41" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      <path d="M66 20 q6 -7 13 -3 q-6 7 -13 3 Z" fill="#7cb342" opacity="0.8" />
+      <path d="M112 37 q6 -5 12 0 q-6 5 -12 0 Z" fill="#7cb342" opacity="0.8" />
+      <Blossom x={20} y={6} s={0.95} rot={10} fill={petal} />
+      <Blossom x={56} y={37} s={1.05} rot={-8} fill={petal} />
+      <Blossom x={46} y={20} s={0.75} rot={30} fill={petal} />
+      <Blossom x={84} y={28} s={0.9} rot={20} fill={petal} />
+      <Blossom x={104} y={9} s={0.85} rot={-15} fill={petal} />
+      <Blossom x={116} y={54} s={0.95} rot={40} fill={petal} />
+      <Blossom x={126} y={41} s={0.8} rot={-20} fill={petal} />
+      <ellipse cx="70" cy="12" rx="2" ry="2.8" fill="#f48fb1" transform="rotate(-30 70 12)" />
+      <ellipse cx="96" cy="17" rx="1.8" ry="2.6" fill="#f06595" transform="rotate(20 96 17)" />
+      <ellipse cx="34" cy="10" rx="1.8" ry="2.6" fill="#f48fb1" transform="rotate(-40 34 10)" />
+    </g>
+  </svg>
   );
 };

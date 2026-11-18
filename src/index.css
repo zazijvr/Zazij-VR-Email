@@ -323,3 +323,14 @@ html.composer-open #root {
 :root[data-theme="dark"] .vr-neon-art   { filter: grayscale(1) sepia(1) hue-rotate(180deg) saturate(2.2); opacity: 0.45; }
 :root[data-theme="light"] .vr-neon-art  { filter: grayscale(1) sepia(1) hue-rotate(150deg) saturate(2.5) brightness(0.8); opacity: 0.35; }
 :root[data-theme="sakura"] .vr-neon-art { filter: grayscale(1) sepia(1) hue-rotate(295deg) saturate(2.5); opacity: 0.45; }
+
+/* Sakura: kvetoucí větev v hlavičce (ThemeDecor.tsx SakuraBranch) místo neonových obvodů v rohu */
+.vr-sakura-only { display: none; }
+:root[data-theme="sakura"] .vr-sakura-only { display: block; }
+:root[data-theme="sakura"] .vr-corner-art { display: none; }
+@keyframes vr-sakura-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(1.2deg); }
+}
+.vr-sakura-sway { transform-box: view-box; transform-origin: 0 0; animation: vr-sakura-sway 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .vr-sakura-sway { animation: none; } }

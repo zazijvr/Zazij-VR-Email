@@ -4,6 +4,7 @@ import { getAvatarInitial } from '../utils/emailParser';
 import { openZazijvrWeb } from '../utils/zazijvrWeb';
 import type { SwitcherAccount } from './AccountSwitcher';
 import { RudolphOverlay } from './ThemeDecor';
+import { SakuraBranch } from './ThemeDecor';
 import UnreadBadge from './UnreadBadge';
 
 interface MobileHeaderProps {
@@ -85,7 +86,9 @@ export default function MobileHeader({
     // Hlavička sama nic neořezává – jinak by ořízla i rozbalovací okno účtů pod ikonou
     <div className="md:hidden flex items-center justify-between px-4 py-2 bg-navy-card/70 border-b border-neon-blue/20 z-40 relative">
       {/* Motiv desky plošných spojů – vedle ikony uživatele, oříznutý výškou hlavičky */}
-      <div className="absolute right-0 top-0 h-full w-[250px] pointer-events-none opacity-60 z-0 overflow-hidden">
+      {/* Motiv Sakura: místo neonových čar kvetoucí větev z pravého horního rohu (za ikonou účtu) */}
+      <SakuraBranch flip className="absolute right-0 top-0 w-[150px] h-[66px] pointer-events-none z-0" />
+      <div className="vr-corner-art absolute right-0 top-0 h-full w-[250px] pointer-events-none opacity-60 z-0 overflow-hidden">
          <img src="/neon_corner.png" alt="" draggable="false" className="vr-neon-art absolute right-0 top-0 w-[170px] h-auto max-w-none" />
       </div>
       <button 

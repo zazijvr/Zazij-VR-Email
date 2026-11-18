@@ -13,6 +13,7 @@ import type { GmailLabel } from '../../types/gmail';
 import type { UnreadCounts } from '../../types/account';
 import type { ComposerConfig, ComposerSuccess } from '../../types/composer';
 import { Mascot } from '../../components/Mascot';
+import { SakuraBranch } from '../../components/ThemeDecor';
 import { useHistoryBack } from '../../hooks/useHistoryBack';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
@@ -328,7 +329,9 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
           {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
           {/* Neonové čáry – ukotvené ke spodku hlavičky, takže „zatékají“ pod její spodní okraj */}
-          <div className="absolute right-0 top-0 bottom-0 w-[340px] overflow-hidden pointer-events-none opacity-70 z-[5]">
+          {/* Motiv Sakura: místo neonových čar kvetoucí větev z pravého horního rohu */}
+          <SakuraBranch flip className="absolute right-0 top-0 w-[300px] h-[130px] pointer-events-none z-[6]" />
+          <div className="vr-corner-art absolute right-0 top-0 bottom-0 w-[340px] overflow-hidden pointer-events-none opacity-70 z-[5]">
             <img src="/neon_corner.png" alt="" draggable="false" className="vr-neon-art absolute right-0 bottom-0 h-[170px] w-auto max-w-none" />
           </div>
 
