@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Check, ChevronDown, Mail } from 'lucide-react';
 import UnreadBadge from './UnreadBadge';
-import { othersUnread } from '../utils/accounts';
 
 export interface SwitcherAccount {
   email: string;
@@ -29,7 +28,6 @@ export default function AccountSwitcher({ accounts, activeEmail, onSelect }: Pro
 
   const active = accounts.find((a) => a.email === activeEmail);
   const canSwitch = accounts.length > 1;
-  const elsewhere = othersUnread(accounts, activeEmail);
 
   return (
     <div className="relative px-4 mb-3 md:mb-5">
@@ -48,7 +46,6 @@ export default function AccountSwitcher({ accounts, activeEmail, onSelect }: Pro
           <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Účet</span>
           <span className="text-sm text-slate-200 font-semibold truncate max-w-[13rem]">{active?.label || activeEmail}</span>
         </div>
-        <UnreadBadge count={elsewhere} title={`Nepřečtené v ostatních účtech: ${elsewhere}`} />
         {canSwitch && <ChevronDown size={16} className={`text-slate-400 shrink-0 transition-transform ${open ? 'rotate-180 text-neon-blue' : ''}`} />}
       </button>
 
