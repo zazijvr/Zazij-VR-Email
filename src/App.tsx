@@ -689,19 +689,39 @@ function App() {
   }, [activeImap, imapFolders, googleToken, userInfo?.email, customLabels]);
   const mailAccountEmail = activeImap ?? userInfo?.email;
 
+  /** Nepřečtené v Doručených u všech účtů (Rust: accounts_unread) – každou minutu, jen když je okno vidět */
+  const accountsUnreadQuery = useQuery({
+    queryKey: ['accountsUnread'],
+    enabled: typeof window.__TAURI_INTERNALS__ !== 'undefined' && (savedAccounts.length + (imapAccountsQuery.data?.length ?? 0)) > 1,
+    queryFn: () => {
+      const mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+      return invoke<Record<string, number>>('accounts_unread', mobile
+        ? { clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE, clientSecret: null }
+        : { clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID_DESKTOP, clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET });
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+  });
+
   /** Všechny účty pro přepínač v levém panelu: Google účty a pak ostatní (IMAP) */
+  const activeInboxUnread = unreadCounts['Doručené'];
   const switcherAccounts = useMemo<SwitcherAccount[]>(() => {
     const google = [...savedAccounts];
     if (userInfo?.email && !google.includes(userInfo.email)) google.unshift(userInfo.email);
+    const counts = accountsUnreadQuery.data ?? {};
+    // U otevřeného účtu je čerstvější počet ze seznamu složek (mění se hned po přečtení)
+    const unreadOf = (email: string) => (email === mailAccountEmail ? activeInboxUnread ?? counts[email] ?? 0 : counts[email]);
     return [
-      ...google.map((email) => ({ email, kind: 'google' as const })),
+      ...google.map((email) => ({ email, kind: 'google' as const, unread: unreadOf(email) })),
       ...(imapAccountsQuery.data ?? []).map((a) => ({
         email: a.email,
         kind: 'imap' as const,
         provider: /seznam\.cz$/i.test(a.imapHost) ? 'Seznam' : /wedos\.net$/i.test(a.imapHost) ? 'WEDOS' : a.imapHost,
+        unread: unreadOf(a.email),
       })),
     ];
-  }, [savedAccounts, userInfo?.email, imapAccountsQuery.data]);
+  }, [savedAccounts, userInfo?.email, imapAccountsQuery.data, accountsUnreadQuery.data, mailAccountEmail, activeInboxUnread]);
 
   // Hlídání nové pošty na pozadí (Rust) potřebuje údaje Google aplikace pro obnovu přihlášení
   useEffect(() => {

@@ -1,5 +1,6 @@
 mod oauth;
 mod imap_mail;
+mod account_counts;
 #[cfg(desktop)]
 mod mail_watch;
 #[cfg(desktop)]
@@ -65,6 +66,7 @@ pub fn run() {
         imap_mail::imap_append,
         imap_mail::imap_empty_folder,
         imap_mail::smtp_send,
+        account_counts::accounts_unread,
         mail_watch::mail_watch_set_google_client,
         open_file::open_attachment_externally
     ]);
@@ -89,7 +91,8 @@ pub fn run() {
         imap_mail::imap_delete,
         imap_mail::imap_append,
         imap_mail::imap_empty_folder,
-        imap_mail::smtp_send
+        imap_mail::smtp_send,
+        account_counts::accounts_unread
     ]);
 
     builder

@@ -296,7 +296,7 @@ pub(crate) fn connect(acc: &ImapAccount, password: &str) -> Result<TlsSession, S
 }
 
 /// Spustí operaci nad přihlášenou IMAP relací v samostatném vlákně
-async fn with_session<T, F>(app: &AppHandle, email: &str, op: F) -> Result<T, String>
+pub(crate) async fn with_session<T, F>(app: &AppHandle, email: &str, op: F) -> Result<T, String>
 where
     T: Send + 'static,
     F: FnOnce(&mut TlsSession) -> Result<T, String> + Send + 'static,
@@ -428,7 +428,7 @@ pub async fn imap_remove_account(app: AppHandle, email: String) -> Result<(), St
 /// Počet nepřečtených ve složce (STATUS … (UNSEEN)).
 /// Knihovna imap 2.4 odpověď STATUS do vráceného Mailboxu nezapíše – pošle ji do fronty
 /// nevyžádaných odpovědí (unsolicited_responses), takže se číslo čte odtamtud.
-fn unseen_count(s: &mut TlsSession, path: &str) -> u32 {
+pub(crate) fn unseen_count(s: &mut TlsSession, path: &str) -> u32 {
     // Vyprázdnit staré záznamy, ať se nepřičte odpověď k jiné složce
     while s.unsolicited_responses.try_recv().is_ok() {}
     if s.status(path, "(UNSEEN)").is_err() {

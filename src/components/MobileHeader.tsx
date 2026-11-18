@@ -3,6 +3,8 @@ import { Check, Mail, Menu, LogOut, Search, Settings, X } from 'lucide-react';
 import { getAvatarInitial } from '../utils/emailParser';
 import { openZazijvrWeb } from '../utils/zazijvrWeb';
 import type { SwitcherAccount } from './AccountSwitcher';
+import UnreadBadge from './UnreadBadge';
+import { othersUnread } from '../utils/accounts';
 
 interface MobileHeaderProps {
   toggleSidebar: () => void;
@@ -130,6 +132,8 @@ export default function MobileHeader({
       </div>
 
       <div id="mobile-user" ref={dropdownRef} className={`relative z-50 transition-all duration-500 ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
+        {/* Nepřečtené v ostatních účtech – na ikoně účtu */}
+        <UnreadBadge count={othersUnread(accounts, userEmail)} className="absolute -top-1.5 -right-1.5 z-10 bg-navy-deep pointer-events-none" />
         <button 
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="w-10 h-10 rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/60 flex items-center justify-center font-extrabold text-neon-blue drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-transform active:scale-95 hover:border-neon-blue"
@@ -163,6 +167,7 @@ export default function MobileHeader({
                         <span className={`text-sm truncate ${isActive ? 'text-neon-blue font-bold' : 'text-slate-200'}`}>{acc.email}</span>
                         <span className="text-[11px] text-slate-500">{acc.provider || (acc.kind === 'google' ? 'Google' : 'Jiný účet')}</span>
                       </span>
+                      <UnreadBadge count={acc.unread} />
                       {isActive && <Check size={16} className="text-neon-blue shrink-0" />}
                     </button>
                   );
