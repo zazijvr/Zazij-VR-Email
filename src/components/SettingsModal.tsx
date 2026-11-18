@@ -9,6 +9,8 @@ import { getVersion } from '@tauri-apps/api/app';
 import { checkForUpdate, installUpdate, isUpdaterSupported, type UpdateProgress } from '../utils/updater';
 import type { Update } from '@tauri-apps/plugin-updater';
 import type { GmailLabel } from '../types/gmail';
+import { ThemeTile } from './ThemeDecor';
+import { chooseTheme, selectableThemes, useTheme } from '../theme';
 import type { UserInfo } from '../types/account';
 
 interface SettingsModalProps {
@@ -51,6 +53,7 @@ export default function SettingsModal({
   onImapAccountRemoved,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState('general');
+  const theme = useTheme();
   const modalRef = useRef<HTMLDivElement>(null);
   const [localVersion, setLocalVersion] = useState('');
   const [cloudVersion, setCloudVersion] = useState('');
@@ -117,7 +120,7 @@ export default function SettingsModal({
       <div className="relative bg-[#1e293b]/80 border border-neon-blue/25 rounded-2xl sm:rounded-[30px] w-full max-w-3xl p-4 sm:p-8 shadow-[0_0_40px_rgba(0,0,0,0.5),0_0_20px_rgba(255,255,255,0.05)] flex flex-col z-10 transition-transform max-h-[90vh]">
         
         <div className="flex justify-between items-center mb-4 sm:mb-6 border-b border-neon-blue/[0.15] pb-3 sm:pb-4">
-          <h2 className="text-xl sm:text-3xl font-black tracking-widest text-neon-blue drop-shadow-[0_0_20px_rgba(0,243,255,0.6)]">NASTAVENÍ</h2>
+          <h2 className="text-xl sm:text-3xl font-black tracking-widest text-neon-blue drop-shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.6)]">NASTAVENÍ</h2>
           <button 
             onClick={() => setIsSettingsOpen(false)}
             className="p-1.5 sm:p-2 bg-white/5 hover:bg-danger/20 text-slate-400 hover:text-danger rounded-full transition-all border border-transparent hover:border-danger/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center justify-center shrink-0"
@@ -127,26 +130,35 @@ export default function SettingsModal({
         </div>
 
         <div className="flex gap-2 sm:gap-4 mb-4 border-b border-neon-blue/10 pb-6 pt-4 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto custom-scrollbar">
-          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'general' ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_15px_rgba(0,243,255,0.2)]' : 'bg-navy-card/70 text-slate-400 border border-neon-blue/10 hover:bg-white/5 hover:text-white'}`}>
+          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'general' ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)]' : 'bg-navy-card/70 text-slate-400 border border-neon-blue/10 hover:bg-white/5 hover:text-white'}`}>
             <SettingsIcon size={16} className="sm:w-[18px] sm:h-[18px]" /> OBECNÉ
           </button>
-          <button onClick={() => setActiveTab('templates')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'templates' ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_15px_rgba(0,243,255,0.2)]' : 'bg-navy-card/70 text-slate-400 border border-neon-blue/10 hover:bg-white/5 hover:text-white'}`}>
+          <button onClick={() => setActiveTab('templates')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'templates' ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)]' : 'bg-navy-card/70 text-slate-400 border border-neon-blue/10 hover:bg-white/5 hover:text-white'}`}>
             <FileText size={16} className="sm:w-[18px] sm:h-[18px]" /> ŠABLONY
           </button>
-          <button onClick={() => setActiveTab('signatures')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'signatures' ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_15px_rgba(0,243,255,0.2)]' : 'bg-navy-card/70 text-slate-400 border border-neon-blue/10 hover:bg-white/5 hover:text-white'}`}>
+          <button onClick={() => setActiveTab('signatures')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'signatures' ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)]' : 'bg-navy-card/70 text-slate-400 border border-neon-blue/10 hover:bg-white/5 hover:text-white'}`}>
             <PenTool size={16} className="sm:w-[18px] sm:h-[18px]" /> PODPISY
           </button>
-          <button onClick={() => setActiveTab('folders')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'folders' ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_15px_rgba(0,243,255,0.2)]' : 'bg-navy-card/70 text-slate-400 border border-neon-blue/10 hover:bg-white/5 hover:text-white'}`}>
+          <button onClick={() => setActiveTab('folders')} className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold tracking-wider transition-all whitespace-nowrap text-xs sm:text-base ${activeTab === 'folders' ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)]' : 'bg-navy-card/70 text-slate-400 border border-neon-blue/10 hover:bg-white/5 hover:text-white'}`}>
             <Folder size={16} className="sm:w-[18px] sm:h-[18px]" /> SLOŽKY
           </button>
         </div>
         
         {activeTab === 'general' && (
         <div className="flex flex-col gap-8 mt-2 overflow-y-auto custom-scrollbar pr-2 max-h-[60vh]">
-          
+
+          <div className="flex flex-col">
+            <h3 className="text-xl font-bold text-slate-200 mb-4 border-b border-neon-blue/[0.15] pb-2">Vzhled</h3>
+            <div role="radiogroup" aria-label="Motiv" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+              {selectableThemes(theme).map((t) => (
+                <ThemeTile key={t.id} theme={t} selected={t.id === theme} onSelect={() => chooseTheme(t.id)} />
+              ))}
+            </div>
+          </div>
+
           <div className="flex flex-col sm:block">
             <h3 className="text-xl font-bold text-slate-200 mb-4 border-b border-neon-blue/[0.15] pb-2">Verze aplikace</h3>
-            <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 rounded-2xl border transition-all ${isUpdateAvailable ? 'bg-neon-purple/5 border-neon-purple/30 shadow-[0_0_20px_rgba(247,37,133,0.1)]' : 'bg-navy-card border-neon-blue/[0.15]'}`}>
+            <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 rounded-2xl border transition-all ${isUpdateAvailable ? 'bg-neon-purple/5 border-neon-purple/30 shadow-[0_0_20px_rgb(var(--c-neon-purple)/0.1)]' : 'bg-navy-card border-neon-blue/[0.15]'}`}>
               <div className="flex flex-col gap-1 mb-4 sm:mb-0">
                 <span className="text-white font-bold tracking-wide flex items-center gap-2">
                   ZazijVR Email Klient 
@@ -169,7 +181,7 @@ export default function SettingsModal({
                   </span>
                 ) : (
                   <span className="text-sm text-neon-blue flex items-center gap-1.5 mt-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_5px_rgba(0,243,255,1)]"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_5px_rgb(var(--c-neon-blue)/1)]"></span>
                     Používáte nejnovější verzi.
                   </span>
                 )}
@@ -182,7 +194,7 @@ export default function SettingsModal({
                 <button 
                   onClick={handleDownloadUpdate}
                   disabled={updateState === 'downloading' || updateState === 'restarting'}
-                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-2 bg-neon-purple/20 hover:bg-neon-purple/30 text-neon-purple border border-neon-purple/50 hover:border-neon-purple px-5 py-2.5 rounded-xl font-black tracking-wider transition-all shadow-[0_0_15px_rgba(247,37,133,0.3)] hover:shadow-[0_0_25px_rgba(247,37,133,0.6)] hover:scale-105 group whitespace-nowrap"
+                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-2 bg-neon-purple/20 hover:bg-neon-purple/30 text-neon-purple border border-neon-purple/50 hover:border-neon-purple px-5 py-2.5 rounded-xl font-black tracking-wider transition-all shadow-[0_0_15px_rgb(var(--c-neon-purple)/0.3)] hover:shadow-[0_0_25px_rgb(var(--c-neon-purple)/0.6)] hover:scale-105 group whitespace-nowrap"
                 >
                   {updateState === 'downloading' || updateState === 'restarting' ? (
                     <>
@@ -210,13 +222,13 @@ export default function SettingsModal({
               <div className="flex items-center gap-2 bg-navy p-1 rounded-xl border border-neon-blue/10">
                 <button 
                   onClick={() => setIsVerticalLayout(false)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold tracking-wider transition-all ${!isVerticalLayout ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/40 shadow-[0_0_10px_rgba(0,243,255,0.2)]' : 'text-slate-500 hover:text-white'}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold tracking-wider transition-all ${!isVerticalLayout ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/40 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)]' : 'text-slate-500 hover:text-white'}`}
                 >
                   VEDLE SEBE
                 </button>
                 <button 
                   onClick={() => setIsVerticalLayout(true)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold tracking-wider transition-all ${isVerticalLayout ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/40 shadow-[0_0_10px_rgba(0,243,255,0.2)]' : 'text-slate-500 hover:text-white'}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold tracking-wider transition-all ${isVerticalLayout ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/40 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)]' : 'text-slate-500 hover:text-white'}`}
                 >
                   POD SEBOU
                 </button>
@@ -233,16 +245,16 @@ export default function SettingsModal({
                   {savedAccounts.map((email) => {
                     const isActive = !activeImap && (userInfo?.email === email || (savedAccounts.length === 1 && !!googleToken));
                     return (
-                      <div key={email} className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-5 rounded-2xl transition-all border ${isActive ? 'bg-neon-blue/10 border-neon-blue/50 shadow-[0_0_15px_rgba(0,243,255,0.1)]' : 'bg-navy-card border-neon-blue/[0.15] hover:border-white/30'}`}>
+                      <div key={email} className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-5 rounded-2xl transition-all border ${isActive ? 'bg-neon-blue/10 border-neon-blue/50 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.1)]' : 'bg-navy-card border-neon-blue/[0.15] hover:border-white/30'}`}>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 overflow-hidden mb-3 sm:mb-0">
-                          <div className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-lg sm:text-xl uppercase ${isActive ? 'bg-neon-blue text-navy shadow-[0_0_15px_rgba(0,243,255,0.6)]' : 'bg-white/10 text-slate-400'}`}>
+                          <div className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-lg sm:text-xl uppercase ${isActive ? 'bg-neon-blue text-navy shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.6)]' : 'bg-white/10 text-slate-400'}`}>
                             {email.charAt(0)}
                           </div>
                           <div className="flex flex-col overflow-hidden">
                             <span className={`font-bold tracking-wide truncate max-w-[200px] sm:max-w-xs ${isActive ? 'text-slate-100' : 'text-slate-400'}`}>{email}</span>
                             {isActive ? (
                               <span className="text-neon-blue text-[10px] sm:text-xs font-semibold flex items-center gap-1.5 mt-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-neon-blue animate-pulse shadow-[0_0_5px_rgba(0,243,255,1)]"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-neon-blue animate-pulse shadow-[0_0_5px_rgb(var(--c-neon-blue)/1)]"></span>
                                 Aktivní napojení ({userInfo?.messagesTotal || 0} mailů)
                               </span>
                             ) : (
@@ -272,7 +284,7 @@ export default function SettingsModal({
                   })}
                   <button 
                     onClick={() => loginWithGoogle()}
-                    className="group self-start flex items-center gap-3 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue border border-neon-blue/40 hover:border-neon-blue/80 px-6 py-3.5 rounded-xl font-bold transition-all hover:scale-105 mt-2 shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:shadow-[0_0_25px_rgba(0,243,255,0.4)]"
+                    className="group self-start flex items-center gap-3 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue border border-neon-blue/40 hover:border-neon-blue/80 px-6 py-3.5 rounded-xl font-bold transition-all hover:scale-105 mt-2 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.1)] hover:shadow-[0_0_25px_rgb(var(--c-neon-blue)/0.4)]"
                   >
                     <span className="text-2xl font-black leading-none drop-shadow-md">+</span>
                     <span className="tracking-wide">Přidat další Google Účet</span>
@@ -289,7 +301,7 @@ export default function SettingsModal({
 
                   <button 
                     onClick={() => loginWithGoogle()}
-                    className="group self-start flex items-center gap-3 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue border border-neon-blue/40 hover:border-neon-blue/80 px-6 py-3.5 rounded-xl font-bold transition-all hover:scale-105 shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:shadow-[0_0_25px_rgba(0,243,255,0.4)]"
+                    className="group self-start flex items-center gap-3 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue border border-neon-blue/40 hover:border-neon-blue/80 px-6 py-3.5 rounded-xl font-bold transition-all hover:scale-105 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.1)] hover:shadow-[0_0_25px_rgb(var(--c-neon-blue)/0.4)]"
                   >
                     <span className="text-2xl font-black leading-none drop-shadow-md">+</span>
                     <span className="tracking-wide">Připojit Google Účet</span>

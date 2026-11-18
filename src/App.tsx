@@ -22,6 +22,8 @@ import type { UnreadCounts, UserInfo } from './types/account';
 import type { GmailLabel } from './types/gmail';
 import type { MoveRequest } from './types/email';
 import { imapListAccounts, imapListFolders } from './services/imap';
+import { Petals, Snowfall, XmasThemePrompt } from './components/ThemeDecor';
+import { initSeasonalTheme, resolveXmasPrompt, xmasPromptPending } from './theme';
 import {
   MailProviderProvider, createGmailProvider, createImapProvider, imapCustomFolders, imapId, imapUnreadCounts,
 } from './services/mailProvider';
@@ -757,7 +759,49 @@ function App() {
     return () => { unlisten.then((f) => f()).catch(() => {}); };
   }, []);
 
+  // Android: klepnutí na upozornění (MainActivity.kt → __vrOpenFromNotification). Gmail účet se dá
+  // přepnout až po načtení přihlášeného účtu při startu – do té doby požadavek počká.
+  const [pendingNotifOpen, setPendingNotifOpen] = useState<MailWatchOpen | null>(null);
+  useEffect(() => {
+    const bridge = window.VrAndroid;
+    if (!bridge) return;
+    window.__vrOpenFromNotification = (json: string) => {
+      try {
+        const req = JSON.parse(json) as Partial<MailWatchOpen>;
+        if ((req.kind !== 'imap' && req.kind !== 'google') || typeof req.account !== 'string' || !req.account) return true;
+        setPendingNotifOpen({ kind: req.kind, account: req.account, messageId: String(req.messageId ?? ''), folder: String(req.folder ?? 'INBOX') });
+      } catch { /* neplatná data – nic */ }
+      return true;
+    };
+    bridge.postMessage(JSON.stringify({ type: 'ready' }));
+    return () => { delete window.__vrOpenFromNotification; };
+  }, []);
+  useEffect(() => {
+    if (!pendingNotifOpen) return;
+    if (pendingNotifOpen.kind === 'google' && !userInfo?.email) return;
+    const req = pendingNotifOpen;
+    setPendingNotifOpen(null);
+    openFromNotificationRef.current(req);
+  }, [pendingNotifOpen, userInfo?.email]);
+
   useEffect(() => { if (isSettingsOpen) setSettingsLoaded(true); }, [isSettingsOpen]);
+
+  // Vánoční motiv (1. 12. – 1. 1.): zapne se sám a zeptá se, jestli ho nechat. Kontrola i při návratu
+  // do aplikace – telefon ji z pozadí jen obnoví, start (main.tsx) se znovu nespustí.
+  const [xmasPrompt, setXmasPrompt] = useState(xmasPromptPending);
+  useEffect(() => {
+    const check = () => {
+      if (document.visibilityState !== 'visible') return;
+      initSeasonalTheme();
+      if (xmasPromptPending()) setXmasPrompt(true);
+    };
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('focus', check);
+    return () => {
+      document.removeEventListener('visibilitychange', check);
+      window.removeEventListener('focus', check);
+    };
+  }, []);
 
   // Android – Zpět: menu a nastavení se zavírají systémovým Zpět přes historii (useHistoryBack).
   useHistoryBack(isMobileMenuOpen, () => setIsMobileMenuOpen(false));
@@ -820,6 +864,15 @@ function App() {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full overflow-hidden app-bg relative md:border border-neon-blue/20 shadow-2xl select-none pt-[env(safe-area-inset-top)]">
+      {/* Výzdoba motivů – vidět jen ve vánočním / Sakuře */}
+      <Snowfall />
+      <Petals />
+      {xmasPrompt && (
+        <XmasThemePrompt
+          onKeep={() => { resolveXmasPrompt(true); setXmasPrompt(false); }}
+          onRevert={() => { resolveXmasPrompt(false); setXmasPrompt(false); }}
+        />
+      )}
 
 
       <MobileHeader
@@ -837,7 +890,7 @@ function App() {
 
 
         {/* Vizuální scelení celé aplikace shora - kyberpunkový top okraj rozhraní */}
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)] z-30 md:z-[100] pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.8)] z-30 md:z-[100] pointer-events-none"></div>
 
         {/* Overlay pro mobilní menu */}
         {isMobileMenuOpen && (googleToken || activeImap) && (

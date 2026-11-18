@@ -2,17 +2,17 @@ export const getEventSolidColor = (colorId: string | number | null | undefined):
   const colors: Record<string, string> = {
     '1': 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]',
     '2': 'bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)]',
-    '3': 'bg-neon-rose shadow-[0_0_10px_rgba(217,37,123,0.5)]',
+    '3': 'bg-neon-rose shadow-[0_0_10px_rgb(var(--c-neon-rose)/0.5)]',
     '4': 'bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]',
     '5': 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]',
     '6': 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]',
     '7': 'bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]',
     '8': 'bg-slate-500 shadow-[0_0_10px_rgba(100,116,139,0.5)]',
-    '9': 'bg-neon-blue shadow-[0_0_10px_rgba(0,243,255,0.5)]',
+    '9': 'bg-neon-blue shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.5)]',
     '10': 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]',
     '11': 'bg-rose-400 shadow-[0_0_10px_rgba(251,113,133,0.5)]'
   };
-  return colors[String(colorId)] || 'bg-neon-blue shadow-[0_0_10px_rgba(0,243,255,0.5)]';
+  return colors[String(colorId)] || 'bg-neon-blue shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.5)]';
 };
 
 export const getEventBgColor = (colorId: string | number | null | undefined): string => {

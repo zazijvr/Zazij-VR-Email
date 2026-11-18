@@ -3,6 +3,7 @@ import { Check, Mail, Menu, LogOut, Search, Settings, X } from 'lucide-react';
 import { getAvatarInitial } from '../utils/emailParser';
 import { openZazijvrWeb } from '../utils/zazijvrWeb';
 import type { SwitcherAccount } from './AccountSwitcher';
+import { RudolphOverlay } from './ThemeDecor';
 import UnreadBadge from './UnreadBadge';
 
 interface MobileHeaderProps {
@@ -85,7 +86,7 @@ export default function MobileHeader({
     <div className="md:hidden flex items-center justify-between px-4 py-2 bg-navy-card/70 border-b border-neon-blue/20 z-40 relative">
       {/* Motiv desky plošných spojů – vedle ikony uživatele, oříznutý výškou hlavičky */}
       <div className="absolute right-0 top-0 h-full w-[250px] pointer-events-none opacity-60 z-0 overflow-hidden">
-         <img src="/neon_corner.png" alt="" draggable="false" className="absolute right-0 top-0 w-[170px] h-auto max-w-none" />
+         <img src="/neon_corner.png" alt="" draggable="false" className="vr-neon-art absolute right-0 top-0 w-[170px] h-auto max-w-none" />
       </div>
       <button 
         id="mobile-hamburger"
@@ -126,14 +127,17 @@ export default function MobileHeader({
           aria-label="Otevřít web ZažijVR"
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 transition-all duration-500 ease-out active:scale-95 ${isSearchActive ? 'opacity-0 invisible scale-50' : 'opacity-100 visible scale-100'}`}
         >
-          <img src="/cropped-logo-neon-pruhledna-150x50.png" alt="ZažijVR" draggable="false" className="vr-neon-logo h-7 w-auto object-contain" />
+          <span className="vr-logo-wrap relative block">
+            <img src="/cropped-logo-neon-pruhledna-150x50.png" alt="ZažijVR" draggable="false" className="vr-neon-logo h-7 w-auto object-contain" />
+            <RudolphOverlay />
+          </span>
         </button>
       </div>
 
       <div id="mobile-user" ref={dropdownRef} className={`relative z-50 transition-all duration-500 ${!userEmail ? 'blur-[3px] opacity-30 pointer-events-none' : ''}`}>
         <button 
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-10 h-10 rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/60 flex items-center justify-center font-extrabold text-neon-blue drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-transform active:scale-95 hover:border-neon-blue"
+          className="w-10 h-10 rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/60 flex items-center justify-center font-extrabold text-neon-blue drop-shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.8)] shadow-[inset_0_0_15px_rgb(var(--c-neon-blue)/0.3)] transition-transform active:scale-95 hover:border-neon-blue"
         >
           {getAvatarInitial(userEmail)}
         </button>
@@ -141,7 +145,7 @@ export default function MobileHeader({
         {isDropdownOpen && (
           <div className="absolute right-0 top-14 w-64 bg-navy border border-neon-blue/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.9)] z-50 overflow-hidden flex flex-col">
             <div className="px-4 py-4 bg-neon-blue/5 border-b border-neon-blue/10 flex flex-col items-center">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 border border-neon-blue/40 flex items-center justify-center font-black text-2xl text-neon-blue mb-3 shadow-[0_0_15px_rgba(0,243,255,0.3)]">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 border border-neon-blue/40 flex items-center justify-center font-black text-2xl text-neon-blue mb-3 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.3)]">
                 {getAvatarInitial(userEmail)}
               </div>
               <span className="text-sm font-bold text-white truncate max-w-full text-center w-full">{userEmail || 'Nepřihlášen'}</span>

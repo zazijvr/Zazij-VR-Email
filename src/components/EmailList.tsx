@@ -770,10 +770,10 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
     return (
       <div className="flex-1 relative bg-navy/80 backdrop-blur-md flex flex-col items-center justify-center h-full p-8 text-center shadow-[10px_0_30px_-5px_rgba(0,0,0,0.5)]">
         <div className="flex flex-col items-center max-w-md gap-6 z-10">
-          <div className="w-24 h-24 rounded-full bg-neon-blue/10 flex items-center justify-center shadow-[0_0_40px_rgba(0,243,255,0.2)] border-2 border-neon-blue/40 mb-2 group animate-pulse-slow">
+          <div className="w-24 h-24 rounded-full bg-neon-blue/10 flex items-center justify-center shadow-[0_0_40px_rgb(var(--c-neon-blue)/0.2)] border-2 border-neon-blue/40 mb-2 group animate-pulse-slow">
             <Mail className="w-10 h-10 text-neon-blue" />
           </div>
-          <h2 className="text-3xl text-white font-black tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]">Systém uzamčen</h2>
+          <h2 className="text-3xl text-white font-black tracking-widest uppercase drop-shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.5)]">Systém uzamčen</h2>
           <p className="text-slate-400 text-sm tracking-widest font-mono uppercase opacity-70">Zabezpečená zóna: Vyžaduje se autentizace operátora</p>
 
           <button
@@ -782,7 +782,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
           >
             <div className="absolute inset-0 w-full h-full bg-neon-blue translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 pointer-events-none"></div>
             <span className="relative z-10 flex items-center gap-3 pointer-events-none">
-              <span className="w-2 h-2 rounded-full bg-neon-purple group-hover:bg-black shadow-[0_0_8px_#f72585] transition-colors duration-300"></span>
+              <span className="w-2 h-2 rounded-full bg-neon-purple group-hover:bg-black shadow-[0_0_8px_rgb(var(--c-neon-purple))] transition-colors duration-300"></span>
               Přihlásit se
             </span>
           </button>
@@ -815,26 +815,26 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
           <div className="md:hidden px-6 pt-5 pb-3 bg-gradient-to-b from-navy-deep/60 to-transparent shrink-0 flex items-center justify-start gap-4 relative z-10">
 
             {/* Horní neonová linka (Synchronizovaná) */}
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.5)] pointer-events-none z-20"></div>
 
             {/* Spodní laserová linka do ztracena (Synchronizovaná) */}
-            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
+            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_rgb(var(--c-neon-blue))] pointer-events-none z-20"></div>
 
             {mascotImg}
             <div className="flex-1 flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-black text-neon-blue tracking-widest uppercase drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">
+                <h1 className="text-3xl font-black text-neon-blue tracking-widest uppercase drop-shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.8)]">
                   {activeFolder}
                 </h1>
                 <div className="text-[10px] uppercase tracking-widest text-neon-blue/60 mt-1">Systém // Výpis {visibleEmails.length} konverzací</div>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('vr-mobile-search-toggle')); }}
-                className="group relative p-3.5 rounded-full bg-navy/80 backdrop-blur-md border border-neon-blue/40 text-neon-blue active:scale-90 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:bg-neon-blue/10 ml-4 overflow-hidden focus:outline-none"
+                className="group relative p-3.5 rounded-full bg-navy/80 backdrop-blur-md border border-neon-blue/40 text-neon-blue active:scale-90 transition-all shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.3)] hover:shadow-[0_0_30px_rgb(var(--c-neon-blue)/0.6)] hover:bg-neon-blue/10 ml-4 overflow-hidden focus:outline-none"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-neon-blue/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 <div className="absolute inset-[3px] rounded-full border border-neon-blue/20 group-hover:border-neon-blue/50 pointer-events-none"></div>
-                <Search size={20} className="relative z-10 drop-shadow-[0_0_8px_rgba(0,243,255,1)] group-hover:drop-shadow-[0_0_12px_rgba(0,243,255,1)] transition-all" strokeWidth={2.5} />
+                <Search size={20} className="relative z-10 drop-shadow-[0_0_8px_rgb(var(--c-neon-blue)/1)] group-hover:drop-shadow-[0_0_12px_rgb(var(--c-neon-blue)/1)] transition-all" strokeWidth={2.5} />
               </button>
             </div>
           </div>
@@ -862,7 +862,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
             placeholder="Hledat zprávy..."
             value={searchInputValue}
             onChange={(e) => setSearchInputValue(e.target.value)}
-            className="pl-9 pr-9 py-1.5 w-full bg-neon-blue/5 border border-neon-blue/30 rounded-md text-xs text-white placeholder-neon-blue/40 outline-none focus:border-neon-blue transition-all duration-300 shadow-[inset_0_0_10px_rgba(0,243,255,0.05)] focus:shadow-[0_0_15px_rgba(0,243,255,0.2)]"
+            className="pl-9 pr-9 py-1.5 w-full bg-neon-blue/5 border border-neon-blue/30 rounded-md text-xs text-white placeholder-neon-blue/40 outline-none focus:border-neon-blue transition-all duration-300 shadow-[inset_0_0_10px_rgb(var(--c-neon-blue)/0.05)] focus:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)]"
           />
           {searchInputValue && (
             <button
@@ -872,7 +872,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
                 setSortField('date');
                 setSortAscending(false);
               }}
-              className="absolute right-6 top-1/2 -translate-y-1/2 text-neon-blue/60 hover:text-neon-purple transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgba(247,37,133,0.5)] z-10 hover:scale-125"
+              className="absolute right-6 top-1/2 -translate-y-1/2 text-neon-blue/60 hover:text-neon-purple transition-colors cursor-pointer text-sm font-black drop-shadow-[0_0_5px_rgb(var(--c-neon-purple)/0.5)] z-10 hover:scale-125"
               title="Vymazat hledání a obnovit řazení"
             >
               ✕
@@ -891,8 +891,8 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
           <button
             onClick={() => setShowOnlyUnread(!showOnlyUnread)}
             className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all rounded-md flex items-center gap-2 ${showOnlyUnread
-              ? 'bg-neon-blue text-black border border-neon-blue shadow-[0_0_20px_rgba(0,243,255,0.6)] scale-105'
-              : 'bg-neon-blue/5 text-neon-blue border border-neon-blue/40 shadow-[0_0_10px_rgba(0,243,255,0.15)] hover:bg-neon-blue/20 hover:shadow-[0_0_20px_rgba(0,243,255,0.4)]'
+              ? 'bg-neon-blue text-black border border-neon-blue shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.6)] scale-105'
+              : 'bg-neon-blue/5 text-neon-blue border border-neon-blue/40 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.15)] hover:bg-neon-blue/20 hover:shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.4)]'
               }`}
           >
             {showOnlyUnread && <span className="font-black text-black">✖</span>}
@@ -932,7 +932,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
                 className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neon-purple/20 text-neon-blue hover:text-neon-purple border border-transparent hover:border-neon-purple/50 transition-all font-bold uppercase tracking-wider text-xs"
                 title="Označit jako důležité"
               >
-                <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-neon-purple/50' : 'bg-neon-purple shadow-[0_0_8px_#f72585]'}`}></div>
+                <div className={`w-3 h-3 shrink-0 rounded-full transition-all ${isFirstStarred ? 'bg-transparent border-2 border-neon-purple/50' : 'bg-neon-purple shadow-[0_0_8px_rgb(var(--c-neon-purple))]'}`}></div>
                 {isFirstStarred ? 'Odebrat' : 'Důležité'}
               </button>
 
@@ -1074,7 +1074,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
                     }
                   }}
                   disabled={loadingMore}
-                  className="px-6 py-3 rounded-full bg-neon-blue/10 text-neon-blue font-bold tracking-widest border border-neon-blue/30 hover:bg-neon-blue/20 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all flex items-center justify-center min-w-[200px]"
+                  className="px-6 py-3 rounded-full bg-neon-blue/10 text-neon-blue font-bold tracking-widest border border-neon-blue/30 hover:bg-neon-blue/20 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)] transition-all flex items-center justify-center min-w-[200px]"
                 >
                   {loadingMore ? <Loader2 size={20} className="animate-spin" /> : 'NAČÍST STARŠÍ E-MAILY'}
                 </button>
@@ -1086,7 +1086,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
       {/* Mobile Multiselect Floating Bar */}
       {selectedMailIds.size > 0 && createPortal(
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-[90] bg-navy/95 backdrop-blur-xl border border-neon-blue/40 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,243,255,0.2)] animate-in slide-in-from-bottom-5 duration-300">
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-[90] bg-navy/95 backdrop-blur-xl border border-neon-blue/40 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgb(var(--c-neon-blue)/0.2)] animate-in slide-in-from-bottom-5 duration-300">
           <div className="flex items-center justify-between mb-4 border-b border-neon-blue/20 pb-3">
             <div className="flex items-center gap-3">
               <button onClick={() => setSelectedMailIds(new Set())} className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 transition-colors">
@@ -1104,13 +1104,13 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
 
           <div className="flex items-center justify-between px-2">
             <button onClick={handleBulkToggleRead} className="flex flex-col items-center gap-1.5 text-neon-blue hover:text-white transition-colors">
-              <div className="p-3 rounded-xl bg-neon-blue/10 shadow-[inset_0_0_10px_rgba(0,243,255,0.2)]">{isFirstUnread ? <MailOpen size={20} /> : <Mail size={20} />}</div>
+              <div className="p-3 rounded-xl bg-neon-blue/10 shadow-[inset_0_0_10px_rgb(var(--c-neon-blue)/0.2)]">{isFirstUnread ? <MailOpen size={20} /> : <Mail size={20} />}</div>
               <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstUnread ? 'Přečtené' : 'Nepřeč.'}</span>
             </button>
 
             <button onClick={handleBulkToggleStar} className="flex flex-col items-center gap-1.5 text-neon-purple hover:text-white transition-colors">
-              <div className="p-3 rounded-xl bg-neon-purple/10 shadow-[inset_0_0_10px_rgba(247,37,133,0.2)]">
-                <div className={`w-5 h-5 rounded-full transition-all ${isFirstStarred ? 'border-2 border-neon-purple/50' : 'bg-neon-purple shadow-[0_0_10px_#f72585] animate-pulse'}`}></div>
+              <div className="p-3 rounded-xl bg-neon-purple/10 shadow-[inset_0_0_10px_rgb(var(--c-neon-purple)/0.2)]">
+                <div className={`w-5 h-5 rounded-full transition-all ${isFirstStarred ? 'border-2 border-neon-purple/50' : 'bg-neon-purple shadow-[0_0_10px_rgb(var(--c-neon-purple))] animate-pulse'}`}></div>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider">{isFirstStarred ? 'Odebrat' : 'Důležité'}</span>
             </button>

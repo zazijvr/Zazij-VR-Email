@@ -37,7 +37,7 @@ const EditorDropdown = ({ defaultLabel, icon, options, onSelect }: EditorDropdow
              className="fixed inset-0 z-[90]" 
              onMouseDown={(e) => { e.stopPropagation(); setIsOpen(false); }}
           />
-          <div className="absolute top-[calc(100%+4px)] left-0 min-w-[140px] bg-navy-deep/95 border border-neon-blue/40 rounded-xl shadow-[0_0_20px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
+          <div className="absolute top-[calc(100%+4px)] left-0 min-w-[140px] bg-navy-deep/95 border border-neon-blue/40 rounded-xl shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.3)] overflow-hidden z-[100] ">
           <div className="max-h-56 overflow-y-auto custom-scrollbar">
             {options.map(opt => (
                <div 
@@ -159,7 +159,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }: 
              onMouseDown={(e) => { e.stopPropagation(); setIsOpen(false); }}
           />
           <div 
-            className="absolute top-[calc(100%+4px)] left-0 min-w-[320px] bg-navy-deep/95 border border-neon-blue/40 rounded-xl shadow-[0_0_20px_rgba(0,243,255,0.3)] p-4 z-[100] flex flex-col gap-3"
+            className="absolute top-[calc(100%+4px)] left-0 min-w-[320px] bg-navy-deep/95 border border-neon-blue/40 rounded-xl shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.3)] p-4 z-[100] flex flex-col gap-3"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex gap-4">
@@ -169,7 +169,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }: 
                    
                    <button 
                      onMouseDown={(e) => { e.preventDefault(); setCurrentBg('transparent'); onSelectBackground('transparent'); setIsOpen(false); }}
-                     className={`w-full border py-1 mb-3 rounded transition-colors flex flex-col items-center justify-center ${currentBg === 'transparent' ? 'border-neon-purple bg-neon-purple/20 text-white shadow-[0_0_10px_rgba(247,37,133,0.3)]' : 'border-neon-blue/25 hover:border-neon-purple hover:text-neon-purple bg-white/5 text-slate-300'}`}
+                     className={`w-full border py-1 mb-3 rounded transition-colors flex flex-col items-center justify-center ${currentBg === 'transparent' ? 'border-neon-purple bg-neon-purple/20 text-white shadow-[0_0_10px_rgb(var(--c-neon-purple)/0.3)]' : 'border-neon-blue/25 hover:border-neon-purple hover:text-neon-purple bg-white/5 text-slate-300'}`}
                      title="Text bez barevného pozadí"
                    >
                      <div className="flex items-center gap-1 text-xs font-bold">
@@ -224,7 +224,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }: 
                    
                    <button 
                      onMouseDown={(e) => { e.preventDefault(); setCurrentFg('default'); onSelectForeground('inherit'); setIsOpen(false); }}
-                     className={`w-full border py-1 mb-3 rounded transition-colors flex flex-col items-center justify-center ${currentFg === 'default' ? 'border-neon-blue bg-neon-blue/20 text-white shadow-[0_0_10px_rgba(0,243,255,0.3)]' : 'border-neon-blue/25 hover:border-neon-blue hover:text-neon-blue bg-white/5 text-slate-300'}`}
+                     className={`w-full border py-1 mb-3 rounded transition-colors flex flex-col items-center justify-center ${currentFg === 'default' ? 'border-neon-blue bg-neon-blue/20 text-white shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.3)]' : 'border-neon-blue/25 hover:border-neon-blue hover:text-neon-blue bg-white/5 text-slate-300'}`}
                      title="Bez vynucené barvy (U příjemce se běžně zobrazí černě, u vás světle)"
                    >
                      <div className="flex items-center gap-1 text-xs font-bold">
@@ -322,7 +322,7 @@ const UnifiedColorPickerDropdown = ({ onSelectForeground, onSelectBackground }: 
                        }
                        setShowMixer(false);
                      }}
-                     className="flex-1 bg-neon-blue/20 text-neon-blue hover:bg-neon-blue/40 text-xs font-bold rounded transition-colors border border-neon-blue/50 py-1 shadow-[0_0_10px_rgba(0,243,255,0.2)]"
+                     className="flex-1 bg-neon-blue/20 text-neon-blue hover:bg-neon-blue/40 text-xs font-bold rounded transition-colors border border-neon-blue/50 py-1 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)]"
                    >
                      ULOŽIT
                    </button>
@@ -515,7 +515,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
     updateFormatState();
   };
 
-  const activeBtnClass = "bg-neon-blue/20 text-neon-blue shadow-[0_0_10px_rgba(0,243,255,0.2)] border-neon-blue/40";
+  const activeBtnClass = "bg-neon-blue/20 text-neon-blue shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)] border-neon-blue/40";
   const inactiveBtnClass = "hover:bg-white/10 text-slate-300 hover:text-white border-transparent";
   const btnBaseClass = "p-1.5 rounded transition-colors border";
 
@@ -736,7 +736,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
       {/* Link Modal */}
       {linkModal.isOpen && (
         <div className="absolute inset-0 bg-navy-deep/60 z-50 flex items-center justify-center " onMouseDown={(e) => e.stopPropagation()}>
-          <div className="bg-navy border border-neon-blue/40 shadow-[0_0_30px_rgba(0,243,255,0.2)] rounded-xl p-5 w-[90%] max-w-sm flex flex-col gap-4">
+          <div className="bg-navy border border-neon-blue/40 shadow-[0_0_30px_rgb(var(--c-neon-blue)/0.2)] rounded-xl p-5 w-[90%] max-w-sm flex flex-col gap-4">
             <h3 className="text-neon-blue font-bold text-sm tracking-widest uppercase flex items-center gap-2 mb-1">
               <LinkIcon size={16} /> Vložit odkaz
             </h3>
@@ -773,7 +773,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
               </button>
               <button 
                 onClick={submitLink}
-                className="px-4 py-2 rounded text-xs font-bold bg-neon-blue/20 text-neon-blue hover:bg-neon-blue/40 border border-neon-blue/50 transition-colors shadow-[0_0_10px_rgba(0,243,255,0.2)]"
+                className="px-4 py-2 rounded text-xs font-bold bg-neon-blue/20 text-neon-blue hover:bg-neon-blue/40 border border-neon-blue/50 transition-colors shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)]"
               >
                 VLOŽIT ODKAZ
               </button>
@@ -811,7 +811,7 @@ const RichTextEditor = ({ value = '', onChange, placeholder, className = '', hid
         return (
           <div
             style={{ position: 'absolute', top: topRelative, left: leftRelative, zIndex: 200 }}
-            className="flex items-center gap-1.5 bg-navy-deep/95 border border-neon-blue/60 rounded-xl px-3 py-2 shadow-[0_0_20px_rgba(0,243,255,0.4)] backdrop-blur-sm"
+            className="flex items-center gap-1.5 bg-navy-deep/95 border border-neon-blue/60 rounded-xl px-3 py-2 shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.4)] backdrop-blur-sm"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <span className="text-[9px] text-neon-blue font-bold uppercase tracking-widest mr-1">Velikost</span>

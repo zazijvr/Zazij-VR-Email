@@ -3,7 +3,7 @@
 //! Běží i bez spuštěné aplikace, takže nepoužívá Tauri (AppHandle): účty, tokeny a hesla čte přímo
 //! ze souboru vault.bin (tauri-plugin-store, JSON) v soukromé složce aplikace. Stav (co už bylo
 //! nahlášeno) si drží v mail_check_state.json. První kontrola účtu jen zapamatuje stav – bez upozornění.
-//! Vrací JSON pole upozornění [{ "title", "body", "account" }].
+//! Vrací JSON pole upozornění [{ "title", "body", "account", "open": { kind, account, messageId, folder } }].
 
 use crate::imap_mail::{self, ImapAccount};
 use jni::objects::{JClass, JString};
@@ -24,7 +24,23 @@ struct Notice {
     title: String,
     body: String,
     account: String,
+    /// Co otevřít po klepnutí (stejné jako mail_watch::OpenRequest na desktopu)
+    open: Open,
 }
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct Open {
+    /// "google" | "imap"
+    kind: String,
+    account: String,
+    /// Gmail: id zprávy; IMAP: UID v Doručených
+    message_id: String,
+    folder: String,
+}
+
+/// Nová zpráva: (odesílatel, předmět, id zprávy / UID)
+type NewMail = (String, String, String);
 
 #[derive(Serialize, Deserialize, Default)]
 struct State {
@@ -81,7 +97,7 @@ fn check_all(data_dir: &Path, client_id: &str) -> Vec<Notice> {
         let prev = state.imap.get(&acc.email).copied();
         if let Ok((validity, last, mails)) = check_imap(acc, pw, prev) {
             state.imap.insert(acc.email.clone(), (validity, last));
-            push_notices(&mut notices, &acc.email, mails);
+            push_notices(&mut notices, "imap", &acc.email, mails);
         }
     }
 
@@ -98,7 +114,7 @@ fn check_all(data_dir: &Path, client_id: &str) -> Vec<Notice> {
                 let known = state.google.get(&email).cloned();
                 if let Some((ids, mails)) = rt.block_on(check_gmail(client_id, &refresh_token, known.as_deref())) {
                     state.google.insert(email.clone(), ids);
-                    push_notices(&mut notices, &email, mails);
+                    push_notices(&mut notices, "google", &email, mails);
                 }
             }
         }
@@ -110,27 +126,34 @@ fn check_all(data_dir: &Path, client_id: &str) -> Vec<Notice> {
     notices
 }
 
-fn push_notices(out: &mut Vec<Notice>, account: &str, mails: Vec<(String, String)>) {
+fn push_notices(out: &mut Vec<Notice>, kind: &str, account: &str, mails: Vec<NewMail>) {
     if mails.is_empty() {
         return;
     }
+    let open = |id: &str| Open {
+        kind: kind.into(),
+        account: account.into(),
+        message_id: id.into(),
+        folder: if kind == "imap" { "INBOX".into() } else { String::new() },
+    };
     if mails.len() > MAX_SINGLE {
-        let (from, subject) = &mails[0];
+        let (from, subject, id) = &mails[0];
         out.push(Notice {
             title: format!("Nová pošta · {account}"),
             body: format!("{} nových zpráv – poslední od: {from}\n{subject}", mails.len()),
             account: account.into(),
+            open: open(id),
         });
         return;
     }
-    for (from, subject) in mails {
+    for (from, subject, id) in mails {
         let subject = if subject.is_empty() { "(bez předmětu)".to_string() } else { subject };
-        out.push(Notice { title: format!("{from} · {account}"), body: subject, account: account.into() });
+        out.push(Notice { title: format!("{from} · {account}"), body: subject, account: account.into(), open: open(&id) });
     }
 }
 
 /// (UIDVALIDITY, nejvyšší UID, nové nepřečtené (odesílatel, předmět)); bez předchozího stavu jen výchozí bod
-fn check_imap(acc: &ImapAccount, password: &str, prev: Option<(u32, u32)>) -> Result<(u32, u32, Vec<(String, String)>), String> {
+fn check_imap(acc: &ImapAccount, password: &str, prev: Option<(u32, u32)>) -> Result<(u32, u32, Vec<NewMail>), String> {
     let mut s = imap_mail::connect(acc, password)?;
     let result = (|| {
         let mbox = s.examine("INBOX").map_err(|e| e.to_string())?;
@@ -161,7 +184,7 @@ fn check_imap(acc: &ImapAccount, password: &str, prev: Option<(u32, u32)>) -> Re
                 continue; // zpráva poslaná sám sobě
             }
             let from = first.and_then(|a| a.name().or(a.address())).unwrap_or("").to_string();
-            mails.push((from, msg.subject().unwrap_or("").to_string()));
+            mails.push((from, msg.subject().unwrap_or("").to_string(), uid.to_string()));
         }
         Ok((validity, last, mails))
     })();
@@ -170,7 +193,7 @@ fn check_imap(acc: &ImapAccount, password: &str, prev: Option<(u32, u32)>) -> Re
 }
 
 /// (všechna aktuální id nepřečtených v Doručených, nové (odesílatel, předmět)); bez známých id jen výchozí bod
-async fn check_gmail(client_id: &str, refresh_token: &str, known: Option<&[String]>) -> Option<(Vec<String>, Vec<(String, String)>)> {
+async fn check_gmail(client_id: &str, refresh_token: &str, known: Option<&[String]>) -> Option<(Vec<String>, Vec<NewMail>)> {
     let http = reqwest::Client::builder().timeout(Duration::from_secs(25)).build().ok()?;
     let v: serde_json::Value = http
         .post("https://oauth2.googleapis.com/token")
@@ -228,7 +251,7 @@ async fn check_gmail(client_id: &str, refresh_token: &str, known: Option<&[Strin
             Some((name, _)) if !name.trim().is_empty() => name.trim().trim_matches('"').to_string(),
             _ => from_raw.trim_matches(['<', '>', ' ']).to_string(),
         };
-        mails.push((from, header("Subject")));
+        mails.push((from, header("Subject"), id.clone()));
     }
     Some((ids, mails))
 }

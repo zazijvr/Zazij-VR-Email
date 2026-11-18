@@ -82,7 +82,7 @@ export default function SignatureSettings() {
             </div>
             <button 
               onClick={createNewSignature}
-              className="flex justify-center w-full sm:w-auto items-center gap-2 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue border border-neon-blue/40 px-4 py-2.5 sm:py-2 rounded-lg font-bold transition-all shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:shadow-[0_0_20px_rgba(0,243,255,0.3)] shrink-0"
+              className="flex justify-center w-full sm:w-auto items-center gap-2 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue border border-neon-blue/40 px-4 py-2.5 sm:py-2 rounded-lg font-bold transition-all shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.1)] hover:shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.3)] shrink-0"
             >
               <Plus size={18} />
               NOVÝ PODPIS
@@ -98,11 +98,11 @@ export default function SignatureSettings() {
               signatures.map(s => (
                 <div 
                   key={s.id} 
-                  className={`group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 ${s.isDefault ? 'bg-neon-blue/5 border border-neon-blue/30 shadow-[0_0_15px_rgba(0,243,255,0.05)]' : 'bg-navy-card border border-neon-blue/[0.15] hover:border-neon-blue/30'} rounded-xl transition-all cursor-pointer hover:shadow-md gap-4`}
+                  className={`group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 ${s.isDefault ? 'bg-neon-blue/5 border border-neon-blue/30 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.05)]' : 'bg-navy-card border border-neon-blue/[0.15] hover:border-neon-blue/30'} rounded-xl transition-all cursor-pointer hover:shadow-md gap-4`}
                   onClick={() => setEditingSignature(s)}
                 >
                   <div className="flex items-start gap-4 flex-1 overflow-hidden w-full">
-                    <div className={`mt-1 w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border transition-all ${s.isDefault ? 'bg-neon-blue/20 text-neon-blue border-neon-blue/50 shadow-[0_0_10px_rgba(0,243,255,0.3)]' : 'bg-white/5 text-slate-500 border-neon-blue/[0.15]'}`}>
+                    <div className={`mt-1 w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border transition-all ${s.isDefault ? 'bg-neon-blue/20 text-neon-blue border-neon-blue/50 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.3)]' : 'bg-white/5 text-slate-500 border-neon-blue/[0.15]'}`}>
                       {s.isDefault ? <Star size={20} fill="currentColor" /> : <PenTool size={20} />}
                     </div>
                     <div className="flex flex-col overflow-hidden max-w-[80%]">
@@ -153,7 +153,7 @@ export default function SignatureSettings() {
                 value={editingSignature.title} 
                 onChange={e => setEditingSignature(prev => prev && ({...prev, title: e.target.value}))}
                 placeholder="Např. Formální, Osobní..."
-                className="bg-navy/80 border border-neon-purple/60 shadow-[0_0_10px_rgba(247,37,133,0.1)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-purple focus:shadow-[0_0_15px_rgba(247,37,133,0.3)] transition-all w-full"
+                className="bg-navy/80 border border-neon-purple/60 shadow-[0_0_10px_rgb(var(--c-neon-purple)/0.1)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-purple focus:shadow-[0_0_15px_rgb(var(--c-neon-purple)/0.3)] transition-all w-full"
                 autoFocus
               />
             </div>
@@ -189,7 +189,7 @@ export default function SignatureSettings() {
              <button 
                onClick={handleSave}
                disabled={!editingSignature.title.trim()}
-               className="flex justify-center w-full sm:w-auto items-center gap-2 px-6 py-3 sm:py-2.5 bg-neon-blue/20 border border-neon-blue/50 text-neon-blue font-bold rounded-xl hover:bg-neon-blue/30 shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:shadow-[0_0_20px_rgba(0,243,255,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+               className="flex justify-center w-full sm:w-auto items-center gap-2 px-6 py-3 sm:py-2.5 bg-neon-blue/20 border border-neon-blue/50 text-neon-blue font-bold rounded-xl hover:bg-neon-blue/30 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)] hover:shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
              >
                <Save size={18} />
                Uložit podpis

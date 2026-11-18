@@ -323,28 +323,28 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
         <div className="hidden md:flex flex-shrink-0 items-center justify-between gap-4 p-8 border-none bg-navy-card backdrop-blur-md relative z-[100] overflow-visible">
 
           {/* Synchronizovaná horní neonová linka (Úplně stejná jako u EmailDetail) */}
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.5)] pointer-events-none z-20"></div>
 
           {/* Dekorativní kyberpunkové žíly - Efekt vrácený na pravou stranu */}
           {/* Neonové čáry – ukotvené ke spodku hlavičky, takže „zatékají“ pod její spodní okraj */}
           <div className="absolute right-0 top-0 bottom-0 w-[340px] overflow-hidden pointer-events-none opacity-70 z-[5]">
-            <img src="/neon_corner.png" alt="" draggable="false" className="absolute right-0 bottom-0 h-[170px] w-auto max-w-none" />
+            <img src="/neon_corner.png" alt="" draggable="false" className="vr-neon-art absolute right-0 bottom-0 h-[170px] w-auto max-w-none" />
           </div>
 
           <div className="flex items-center gap-6 relative z-10">
-            <div className="p-2 md:p-3 rounded-2xl bg-neon-blue/10 border-2 border-neon-blue/40 shadow-[0_0_25px_rgba(0,243,255,0.4)] transition-all">
+            <div className="p-2 md:p-3 rounded-2xl bg-neon-blue/10 border-2 border-neon-blue/40 shadow-[0_0_25px_rgb(var(--c-neon-blue)/0.4)] transition-all">
               {getFolderIcon(activeFolder)}
             </div>
             <div className="flex flex-col justify-center relative mt-1 select-none">
               <div className="flex items-center gap-3 ml-2 mb-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-neon-purple shadow-[0_0_8px_rgba(247,37,133,0.8)]"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-neon-purple shadow-[0_0_8px_rgb(var(--c-neon-purple)/0.8)]"></div>
                 <span className="text-neon-blue text-[10px] md:text-xs font-mono font-bold tracking-[0.3em] uppercase opacity-80">
                   System // Directory // 0xE9
                 </span>
               </div>
               <div className="flex flex-row items-baseline">
                 <span className="text-neon-blue text-4xl md:text-5xl font-light mr-4 opacity-70">[</span>
-                <h1 className="text-4xl md:text-5xl font-black text-neon-blue tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.8)] pt-2 pb-1 leading-normal">
+                <h1 className="text-4xl md:text-5xl font-black text-neon-blue tracking-widest uppercase drop-shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.8)] pt-2 pb-1 leading-normal">
                   {activeFolder}
                 </h1>
                 <span className="text-neon-blue text-4xl md:text-5xl font-light ml-4 opacity-70">]</span>
@@ -352,7 +352,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
             </div>
           </div>
           {/* Aplikace neonové lajny zespodu hlavní hlavičky složek - Synchronizováno s Emailem */}
-          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
+          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_rgb(var(--c-neon-blue))] pointer-events-none z-20"></div>
         </div>
       )}
 
@@ -395,7 +395,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
               title="Táhnutím změníte velikost panelů (dvojklik = půl na půl)"
               className={`hidden md:block shrink-0 relative z-20 group ${isVerticalLayout ? 'h-[7px] w-full cursor-row-resize' : 'w-[7px] h-full cursor-col-resize'}`}
             >
-              <div className={`absolute transition-colors ${isDraggingSplit ? 'bg-neon-blue shadow-[0_0_8px_rgba(0,243,255,0.7)]' : 'bg-neon-blue/15 group-hover:bg-neon-blue/70'} ${isVerticalLayout ? 'left-0 right-0 top-[3px] h-px' : 'top-0 bottom-0 left-[3px] w-px'}`} />
+              <div className={`absolute transition-colors ${isDraggingSplit ? 'bg-neon-blue shadow-[0_0_8px_rgb(var(--c-neon-blue)/0.7)]' : 'bg-neon-blue/15 group-hover:bg-neon-blue/70'} ${isVerticalLayout ? 'left-0 right-0 top-[3px] h-px' : 'top-0 bottom-0 left-[3px] w-px'}`} />
             </div>
             {isDraggingSplit && (
               // Během tažení zachytí myš i nad náhledem e-mailu (iframe by jinak pohyb „spolkl“)
@@ -423,7 +423,7 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
 
       {modalEmailId && createPortal(
         <div className="fixed inset-0 bg-navy-deep/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-0 sm:p-6 lg:p-10">
-          <div className="bg-navy sm:border-[2px] border-neon-blue/30 shadow-[0_0_50px_-10px_rgba(0,243,255,0.3)] sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
+          <div className="bg-navy sm:border-[2px] border-neon-blue/30 shadow-[0_0_50px_-10px_rgb(var(--c-neon-blue)/0.3)] sm:rounded-3xl w-full sm:w-[98vw] max-w-[1800px] h-full sm:h-[95vh] flex flex-col relative overflow-hidden transform-gpu">
             <EmailDetail
               googleToken={googleToken}
               selectedEmailId={modalEmailId}

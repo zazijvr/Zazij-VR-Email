@@ -53,7 +53,7 @@ export default function AccountSwitcher({ accounts, activeEmail, onSelect }: Pro
         <>
           {/* Klik mimo seznam ho zavře */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-4 right-4 top-full mt-2 z-50 bg-navy border border-neon-blue/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,243,255,0.15)] py-1.5 max-h-80 overflow-y-auto custom-scrollbar">
+          <div className="absolute left-4 right-4 top-full mt-2 z-50 bg-navy border border-neon-blue/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgb(var(--c-neon-blue)/0.15)] py-1.5 max-h-80 overflow-y-auto custom-scrollbar">
             {accounts.map((acc) => {
               const isActive = acc.email === activeEmail;
               return (

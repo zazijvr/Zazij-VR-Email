@@ -451,7 +451,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
         
         {/* Dekorační linky nahoře */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neon-blue to-transparent opacity-50"></div>
-        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1/4 h-0.5 bg-neon-blue shadow-[0_0_10px_#00f3ff]"></div>
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1/4 h-0.5 bg-neon-blue shadow-[0_0_10px_rgb(var(--c-neon-blue))]"></div>
 
         <div className="flex justify-between items-center p-6 border-b border-neon-blue/10 bg-navy-card">
           <h2 className="text-2xl font-black tracking-[0.2em] text-white flex items-center gap-3">
@@ -483,7 +483,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                   value={templateTitle} 
                   onChange={e => setTemplateTitle(e.target.value)}
                   placeholder="Např. Formální pozvánka"
-                  className="w-full bg-navy/50 border border-neon-purple/60 shadow-[0_0_10px_rgba(247,37,133,0.1)] rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-neon-purple focus:shadow-[0_0_15px_rgba(247,37,133,0.3)] focus:bg-navy transition-all font-bold"
+                  className="w-full bg-navy/50 border border-neon-purple/60 shadow-[0_0_10px_rgb(var(--c-neon-purple)/0.1)] rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-neon-purple focus:shadow-[0_0_15px_rgb(var(--c-neon-purple)/0.3)] focus:bg-navy transition-all font-bold"
                 />
               </div>
             )}
@@ -566,7 +566,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-2 w-full">
               {attachments.map((att, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-neon-blue/10 border border-neon-blue/40 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgba(0,243,255,0.1)] transition-all">
+                <div key={idx} className="flex items-center gap-2 bg-neon-blue/10 border border-neon-blue/40 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.1)] transition-all">
                    <File size={14} className="text-neon-blue" />
                    <span className="text-white text-xs font-mono max-w-[200px] truncate">{att.name}</span>
                    <button onClick={() => removeAttachment(idx)} className="ml-1 text-danger hover:text-white transition-colors" title="Odebrat přílohu">
@@ -604,7 +604,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                  <FileText size={18} className="group-hover:scale-110 transition-transform" />
               </button>
               {showTemplateMenu && (
-                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-navy-deep/90 border border-neon-blue/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
+                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-navy-deep/90 border border-neon-blue/40 rounded-xl shadow-[0_0_30px_rgb(var(--c-neon-blue)/0.3)] overflow-hidden z-[100] ">
                    <div className="p-2 border-b border-neon-blue/[0.15] text-[10px] uppercase font-bold text-neon-blue/70 tracking-widest text-center bg-neon-blue/5">Vybrat Šablonu</div>
                    <button 
                      onClick={(e) => { e.preventDefault(); handleSaveCurrentAsTemplate(); }}
@@ -644,7 +644,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                  <PenTool size={18} className="group-hover:scale-110 transition-transform" />
               </button>
               {showSignatureMenu && (
-                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-navy-deep/90 border border-neon-blue/40 rounded-xl shadow-[0_0_30px_rgba(0,243,255,0.3)] overflow-hidden z-[100] ">
+                 <div className="absolute bottom-[calc(100%+0.5rem)] left-0 w-56 bg-navy-deep/90 border border-neon-blue/40 rounded-xl shadow-[0_0_30px_rgb(var(--c-neon-blue)/0.3)] overflow-hidden z-[100] ">
                    <div className="p-2 border-b border-neon-blue/[0.15] text-[10px] uppercase font-bold text-neon-blue/70 tracking-widest text-center bg-neon-blue/5">Vložit Podpis</div>
                    {savedSignatures.length === 0 ? (
                      <div className="p-4 text-xs text-slate-500 text-center font-semibold">Zatím nemáte žádné podpisy.</div>
@@ -680,7 +680,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-neon-blue/50 hover:border-neon-blue/80 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-neon-blue/10 to-neon-blue/10 group-hover:from-neon-blue/30 group-hover:to-neon-blue/30 transition-all duration-300"></div>
-                <div className="relative z-10 w-full h-full bg-navy rounded-lg py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all">
+                <div className="relative z-10 w-full h-full bg-navy rounded-lg py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)] transition-all">
                    <Save size={18} className="text-neon-blue group-hover:scale-110 transition-transform" />
                    <span className="font-black tracking-[0.1em] text-neon-blue text-xs sm:text-sm group-hover:text-white transition-colors">ULOŽIT ŠABLONU</span>
                 </div>
@@ -711,7 +711,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                   className="group flex-1 sm:w-64 flex flex-col items-center justify-center p-1 relative overflow-hidden rounded-xl border border-neon-blue/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-neon-blue/10 to-neon-blue/10 group-hover:from-neon-blue/30 group-hover:to-neon-blue/30 transition-all duration-300"></div>
-                  <div className="relative z-10 w-full h-full bg-navy rounded-lg py-3 px-2 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,243,255,0.2)] group-hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all">
+                  <div className="relative z-10 w-full h-full bg-navy rounded-lg py-3 px-2 flex items-center justify-center gap-2 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)] group-hover:shadow-[0_0_25px_rgb(var(--c-neon-blue)/0.5)] transition-all">
                      {isSending ? (
                         <div className="w-5 h-5 rounded-full border-[2px] border-neon-blue/30 border-t-neon-blue animate-spin"></div>
                      ) : (
@@ -731,7 +731,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
       </div>
         {showCloseWarning && (
         <div className="absolute inset-0 z-[200] flex items-center justify-center bg-navy-deep/60 backdrop-blur-sm p-4">
-          <div className="bg-navy border border-neon-blue/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-navy border border-neon-blue/30 p-6 rounded-2xl shadow-[0_0_30px_rgb(var(--c-neon-blue)/0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-white tracking-wide mb-2">Zahodit rozepsanou zprávu?</h3>
             <p className="text-slate-400 text-sm mb-6">Máte neuložené změny. Opravdu chcete okno zavřít a změny zahodit?</p>
             <div className="flex justify-end gap-3">
@@ -754,7 +754,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
 
       {showTemplateNamePrompt && (
         <div className="absolute inset-0 z-[200] flex items-center justify-center bg-navy-deep/60 backdrop-blur-sm p-4">
-          <div className="bg-navy border border-neon-blue/50 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,243,255,0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-navy border border-neon-blue/50 p-6 rounded-2xl shadow-[0_0_30px_rgb(var(--c-neon-blue)/0.2)] max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-white tracking-wide mb-2">Nová Šablona</h3>
             <p className="text-slate-400 text-sm mb-4">Zadejte název, pod kterým se má tento e-mail uložit do rychlých šablon.</p>
             <input 
@@ -767,7 +767,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
                 if (e.key === 'Escape') setShowTemplateNamePrompt(false);
               }}
               placeholder="Např. Reakce na projekt..."
-              className="w-full bg-navy border border-neon-blue/40 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-neon-blue focus:shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all mb-6 font-bold"
+              className="w-full bg-navy border border-neon-blue/40 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-neon-blue focus:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)] transition-all mb-6 font-bold"
             />
             <div className="flex justify-end gap-3">
               <button 
@@ -779,7 +779,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
               <button 
                 onClick={confirmSaveCurrentAsTemplate}
                 disabled={!newTemplateName.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-neon-blue/20 text-neon-blue hover:bg-neon-blue/30 hover:shadow-[0_0_15px_rgba(0,243,255,0.3)] border border-neon-blue/50 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 bg-neon-blue/20 text-neon-blue hover:bg-neon-blue/30 hover:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.3)] border border-neon-blue/50 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save size={16} /> Uložit
               </button>

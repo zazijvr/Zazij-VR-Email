@@ -98,7 +98,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
     <div className={`relative ${className}`}>
       {label && <label className="text-neon-blue text-[10px] font-bold uppercase tracking-widest mb-1.5 block select-none">{label}</label>}
       
-      <div className="w-full bg-navy-deep/50 border border-neon-blue/40 rounded-xl px-4 py-3 shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] transition-all flex items-center justify-between focus-within:border-neon-blue focus-within:shadow-[0_0_15px_rgba(0,243,255,0.2)_inset]">
+      <div className="w-full bg-navy-deep/50 border border-neon-blue/40 rounded-xl px-4 py-3 shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] transition-all flex items-center justify-between focus-within:border-neon-blue focus-within:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.2)_inset]">
         <input  
           type="text"
           value={inputValue}
@@ -115,7 +115,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
              if (e.key === 'Enter') e.currentTarget.blur();
           }}
           placeholder="--:--"
-          className={`bg-transparent font-mono text-sm font-bold focus:outline-none w-full transition-all duration-300 ${flash ? 'text-neon-blue drop-shadow-[0_0_8px_rgba(0,243,255,0.8)] scale-105' : 'text-white'}`}
+          className={`bg-transparent font-mono text-sm font-bold focus:outline-none w-full transition-all duration-300 ${flash ? 'text-neon-blue drop-shadow-[0_0_8px_rgb(var(--c-neon-blue)/0.8)] scale-105' : 'text-white'}`}
         />
         <button 
            type="button" 
@@ -133,7 +133,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
              onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
              onMouseDown={(e) => e.stopPropagation()}
           />
-          <div className={`absolute top-full mt-2 p-4 bg-navy border border-neon-blue/40 shadow-[0_0_40px_rgba(0,243,255,0.2)] rounded-2xl z-[700] w-[340px] select-none animate-in fade-in-0 zoom-in-95 pointer-events-auto flex flex-col gap-3 overflow-hidden ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          <div className={`absolute top-full mt-2 p-4 bg-navy border border-neon-blue/40 shadow-[0_0_40px_rgb(var(--c-neon-blue)/0.2)] rounded-2xl z-[700] w-[340px] select-none animate-in fade-in-0 zoom-in-95 pointer-events-auto flex flex-col gap-3 overflow-hidden ${align === 'right' ? 'right-0' : 'left-0'}`}>
             
             {/* Dekorativní záře */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-neon-blue/20 blur-[40px] rounded-full pointer-events-none" />
@@ -149,7 +149,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
                       onClick={(e) => handleHourClick(e, i)}
                       className={`py-1.5 text-center rounded-md cursor-pointer text-sm font-mono transition-all font-bold ${
                          internalHour === i 
-                           ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_8px_rgba(0,243,255,0.3)]' 
+                           ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_8px_rgb(var(--c-neon-blue)/0.3)]' 
                            : 'text-slate-400 hover:bg-white/10 border border-transparent hover:text-white'
                       }`}
                     >
@@ -171,7 +171,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
                       onClick={(e) => handleMinuteClick(e, m)}
                       className={`py-1.5 text-center rounded-md cursor-pointer text-sm font-mono transition-all font-bold ${
                          internalMinute === m 
-                           ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_8px_rgba(0,243,255,0.3)]' 
+                           ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/50 shadow-[0_0_8px_rgb(var(--c-neon-blue)/0.3)]' 
                            : 'text-slate-400 hover:bg-white/10 border border-transparent hover:text-white'
                       }`}
                     >
@@ -193,7 +193,7 @@ export default function TimePicker({ value, onChange, label, className = "", ali
                <button 
                  type="button" 
                  onClick={handleConfirm} 
-                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-neon-blue/20 text-neon-blue border border-neon-blue/50 hover:bg-neon-blue/40 shadow-[0_0_10px_rgba(0,243,255,0.2)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)] transition-all font-bold text-xs tracking-widest uppercase"
+                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-neon-blue/20 text-neon-blue border border-neon-blue/50 hover:bg-neon-blue/40 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)] hover:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.4)] transition-all font-bold text-xs tracking-widest uppercase"
                >
                  <Check size={14} /> Potvrdit
                </button>

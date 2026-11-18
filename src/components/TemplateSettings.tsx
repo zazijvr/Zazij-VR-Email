@@ -62,7 +62,7 @@ export default function TemplateSettings({ googleToken }: { googleToken: string 
             </div>
             <button 
               onClick={createNewTemplate}
-              className="flex w-full sm:w-auto justify-center items-center gap-2 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue border border-neon-blue/40 px-4 py-2.5 sm:py-2 rounded-lg font-bold transition-all shadow-[0_0_10px_rgba(0,243,255,0.1)] hover:shadow-[0_0_20px_rgba(0,243,255,0.3)] shrink-0"
+              className="flex w-full sm:w-auto justify-center items-center gap-2 bg-neon-blue/10 hover:bg-neon-blue/20 text-neon-blue border border-neon-blue/40 px-4 py-2.5 sm:py-2 rounded-lg font-bold transition-all shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.1)] hover:shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.3)] shrink-0"
             >
               <Plus size={18} />
               NOVÁ ŠABLONA
@@ -78,7 +78,7 @@ export default function TemplateSettings({ googleToken }: { googleToken: string 
               templates.map(t => (
                 <div 
                   key={t.id} 
-                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-navy-card hover:bg-navy-deep/60 border border-neon-blue/[0.15] hover:border-neon-blue/40 rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(0,243,255,0.1)] gap-4"
+                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-navy-card hover:bg-navy-deep/60 border border-neon-blue/[0.15] hover:border-neon-blue/40 rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.1)] gap-4"
                   onClick={() => setComposerConfig({ type: 'template', templateData: t })}
                 >
                   <div className="flex items-start gap-4 flex-1 w-full overflow-hidden">

@@ -74,6 +74,7 @@ export interface EmailDetailProps {
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
+import { themeInfo, useTheme } from '../theme';
 import { useAlert } from './AlertProvider';
 
 /** Velikost písma předmětu podle délky – co nejvíc textu se vejde do dvou řádků bez zkracování */
@@ -84,6 +85,8 @@ const subjectSizeClass = (subject?: string) => {
 };
 
 export default function EmailDetail({ googleToken, selectedEmailId, onExpand, onTrash, onSpam, onNotSpam, onActionReply, onClose, onMobileBack, autoResumeDraftId, onDraftResumed, userEmail }: EmailDetailProps) {
+  // Obsah e-mailu je v iframe bez proměnných aplikace – barvy textu a odkazů podle motivu
+  const frameColors = themeInfo(useTheme()).preview;
   const queryClient = useQueryClient();
   const provider = useMailProvider();
   const detailKey = ['emailDetail', userEmail ?? '', selectedEmailId ?? ''] as const;
@@ -666,7 +669,7 @@ ${ccLine}
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-neon-blue/60 h-full relative overflow-hidden bg-navy">
-        <div className="w-16 h-16 rounded-full border-[6px] border-neon-blue/10 border-t-neon-blue animate-spin mb-6 drop-shadow-[0_0_15px_rgba(0,243,255,0.4)]"></div>
+        <div className="w-16 h-16 rounded-full border-[6px] border-neon-blue/10 border-t-neon-blue animate-spin mb-6 drop-shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.4)]"></div>
         <p className="font-bold tracking-widest uppercase animate-pulse">Dešifruji data z matrixu...</p>
       </div>
     );
@@ -706,7 +709,7 @@ ${ccLine}
           {onMobileBack && (
             <button
               onClick={onMobileBack}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/60 text-neon-blue drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)] transition-all active:scale-95 anim-spin-in-arrow"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] border-neon-blue/60 text-neon-blue drop-shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.8)] shadow-[inset_0_0_15px_rgb(var(--c-neon-blue)/0.3)] transition-all active:scale-95 anim-spin-in-arrow"
             >
               <ArrowLeft size={22} strokeWidth={2.5} />
             </button>
@@ -715,7 +718,7 @@ ${ccLine}
             {emailData && (
               <button
                 onClick={toggleReadStatus}
-                className={`w-10 h-10 flex items-center justify-center rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-neon-blue border-neon-blue/60 drop-shadow-[0_0_10px_rgba(0,243,255,0.8)] shadow-[inset_0_0_15px_rgba(0,243,255,0.3)]' : 'text-white/80 border-white/50 drop-shadow-[0_0_10px_rgba(255,255,255,0.6)] shadow-[inset_0_0_12px_rgba(255,255,255,0.2)] hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.9)] hover:border-white hover:text-white'}`}
+                className={`w-10 h-10 flex items-center justify-center rounded-full bg-navy-deep/90 backdrop-blur-md border-[1.5px] transition-all active:scale-95 text-[20px] ${emailData.isUnread ? 'text-neon-blue border-neon-blue/60 drop-shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.8)] shadow-[inset_0_0_15px_rgb(var(--c-neon-blue)/0.3)]' : 'text-white/80 border-white/50 drop-shadow-[0_0_10px_rgba(255,255,255,0.6)] shadow-[inset_0_0_12px_rgba(255,255,255,0.2)] hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.9)] hover:border-white hover:text-white'}`}
                 title={emailData.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
               >
                 {emailData.isUnread ? <Mail size={20} /> : <MailOpen size={20} />}
@@ -756,16 +759,16 @@ ${ccLine}
         <div className="shrink-0 px-4 py-5 md:py-4 md:px-6 md:m-6 md:mb-0 md:min-h-[100px] border-t-0 md:border md:rounded-2xl border-transparent md:border-neon-blue/20 bg-navy md:bg-navy shadow-[0_15px_40px_rgba(0,0,0,0.6)] md:shadow-[0_5px_20px_rgba(0,0,0,0.5)] z-[70] flex flex-col gap-4 relative w-full md:w-auto overflow-hidden">
 
           {/* Horní neonová linka ze Seznamu Emailů (Pouze mobil) */}
-          <div className="md:hidden absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgba(0,243,255,0.5)] pointer-events-none z-20"></div>
+          <div className="md:hidden absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue/80 via-neon-blue/20 to-transparent shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.5)] pointer-events-none z-20"></div>
 
           {/* Dekorační levé zakončení (Pouze mobil) */}
           <div className="md:hidden absolute top-0 left-0 w-1 h-full bg-neon-purple/20"></div>
 
           {/* Velmi jemný radialní odlesk v pozadí (Pouze mobil) */}
-          <div className="md:hidden absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(0,243,255,0.06)_0%,transparent_60%)] pointer-events-none"></div>
+          <div className="md:hidden absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgb(var(--c-neon-blue)/0.06)_0%,transparent_60%)] pointer-events-none"></div>
 
           {/* Laserová linka dole (Z návrhu 1, žádané uživatelem, pouze mobil) */}
-          <div className="md:hidden absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_#00f3ff] pointer-events-none z-20"></div>
+          <div className="md:hidden absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_rgb(var(--c-neon-blue))] pointer-events-none z-20"></div>
 
           <div className="relative z-10 w-full pl-2 md:pl-0">
             <div className="min-w-0 w-full">
@@ -773,11 +776,11 @@ ${ccLine}
                 <div className="mb-4">
                   <button
                     onClick={() => handleResumeDraft(emailData)}
-                    className="w-full relative overflow-hidden group rounded-2xl flex items-center justify-center p-1 cursor-pointer bg-neon-purple/10 border border-neon-purple/40 shadow-[0_0_20px_rgba(247,37,133,0.2)] hover:shadow-[0_0_40px_rgba(247,37,133,0.5)] transition-all animate-pulse hover:animate-none"
+                    className="w-full relative overflow-hidden group rounded-2xl flex items-center justify-center p-1 cursor-pointer bg-neon-purple/10 border border-neon-purple/40 shadow-[0_0_20px_rgb(var(--c-neon-purple)/0.2)] hover:shadow-[0_0_40px_rgb(var(--c-neon-purple)/0.5)] transition-all animate-pulse hover:animate-none"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neon-purple/20 to-transparent group-hover:translate-x-[200%] transition-transform duration-1000 -translate-x-full"></div>
                     <div className="relative z-10 py-3 mx-4 flex items-center justify-center gap-3">
-                      <span className="font-black tracking-[0.3em] text-neon-purple text-xl drop-shadow-[0_0_10px_#f72585]">POKRAČOVAT V PSANÍ (UPRAVIT KONCEPT)</span>
+                      <span className="font-black tracking-[0.3em] text-neon-purple text-xl drop-shadow-[0_0_10px_rgb(var(--c-neon-purple))]">POKRAČOVAT V PSANÍ (UPRAVIT KONCEPT)</span>
                     </div>
                   </button>
                 </div>
@@ -794,10 +797,10 @@ ${ccLine}
                     e.stopPropagation();
                     await toggleStarred();
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm border cursor-pointer hover:brightness-125 active:scale-95 transition-all ${emailData?.isStarred ? 'bg-neon-purple/10 border-neon-purple/30 text-neon-purple drop-shadow-[0_0_5px_rgba(247,37,133,0.4)]' : 'bg-neon-blue/10 border-neon-blue/30 text-neon-blue'}`}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm border cursor-pointer hover:brightness-125 active:scale-95 transition-all ${emailData?.isStarred ? 'bg-neon-purple/10 border-neon-purple/30 text-neon-purple drop-shadow-[0_0_5px_rgb(var(--c-neon-purple)/0.4)]' : 'bg-neon-blue/10 border-neon-blue/30 text-neon-blue'}`}
                   title={emailData?.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${emailData?.isStarred ? 'bg-neon-purple shadow-[0_0_8px_#f72585]' : 'bg-neon-blue shadow-[0_0_5px_#00f3ff]'}`}></div>
+                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${emailData?.isStarred ? 'bg-neon-purple shadow-[0_0_8px_rgb(var(--c-neon-purple))]' : 'bg-neon-blue shadow-[0_0_5px_rgb(var(--c-neon-blue))]'}`}></div>
                   <span className="text-[9px] md:text-[10px] uppercase font-mono font-bold tracking-widest text-current">Link_Active</span>
                 </button>
 
@@ -818,14 +821,14 @@ ${ccLine}
                     <>
                       <button
                         onClick={handleReply}
-                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.1)] hover:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.4)]"
                         title="Odpovědět (Reply)"
                       >
                         <Reply size={22} />
                       </button>
                       <button
                         onClick={handleReplyAll}
-                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.1)] hover:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.4)]"
                         title="Odpovědět všem (Reply All)"
                       >
                         <ReplyAll size={22} />
@@ -833,7 +836,7 @@ ${ccLine}
                       <button
                         onClick={handleForward}
                         disabled={isPreparingForward}
-                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-purple hover:bg-neon-purple/15 hover:border-neon-purple/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(247,37,133,0.4)] disabled:opacity-50"
+                        className="p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-purple hover:bg-neon-purple/15 hover:border-neon-purple/50 transition-all shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.1)] hover:shadow-[0_0_15px_rgb(var(--c-neon-purple)/0.4)] disabled:opacity-50"
                         title="Přeposlat (Forward)"
                       >
                         {isPreparingForward ? (
@@ -878,7 +881,7 @@ ${ccLine}
                   {onExpand && (
                     <button
                       onClick={onExpand}
-                      className="hidden md:block p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgba(0,243,255,0.1)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                      className="hidden md:block p-2 rounded-xl text-neon-blue/70 bg-neon-blue/5 border border-neon-blue/20 hover:text-neon-blue hover:bg-neon-blue/15 hover:border-neon-blue/50 transition-all shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.1)] hover:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.4)]"
                       title="Otevřít v plné velikosti"
                     >
                       <Maximize2 size={22} />
@@ -926,16 +929,16 @@ ${ccLine}
         </div>
 
         {/* Dělící čára napevno ustavená na Y=192px (přesně navazující na horizont levé tabulky nezávisle na výšce hlavičky výše) */}
-        <div className="hidden md:block absolute left-0 w-full h-[1px] top-[192px] bg-gradient-to-r from-neon-blue/20 to-transparent opacity-80 shadow-[0_1px_5px_rgba(0,243,255,0.2)] pointer-events-none z-10"></div>
+        <div className="hidden md:block absolute left-0 w-full h-[1px] top-[192px] bg-gradient-to-r from-neon-blue/20 to-transparent opacity-80 shadow-[0_1px_5px_rgb(var(--c-neon-blue)/0.2)] pointer-events-none z-10"></div>
 
         {/* Samotné Iframe Tělo zprávy s neonovým okrajem */}
-        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[213px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-neon-blue/20 md:border-neon-blue/40 shadow-[0_5px_20px_rgba(0,0,0,0.5)] md:shadow-[0_0_20px_rgba(0,243,255,0.2)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-navy relative z-20">
+        <div className="flex-1 md:flex-none flex flex-col min-w-0 p-0 m-0 md:absolute md:top-[213px] md:bottom-8 md:inset-x-6 rounded-none md:rounded-2xl border-t md:border border-neon-blue/20 md:border-neon-blue/40 shadow-[0_5px_20px_rgba(0,0,0,0.5)] md:shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.2)] overflow-y-auto overflow-x-hidden custom-scrollbar bg-navy relative z-20">
           {/* Sender Info Block */}
           <div className="shrink-0 w-full px-4 py-3 md:px-6 md:py-4 border-b border-neon-blue/10 bg-navy z-20">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm gap-3 w-full">
               <div className="flex items-center justify-between w-full md:w-auto min-w-0">
                 <div className="flex items-start gap-3 w-full md:w-auto min-w-0">
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-neon-blue/20 text-neon-blue font-bold text-lg flex items-center justify-center border border-neon-blue/50 shadow-[0_0_10px_rgba(0,243,255,0.2)]">
+                  <div className="shrink-0 w-10 h-10 rounded-full bg-neon-blue/20 text-neon-blue font-bold text-lg flex items-center justify-center border border-neon-blue/50 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)]">
                     {emailData?.from?.match(/[\p{L}\p{N}]/u)?.[0]?.toUpperCase() || emailData?.from?.charAt(0)?.toUpperCase()}
                   </div>
                   <div className="flex flex-col overflow-hidden pr-0 w-full">
@@ -970,12 +973,12 @@ ${ccLine}
                 </div>
                 <div className="md:hidden flex items-center gap-1 shrink-0">
                   {onActionReply && !emailData?.isDraft && (
-                    <button onClick={handleReply} className="p-2 rounded-xl text-neon-blue/70 hover:text-neon-blue hover:bg-neon-blue/10 hover:shadow-[0_0_10px_rgba(0,243,255,0.2)] transition-all">
+                    <button onClick={handleReply} className="p-2 rounded-xl text-neon-blue/70 hover:text-neon-blue hover:bg-neon-blue/10 hover:shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)] transition-all">
                       <Reply size={22} />
                     </button>
                   )}
                   <div className="relative" ref={moreMenuRef}>
-                    <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className={`p-2 rounded-xl transition-all ${isMoreMenuOpen ? 'text-neon-blue bg-neon-blue/20 shadow-[0_0_15px_rgba(0,243,255,0.3)]' : 'text-neon-blue/70 hover:bg-neon-blue/10 hover:shadow-[0_0_10px_rgba(0,243,255,0.2)]'}`}>
+                    <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className={`p-2 rounded-xl transition-all ${isMoreMenuOpen ? 'text-neon-blue bg-neon-blue/20 shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.3)]' : 'text-neon-blue/70 hover:bg-neon-blue/10 hover:shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)]'}`}>
                       <MoreVertical size={22} />
                     </button>
                     {isMoreMenuOpen && createPortal(
@@ -1000,7 +1003,7 @@ ${ccLine}
                         {/* Moderní Mobile Bottom Sheet místo plovoucího okna */}
                         <div
                           ref={bottomSheetRef}
-                          className="relative w-full max-w-lg bg-navy border-t border-neon-blue/40 rounded-t-[30px] shadow-[0_-15px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,243,255,0.15)] flex flex-col p-6 pb-12 gap-1 z-10"
+                          className="relative w-full max-w-lg bg-navy border-t border-neon-blue/40 rounded-t-[30px] shadow-[0_-15px_50px_rgba(0,0,0,0.9),0_0_30px_rgb(var(--c-neon-blue)/0.15)] flex flex-col p-6 pb-12 gap-1 z-10"
                           style={{ animation: 'mobileSheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
                         >
                           {/* Designové držátko/čárka typická pro Bottom sheets */}
@@ -1025,7 +1028,7 @@ ${ccLine}
                             await toggleStarred();
                           }} className={`flex items-center gap-4 p-4 rounded-2xl transition-all w-full text-left font-bold tracking-wide active:scale-[0.98] ${emailData.isStarred ? 'hover:bg-neon-purple/10 text-neon-purple/90 active:bg-neon-purple/20' : 'hover:bg-neon-purple/10 text-neon-purple/50 active:bg-neon-purple/20'}`}>
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${emailData.isStarred ? 'bg-transparent border-2 border-neon-purple/30' : 'bg-neon-purple/10'}`}>
-                              <div className={`w-4 h-4 rounded-full transition-all ${emailData.isStarred ? 'border-2 border-neon-purple/50' : 'bg-neon-purple shadow-[0_0_8px_#f72585]'}`}></div>
+                              <div className={`w-4 h-4 rounded-full transition-all ${emailData.isStarred ? 'border-2 border-neon-purple/50' : 'bg-neon-purple shadow-[0_0_8px_rgb(var(--c-neon-purple))]'}`}></div>
                             </div>
                             {emailData.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
                           </button>
@@ -1069,7 +1072,7 @@ ${ccLine}
                           <Paperclip size={16} className="text-neon-blue shrink-0" />
                         )}
                         <div className="flex flex-col text-left pl-1 flex-1 min-w-0">
-                          <span className="truncate text-neon-blue text-sm font-semibold tracking-wide drop-shadow-[0_0_5px_rgba(0,243,255,0.1)]">{att.filename}</span>
+                          <span className="truncate text-neon-blue text-sm font-semibold tracking-wide drop-shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.1)]">{att.filename}</span>
                           {isIcs && icsDetails[att.attachmentId] && (
                             <span className="text-[10px] text-neon-purple font-bold tracking-[0.15em] uppercase animate-pulse">📅 {icsDetails[att.attachmentId]}</span>
                           )}
@@ -1136,7 +1139,7 @@ ${ccLine}
                   
                   /* Přebijeme generátory faktur: všechno co není aktivní odkaz obarvíme na bílo! */
                   *:not(a):not(a *) {
-                    color: #e2e8f0 !important;
+                    color: ${frameColors.text} !important;
                   }
                   
                   /* Odstřelovač neviditelných prvků co rozbíjí layout (Sledovací pixely, dlouhé URL) */
@@ -1169,14 +1172,14 @@ ${ccLine}
                   }
                   
                   /* Linky držíme svítivě modré */
-                  a, a * { color: #00f3ff !important; text-decoration: none !important; }
-                  a:hover, a:hover * { text-decoration: underline !important; color: #f72585 !important; text-shadow: 0 0 10px #f72585 !important; }
+                  a, a * { color: ${frameColors.link} !important; text-decoration: none !important; }
+                  a:hover, a:hover * { text-decoration: underline !important; color: ${frameColors.linkHover} !important; }
                   
                   /* Stylování iFrame posuvníku do neonu */
                   ::-webkit-scrollbar { width: 8px; height: 8px; }
                   ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-                  ::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.2); border-radius: 4px; }
-                  ::-webkit-scrollbar-thumb:hover { background: rgba(0,243,255,0.5); }
+                  ::-webkit-scrollbar-thumb { background: ${frameColors.accent}33; border-radius: 4px; }
+                  ::-webkit-scrollbar-thumb:hover { background: ${frameColors.accent}80; }
                 </style>
                 ${emailData.htmlBody}
                 <script src="/email-frame.js"></script>
@@ -1239,10 +1242,10 @@ ${ccLine}
               <img src={previewBlob.url} className="max-w-full max-h-full object-contain p-2 drop-shadow-2xl" alt="Preview" />
             ) : previewBlob.type === 'application/pdf' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (
               <div className="flex flex-col items-center justify-center p-8 text-center h-full w-full bg-navy/95">
-                 <FileText size={64} className="text-neon-blue mb-6 drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]" />
+                 <FileText size={64} className="text-neon-blue mb-6 drop-shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.5)]" />
                  <h3 className="text-2xl font-black tracking-widest text-white mb-4 uppercase drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">Náhled na mobilu</h3>
                  <p className="text-neon-blue/70 max-w-md mb-8 text-sm leading-relaxed">Mobilní systémy (iOS/Android) z bezpečnostních a technických důvodů blokují přímé zobrazení PDF souborů uvnitř okna webových aplikací.</p>
-                 <a href={previewBlob.url} target="_blank" rel="noopener noreferrer" className="px-8 py-4 bg-neon-blue/10 border-2 border-neon-blue/50 hover:bg-neon-blue/30 text-neon-blue hover:text-white rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(0,243,255,0.2)] hover:shadow-[0_0_40px_rgba(0,243,255,0.6)] tracking-wide">OTEVŘÍT PDF SOUBOR</a>
+                 <a href={previewBlob.url} target="_blank" rel="noopener noreferrer" className="px-8 py-4 bg-neon-blue/10 border-2 border-neon-blue/50 hover:bg-neon-blue/30 text-neon-blue hover:text-white rounded-xl font-bold transition-all shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.2)] hover:shadow-[0_0_40px_rgb(var(--c-neon-blue)/0.6)] tracking-wide">OTEVŘÍT PDF SOUBOR</a>
               </div>
             ) : (
               <iframe src={previewBlob.url} className="w-full h-full bg-white" title="Preview" />

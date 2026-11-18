@@ -195,9 +195,9 @@ export default function EmailListItem({
           } 
         }}
         className={`relative flex flex-col md:flex-row md:items-center px-4 py-4 md:py-3 rounded-xl cursor-pointer select-none border overflow-hidden ${email._newArrival ? 'animate-new-email ' : ''}${isKeyboardFocus && !isActiveRow ? 'md:bg-white/[0.08] md:border-neon-blue/25 md:shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10 ' : ''}${isActiveRow
-            ? 'bg-gradient-to-r from-neon-blue/20 to-neon-blue/5 border-neon-blue md:shadow-[0_0_20px_rgba(0,243,255,0.2)]'
+            ? 'bg-gradient-to-r from-neon-blue/20 to-neon-blue/5 border-neon-blue md:shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.2)]'
             : email.isUnread
-              ? 'bg-navy-card md:bg-transparent md:bg-gradient-to-r md:from-neon-blue/10 md:to-transparent border-neon-blue/30 md:hover:border-neon-blue/60 shadow-[inset_3px_0_0_#00f3ff]'
+              ? 'bg-navy-card md:bg-transparent md:bg-gradient-to-r md:from-neon-blue/10 md:to-transparent border-neon-blue/30 md:hover:border-neon-blue/60 shadow-[inset_3px_0_0_rgb(var(--c-neon-blue))]'
               : 'bg-navy-card md:bg-white/[0.02] border-neon-blue/10 md:hover:bg-white/[0.08] md:hover:border-neon-blue/25 shadow-[0_4px_15px_rgba(0,0,0,0.5)] md:shadow-none'
           }`}
       >
@@ -215,25 +215,25 @@ export default function EmailListItem({
           className="md:hidden absolute left-2 top-1/2 flex-shrink-0 w-[46px] h-[46px] transition-transform duration-500 [transform-style:preserve-3d] z-10"
           style={{ transform: isMultiSelected ? 'translateY(-50%) rotateY(180deg)' : 'translateY(-50%) rotateY(0deg)' }}
         >
-          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 border border-neon-blue/40 shadow-[0_0_10px_rgba(0,243,255,0.2)] [backface-visibility:hidden]">
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 border border-neon-blue/40 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.2)] [backface-visibility:hidden]">
             <span className="font-black text-xl text-neon-blue">
                {getAvatarInitial(activeFolder === 'Odeslané' ? email.to : email.from)}
             </span>
           </div>
-          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-neon-blue shadow-[0_0_15px_rgba(0,243,255,0.6)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-neon-blue shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.6)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
             <Check className="text-black" size={24} strokeWidth={4} />
           </div>
         </div>
 
         {/* Sender / Initial */}
         <div className="flex w-full md:w-[var(--col-from)] items-center mb-1 md:mb-0 shrink-0">
-          <div className={`font-bold truncate w-full md:pr-4 flex items-center gap-2 pl-[58px] md:pl-0 ${email.isUnread || isActiveRow ? 'text-neon-blue drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]' : 'text-slate-200'}`}>
+          <div className={`font-bold truncate w-full md:pr-4 flex items-center gap-2 pl-[58px] md:pl-0 ${email.isUnread || isActiveRow ? 'text-neon-blue drop-shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.4)]' : 'text-slate-200'}`}>
             <div className="flex items-center gap-1.5 shrink-0">
               {email.isUnread && (
-                <span className="w-2 h-2 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff]" title="Nepřečteno"></span>
+                <span className="w-2 h-2 rounded-full bg-neon-blue shadow-[0_0_8px_rgb(var(--c-neon-blue))]" title="Nepřečteno"></span>
               )}
               {email.isStarred && (
-                <span className="w-2 h-2 rounded-full bg-neon-purple shadow-[0_0_8px_#f72585]" title="Důležité"></span>
+                <span className="w-2 h-2 rounded-full bg-neon-purple shadow-[0_0_8px_rgb(var(--c-neon-purple))]" title="Důležité"></span>
               )}
             </div>
             <span className="truncate">{activeFolder === 'Odeslané' ? email.to : email.from}</span>
@@ -253,7 +253,7 @@ export default function EmailListItem({
           </div>
           {email.snippet?.startsWith('↩️ ') ? (
             <div className="flex items-center gap-1.5 min-w-0 truncate mt-[1px]">
-               <Reply size={14} className="text-neon-blue shrink-0 drop-shadow-[0_0_5px_rgba(0,243,255,0.6)]" />
+               <Reply size={14} className="text-neon-blue shrink-0 drop-shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.6)]" />
                <span className="text-xs text-slate-500 truncate group-hover:text-slate-400 transition-colors">
                  {email.snippet.replace('↩️ ', '')}
                </span>
@@ -281,7 +281,7 @@ export default function EmailListItem({
         <div className="hidden md:group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 items-center gap-0.5 px-1 py-0.5 rounded-lg bg-navy-light border border-neon-blue/25 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
           <button
             onClick={(e) => handleToggleRead(email.id, email.isUnread, e)}
-            className={`p-1.5 rounded-md transition-all ${email.isUnread ? 'hover:bg-neon-blue/20 text-neon-blue drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]' : 'hover:bg-white/10 text-slate-500 hover:text-white'}`}
+            className={`p-1.5 rounded-md transition-all ${email.isUnread ? 'hover:bg-neon-blue/20 text-neon-blue drop-shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.8)]' : 'hover:bg-white/10 text-slate-500 hover:text-white'}`}
             title={email.isUnread ? "Označit jako přečtené" : "Označit jako nepřečtené"}
           >
             {email.isUnread ? <Mail size={16} /> : <MailOpen size={16} />}
@@ -290,7 +290,7 @@ export default function EmailListItem({
           {email.labelIds?.includes('DRAFT') ? (
             <button
               onClick={(e) => { e.stopPropagation(); if (typeof onDraftClick === 'function') onDraftClick(email.id); }}
-              className="p-1.5 rounded-md transition-all hover:bg-neon-blue/20 text-neon-blue drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]"
+              className="p-1.5 rounded-md transition-all hover:bg-neon-blue/20 text-neon-blue drop-shadow-[0_0_5px_rgb(var(--c-neon-blue)/0.8)]"
               title="Ihned upravit koncept"
             >
               <FileEdit size={16} />
@@ -301,7 +301,7 @@ export default function EmailListItem({
               className={`flex items-center justify-center p-1.5 rounded-md transition-all ${email.isStarred ? 'hover:bg-neon-purple/20' : 'hover:bg-neon-purple/10'}`}
               title={email.isStarred ? "Odebrat prioritu" : "Označit jako důležité"}
             >
-              <div className={`w-3.5 h-3.5 rounded-full transition-all ${email.isStarred ? 'bg-neon-purple shadow-[0_0_8px_#f72585]' : 'border-2 border-slate-500 group-hover:border-neon-purple/50'}`}></div>
+              <div className={`w-3.5 h-3.5 rounded-full transition-all ${email.isStarred ? 'bg-neon-purple shadow-[0_0_8px_rgb(var(--c-neon-purple))]' : 'border-2 border-slate-500 group-hover:border-neon-purple/50'}`}></div>
             </button>
           )}
 

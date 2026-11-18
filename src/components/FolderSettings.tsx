@@ -89,7 +89,7 @@ export default function FolderSettings({ googleToken, customLabels, setCustomLab
           <button 
             type="submit" 
             disabled={isCreating || !newFolderName.trim()}
-            className="group flex items-center justify-center gap-2 bg-neon-blue/10 hover:bg-neon-blue/20 disabled:bg-white/5 disabled:hover:bg-white/5 disabled:text-slate-500 disabled:border-transparent disabled:cursor-not-allowed disabled:shadow-none text-neon-blue border border-neon-blue/40 w-full sm:w-auto px-6 py-3 rounded-xl font-bold transition-all hover:shadow-[0_0_15px_rgba(0,243,255,0.3)]"
+            className="group flex items-center justify-center gap-2 bg-neon-blue/10 hover:bg-neon-blue/20 disabled:bg-white/5 disabled:hover:bg-white/5 disabled:text-slate-500 disabled:border-transparent disabled:cursor-not-allowed disabled:shadow-none text-neon-blue border border-neon-blue/40 w-full sm:w-auto px-6 py-3 rounded-xl font-bold transition-all hover:shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.3)]"
           >
             {isCreating ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
             PŘIDAT

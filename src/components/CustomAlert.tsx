@@ -42,14 +42,14 @@ export default function CustomAlert({ isOpen, title, message, type = 'info', onC
   let colorClass = 'text-neon-blue';
   let borderClass = 'border-neon-blue/40';
   let bgClass = 'bg-neon-blue/10';
-  let shadowClass = 'shadow-[0_0_30px_rgba(0,243,255,0.2)]';
+  let shadowClass = 'shadow-[0_0_30px_rgb(var(--c-neon-blue)/0.2)]';
 
   if (type === 'success') {
     Icon = CheckCircle;
     colorClass = 'text-neon-blue';
     borderClass = 'border-neon-blue/40';
     bgClass = 'bg-neon-blue/10';
-    shadowClass = 'shadow-[0_0_30px_rgba(0,243,255,0.2)]';
+    shadowClass = 'shadow-[0_0_30px_rgb(var(--c-neon-blue)/0.2)]';
   } else if (type === 'error') {
     Icon = XCircle;
     colorClass = 'text-danger';

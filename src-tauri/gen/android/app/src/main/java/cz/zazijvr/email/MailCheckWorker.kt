@@ -30,6 +30,8 @@ class MailCheckWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
     private const val CHANNEL_ID = "new_mail"
     const val PREFS = "vr_mail"
     const val PREF_CLIENT_ID = "googleClientId"
+    /** Extra v Intentu z upozornění: JSON { kind, account, messageId, folder } – MainActivity ho předá aplikaci */
+    const val EXTRA_OPEN = "cz.zazijvr.email.OPEN_MAIL"
 
     fun schedule(context: Context) {
       val request = PeriodicWorkRequestBuilder<MailCheckWorker>(15, TimeUnit.MINUTES)
@@ -66,11 +68,16 @@ class MailCheckWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
       channel.description = "Upozornění na nové e-maily ve všech účtech"
       ctx.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
-    val open = Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-    val pending = PendingIntent.getActivity(ctx, 0, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+    val base = (System.currentTimeMillis() % 1_000_000).toInt() * 16
     for (i in 0 until items.length()) {
       val item = items.getJSONObject(i)
       val body = item.optString("body")
+      // Každé upozornění má vlastní PendingIntent (jiné requestCode) s účtem a zprávou,
+      // jinak by se přepsaly a klepnutí by otevřelo naposledy aktivní účet
+      val open = Intent(ctx, MainActivity::class.java)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+      item.optJSONObject("open")?.let { open.putExtra(EXTRA_OPEN, it.toString()) }
+      val pending = PendingIntent.getActivity(ctx, base + i, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
       val notification = NotificationCompat.Builder(ctx, CHANNEL_ID)
         .setSmallIcon(android.R.drawable.ic_dialog_email)
         .setContentTitle(item.optString("title"))
@@ -81,7 +88,7 @@ class MailCheckWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, para
         .setContentIntent(pending)
         .build()
       try {
-        nm.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt() + i, notification)
+        nm.notify(base + i, notification)
       } catch (e: SecurityException) {
         return
       }

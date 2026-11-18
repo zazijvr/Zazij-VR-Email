@@ -4,6 +4,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import type { GmailLabel } from '../types/gmail';
 import { openZazijvrWeb } from '../utils/zazijvrWeb';
 import type { UnreadCounts } from '../types/account';
+import { RudolphOverlay } from './ThemeDecor';
 import type { DragPayload, MoveRequest } from '../types/email';
 
 export type AppMode = 'email' | 'calendar';
@@ -176,12 +177,15 @@ export default function Sidebar({
             (obrázek má 150 × 50 px, takže se ani nezvětšuje do rozmazání) */}
         <button type="button" onClick={openZazijvrWeb} title="zazijvr.cz" aria-label="Otevřít web ZažijVR"
           className="hover:scale-105 active:scale-95 transition-transform">
-          <img
-            src="/cropped-logo-neon-pruhledna-150x50.png"
-            alt="ZažijVR"
-            className="vr-neon-logo h-11 w-auto object-contain"
-            draggable="false"
-          />
+          <span className="vr-logo-wrap relative block">
+            <img
+              src="/cropped-logo-neon-pruhledna-150x50.png"
+              alt="ZažijVR"
+              className="vr-neon-logo h-11 w-auto object-contain"
+              draggable="false"
+            />
+            <RudolphOverlay />
+          </span>
         </button>
       </div>
 
@@ -193,7 +197,7 @@ export default function Sidebar({
             if (onMobileClose) onMobileClose();
           }}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'email'
-              ? 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
+              ? 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.25)] scale-110'
               : 'text-slate-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
         >
@@ -206,7 +210,7 @@ export default function Sidebar({
             if (onMobileClose) onMobileClose();
           }}
           className={`p-3 rounded-[18px] cursor-pointer transition-all duration-300 ${appMode === 'calendar'
-              ? 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue shadow-[0_0_20px_rgba(0,243,255,0.25)] scale-110'
+              ? 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.25)] scale-110'
               : 'text-slate-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
         >
@@ -227,9 +231,9 @@ export default function Sidebar({
         {appMode === 'email' ? (
             <button 
               onClick={onComposeNew}
-              className="w-full relative group overflow-hidden rounded-xl border-2 border-neon-blue/50 bg-neon-blue/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-neon-blue/20 hover:border-neon-blue hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
+              className="w-full relative group overflow-hidden rounded-xl border-2 border-neon-blue/50 bg-neon-blue/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-neon-blue/20 hover:border-neon-blue hover:shadow-[0_0_25px_rgb(var(--c-neon-blue)/0.6)]"
             >
-            <span className="font-bold text-base tracking-widest text-neon-blue drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
+            <span className="font-bold text-base tracking-widest text-neon-blue drop-shadow-[0_0_8px_rgb(var(--c-neon-blue)/0.9)] flex items-center gap-2">
               <Mail size={18} strokeWidth={2.5} />
               Napsat e-mail
             </span>
@@ -240,9 +244,9 @@ export default function Sidebar({
                  onCreateNewEvent();
                  if (onMobileClose) onMobileClose();
               }}
-              className="w-full relative group overflow-hidden rounded-xl border-2 border-neon-blue/50 bg-neon-blue/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-neon-blue/20 hover:border-neon-blue hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]"
+              className="w-full relative group overflow-hidden rounded-xl border-2 border-neon-blue/50 bg-neon-blue/10 py-2.5 md:py-3.5 flex justify-center items-center transition-all hover:bg-neon-blue/20 hover:border-neon-blue hover:shadow-[0_0_25px_rgb(var(--c-neon-blue)/0.6)]"
             >
-            <span className="font-bold text-base tracking-widest text-neon-blue drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] flex items-center gap-2">
+            <span className="font-bold text-base tracking-widest text-neon-blue drop-shadow-[0_0_8px_rgb(var(--c-neon-blue)/0.9)] flex items-center gap-2">
               <Calendar size={18} strokeWidth={2.5} />
               Nová událost
             </span>
@@ -251,10 +255,10 @@ export default function Sidebar({
       </div>
 
       {/* Cyberpunk Neon Divider za akčním tlačítkem */}
-      <div className="w-full h-[1px] mb-4 mt-2 bg-gradient-to-r from-neon-blue/0 via-neon-blue/60 to-neon-blue/0 shadow-[0_0_10px_rgba(0,243,255,0.6)] pointer-events-none"></div>
+      <div className="w-full h-[1px] mb-4 mt-2 bg-gradient-to-r from-neon-blue/0 via-neon-blue/60 to-neon-blue/0 shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.6)] pointer-events-none"></div>
 
       {/* Neonové čáry dole – hotový obrázek (bez živých filtrů, nic nestojí) */}
-      <img src="/neon_sidebar.png" alt="" draggable="false" className="absolute left-0 bottom-0 w-full h-auto opacity-60 pointer-events-none select-none z-0" />
+      <img src="/neon_sidebar.png" alt="" draggable="false" className="vr-neon-art absolute left-0 bottom-0 w-full h-auto opacity-60 pointer-events-none select-none z-0" />
 
       <nav ref={navScrollRef} onDragOver={handleNavDragOver} className="relative z-10 flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-6 pt-2">
         {appMode === 'email' && folders.map((folder, index) => {
@@ -275,9 +279,9 @@ export default function Sidebar({
                  if (onMobileClose) onMobileClose();
               }}
               className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
-                isDragOver ? 'bg-neon-blue/30 border border-neon-blue scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20' :
+                isDragOver ? 'bg-neon-blue/30 border border-neon-blue scale-[1.05] shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.4)] z-20' :
                 isActive
-                  ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
+                  ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_rgb(var(--c-neon-blue)),0_0_15px_rgb(var(--c-neon-blue)/0.15)] scale-[1.02]'
                   : 'hover:bg-neon-blue/5 border border-neon-blue/10 text-neon-blue/60 hover:text-neon-blue'
                 } group`}
             >
@@ -286,7 +290,7 @@ export default function Sidebar({
               )}
               <div className="flex items-center gap-3 relative z-10">
                 {isActive && (
-                   <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff] animate-pulse" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_rgb(var(--c-neon-blue))] animate-pulse" />
                 )}
                 <span className={`font-semibold tracking-wide ${isActive ? 'text-neon-blue font-bold' : 'text-neon-blue/60'}`}>
                   {folder.label}
@@ -294,7 +298,7 @@ export default function Sidebar({
               </div>
               
               {unreadCounts[folder.label] > 0 && (
-                <span className={`relative z-10 px-2.5 py-0.5 rounded text-xs font-extrabold transition-all duration-300 ${isActive ? 'bg-neon-blue text-black shadow-[0_0_10px_rgba(0,243,255,0.8)]' : 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'}`}>
+                <span className={`relative z-10 px-2.5 py-0.5 rounded text-xs font-extrabold transition-all duration-300 ${isActive ? 'bg-neon-blue text-black shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.8)]' : 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'}`}>
                    {unreadCounts[folder.label]}
                 </span>
               )}
@@ -305,7 +309,7 @@ export default function Sidebar({
          {appMode === 'email' && customLabels && customLabels.length > 0 && (
            <>
               <div 
-                className={`h-px bg-neon-blue/20 mx-4 !mt-7 !mb-7 relative shrink-0 transition-all ${dragOverIdx === 'root_custom' ? 'shadow-[0_0_15px_#00f3ff] scale-105' : ''}`}
+                className={`h-px bg-neon-blue/20 mx-4 !mt-7 !mb-7 relative shrink-0 transition-all ${dragOverIdx === 'root_custom' ? 'shadow-[0_0_15px_rgb(var(--c-neon-blue))] scale-105' : ''}`}
                 onDragOver={(e) => {
                    e.preventDefault();
                    e.dataTransfer.dropEffect = 'move';
@@ -349,7 +353,7 @@ export default function Sidebar({
                            className="h-1 bg-navy border border-neon-blue rounded-full my-1 z-30 transition-all relative overflow-hidden"
                            style={{ marginLeft: `${1 + (depth > 0 ? depth - 1 : 0) * 1.2}rem`, marginRight: '1rem' }}
                         >
-                           <div className="absolute inset-0 w-full h-full bg-neon-blue shadow-[0_0_15px_#00f3ff] animate-pulse opacity-70" />
+                           <div className="absolute inset-0 w-full h-full bg-neon-blue shadow-[0_0_15px_rgb(var(--c-neon-blue))] animate-pulse opacity-70" />
                         </div>
                       )}
                       <div
@@ -383,9 +387,9 @@ export default function Sidebar({
                        if (onMobileClose) onMobileClose();
                     }}
                     className={`relative flex items-center justify-between py-3 cursor-pointer transition-all duration-300 overflow-hidden ${
-                      isDragOverInto ? 'bg-neon-blue/30 border border-neon-blue scale-[1.05] shadow-[0_0_20px_rgba(0,243,255,0.4)] z-20 rounded-xl' :
+                      isDragOverInto ? 'bg-neon-blue/30 border border-neon-blue scale-[1.05] shadow-[0_0_20px_rgb(var(--c-neon-blue)/0.4)] z-20 rounded-xl' :
                       isActive
-                        ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02] rounded-xl'
+                        ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_rgb(var(--c-neon-blue)),0_0_15px_rgb(var(--c-neon-blue)/0.15)] scale-[1.02] rounded-xl'
                         : 'hover:bg-neon-blue/5 border border-transparent hover:border-neon-blue/10 text-neon-blue/60 hover:text-neon-blue rounded-xl'
                       } group`}
                     style={{ paddingLeft: `${1 + depth * 1.2}rem`, paddingRight: '1rem' }}
@@ -404,7 +408,7 @@ export default function Sidebar({
                       ) : (
                          <div className="w-[22px] shrink-0 flex justify-center items-center">
                             {isActive ? (
-                               <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff] animate-pulse shrink-0" />
+                               <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_rgb(var(--c-neon-blue))] animate-pulse shrink-0" />
                             ) : depth > 0 ? (
                                <div className="w-1 h-1 rounded-full bg-neon-blue/30 shrink-0" />
                             ) : null}
@@ -416,7 +420,7 @@ export default function Sidebar({
                       </span>
                     </div>
                     {unreadCounts[folder.name] > 0 && (
-                      <span className={`shrink-0 relative z-10 px-2.5 py-0.5 rounded text-xs font-extrabold transition-all duration-300 ${isActive ? 'bg-neon-blue text-black shadow-[0_0_10px_rgba(0,243,255,0.8)]' : 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'}`}>
+                      <span className={`shrink-0 relative z-10 px-2.5 py-0.5 rounded text-xs font-extrabold transition-all duration-300 ${isActive ? 'bg-neon-blue text-black shadow-[0_0_10px_rgb(var(--c-neon-blue)/0.8)]' : 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'}`}>
                          {unreadCounts[folder.name]}
                       </span>
                     )}
@@ -446,7 +450,7 @@ export default function Sidebar({
               }}
               className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
                 isActive
-                  ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_#00f3ff,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
+                  ? 'bg-gradient-to-r from-neon-blue/20 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_rgb(var(--c-neon-blue)),0_0_15px_rgb(var(--c-neon-blue)/0.15)] scale-[1.02]'
                   : 'hover:bg-neon-blue/5 border border-neon-blue/10 text-neon-blue/60 hover:text-neon-blue'
                 } group`}
             >
@@ -455,7 +459,7 @@ export default function Sidebar({
               )}
               <div className="flex items-center gap-3 relative z-10">
                 {isActive && (
-                   <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_#00f3ff] animate-pulse" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-neon-blue shadow-[0_0_8px_rgb(var(--c-neon-blue))] animate-pulse" />
                 )}
                 <span className={`font-semibold tracking-wide ${isActive ? 'text-neon-blue font-bold' : 'text-neon-blue/60'}`}>
                   {view.label}
@@ -486,7 +490,7 @@ export default function Sidebar({
                       }}
                       className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
                         isActive
-                          ? 'bg-gradient-to-r from-neon-blue/15 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_#f72585,0_0_15px_rgba(0,243,255,0.15)] scale-[1.02]'
+                          ? 'bg-gradient-to-r from-neon-blue/15 to-transparent border border-neon-blue/30 shadow-[inset_4px_0_0_rgb(var(--c-neon-purple)),0_0_15px_rgb(var(--c-neon-blue)/0.15)] scale-[1.02]'
                           : 'hover:bg-neon-blue/5 border border-neon-blue/10 text-neon-blue/60 hover:text-neon-blue'
                         } group`}
                     >
@@ -494,7 +498,7 @@ export default function Sidebar({
                         <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-neon-blue/10 to-transparent pointer-events-none" />
                       )}
                       <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
-                         <div className={`w-1.5 h-1.5 rounded-full bg-neon-blue shrink-0 transition-all ${isActive ? 'shadow-[0_0_8px_#00f3ff] animate-pulse' : 'opacity-40'}`} />
+                         <div className={`w-1.5 h-1.5 rounded-full bg-neon-blue shrink-0 transition-all ${isActive ? 'shadow-[0_0_8px_rgb(var(--c-neon-blue))] animate-pulse' : 'opacity-40'}`} />
                          <span className={`font-semibold tracking-wide truncate transition-colors ${isActive ? 'text-neon-blue font-bold' : 'text-neon-blue/60 group-hover:text-neon-blue'}`}>
                            CZ Státní svátky
                          </span>
@@ -509,7 +513,7 @@ export default function Sidebar({
       {appVersion && (
         <div className="relative z-10 px-4 pb-0 pt-3 flex justify-center border-t border-neon-blue/20">
           {/* Tmavý podklad, aby se číslo neztrácelo v neonových čarách za ním */}
-          <span className="px-3 py-1 rounded-md bg-navy/80 border border-neon-blue/25 text-neon-blue text-[11px] font-semibold tracking-widest uppercase truncate drop-shadow-[0_0_6px_rgba(0,243,255,0.5)]">
+          <span className="px-3 py-1 rounded-md bg-navy/80 border border-neon-blue/25 text-neon-blue text-[11px] font-semibold tracking-widest uppercase truncate drop-shadow-[0_0_6px_rgb(var(--c-neon-blue)/0.5)]">
             Verze {appVersion}
           </span>
         </div>

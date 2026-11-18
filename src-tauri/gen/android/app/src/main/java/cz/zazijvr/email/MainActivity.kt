@@ -11,6 +11,7 @@ import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.FileProvider
+import androidx.core.view.WindowCompat
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
@@ -18,16 +19,55 @@ import org.json.JSONObject
 import java.io.File
 
 class MainActivity : TauriActivity() {
+  /** Zpráva z klepnutí na upozornění, která čeká, až bude aplikace (JS) připravená */
+  private var pendingOpen: String? = null
+  private var webViewRef: WebView? = null
+  private var webReady = false
+
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
     // Kontrola nové pošty na pozadí (každých ~15 min)
     MailCheckWorker.schedule(this)
+    if (savedInstanceState == null) takeOpenRequest(intent)
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    takeOpenRequest(intent)
   }
 
   override fun onWebViewCreate(webView: WebView) {
+    webViewRef = webView
     setupBridge(webView)
     setupBack(webView)
+  }
+
+  // ───────────── Klepnutí na upozornění → správný účet a zpráva ─────────────
+
+  private fun takeOpenRequest(intent: Intent?) {
+    val json = intent?.getStringExtra(MailCheckWorker.EXTRA_OPEN) ?: return
+    intent.removeExtra(MailCheckWorker.EXTRA_OPEN)
+    // jen platný JSON objekt – do JS se předává jako řetězec, ne jako kód
+    if (try { JSONObject(json); true } catch (e: Exception) { false }) {
+      pendingOpen = json
+      deliverOpen()
+    }
+  }
+
+  /** Předá čekající požadavek aplikaci – hned, pokud už běží; jinak po zprávě "ready" z JS */
+  private fun deliverOpen() {
+    val json = pendingOpen ?: return
+    val webView = webViewRef ?: return
+    if (!webReady) return
+    pendingOpen = null
+    val arg = JSONObject.quote(json)
+    runOnUiThread {
+      webView.evaluateJavascript("(window.__vrOpenFromNotification ? window.__vrOpenFromNotification($arg) : false)") { result ->
+        if (result != "true") pendingOpen = json
+      }
+    }
   }
 
   // ───────────── Zpět ─────────────
@@ -93,6 +133,8 @@ class MainActivity : TauriActivity() {
   /**
    * window.VrAndroid.postMessage(JSON) – jen v hlavním rámu aplikace (ne v okně s obsahem e-mailu):
    *  { type: "exit" }                         → aplikace na pozadí (po potvrzení v aplikaci)
+   *  { type: "ready" }                        → aplikace připravená přijmout klepnutí na upozornění
+   *  { type: "statusBar", light }             → tmavé ikony stavového řádku ve světlém motivu
    *  { type: "config", googleClientId }       → pro kontrolu pošty na pozadí
    *  { type: "openFile", name, mime, data }   → příloha v aplikaci telefonu (PDF…)
    */
@@ -107,6 +149,16 @@ class MainActivity : TauriActivity() {
       val msg = try { JSONObject(message.data ?: return@addWebMessageListener) } catch (e: Exception) { return@addWebMessageListener }
       when (msg.optString("type")) {
         "exit" -> moveTaskToBack(true)
+        "ready" -> { webReady = true; deliverOpen() }
+        "statusBar" -> {
+          val light = msg.optBoolean("light")
+          runOnUiThread {
+            WindowCompat.getInsetsController(window, window.decorView).apply {
+              isAppearanceLightStatusBars = light
+              isAppearanceLightNavigationBars = light
+            }
+          }
+        }
         "config" -> getSharedPreferences(MailCheckWorker.PREFS, Context.MODE_PRIVATE).edit()
           .putString(MailCheckWorker.PREF_CLIENT_ID, msg.optString("googleClientId"))
           .apply()

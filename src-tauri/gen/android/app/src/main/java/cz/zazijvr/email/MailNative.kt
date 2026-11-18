@@ -6,7 +6,7 @@ object MailNative {
     System.loadLibrary("app_lib")
   }
 
-  /** Vrací JSON pole upozornění [{ "title", "body", "account" }] */
+  /** Vrací JSON pole upozornění [{ "title", "body", "account", "open": { kind, account, messageId, folder } }] */
   @JvmStatic
   external fun checkMail(dataDir: String, googleClientId: String): String
 }

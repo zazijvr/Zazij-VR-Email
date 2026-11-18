@@ -10,6 +10,11 @@ import '@fontsource/rajdhani/latin-700.css';
 import '@fontsource/rajdhani/latin-ext-600.css';
 import '@fontsource/rajdhani/latin-ext-700.css';
 import './index.css';
+import { applyTheme, initSeasonalTheme } from './theme';
+
+// Motiv dřív, než se aplikace vykreslí (bez probliknutí výchozích barev)
+applyTheme();
+initSeasonalTheme();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Chybí element #root v index.html');

@@ -1,12 +1,14 @@
 
+@import './themes.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   html, body {
-    background-color: #061026; /* stejné pozadí jako Moje Kára */
-    color: white;
+    background-color: rgb(var(--c-navy)); /* stejné pozadí jako Moje Kára (podle motivu) */
+    color: rgb(var(--c-white));
     overflow-x: hidden;
     overscroll-behavior-y: none;
     overscroll-behavior-x: none;
@@ -27,8 +29,8 @@
     cursor: pointer;
   }
   select option {
-    background-color: #0a1630;
-    color: white;
+    background-color: rgb(var(--c-navy-card));
+    color: rgb(var(--c-white));
   }
 }
 
@@ -39,27 +41,27 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(6,16,38, 0.8);
-  border-left: 1px solid rgba(0, 243, 255, 0.1);
+  background: rgb(var(--c-navy) / 0.8);
+  border-left: 1px solid rgb(var(--c-neon-blue) / 0.1);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 243, 255, 0.2); 
+  background: rgb(var(--c-neon-blue) / 0.2); 
   border-radius: 8px;
-  border: 2px solid rgba(6,16,38, 0.8); /* padding feeling */
+  border: 2px solid rgb(var(--c-navy) / 0.8); /* padding feeling */
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 243, 255, 0.6);
-  box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+  background: rgb(var(--c-neon-blue) / 0.6);
+  box-shadow: 0 0 10px rgb(var(--c-neon-blue) / 0.5);
 }
 
 @keyframes newEmailIn {
   0% {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
-    background-color: rgba(0, 243, 255, 0.4);
-    box-shadow: 0 0 30px rgba(0, 243, 255, 0.8), inset 0 0 20px rgba(0, 243, 255, 0.5);
+    background-color: rgb(var(--c-neon-blue) / 0.4);
+    box-shadow: 0 0 30px rgb(var(--c-neon-blue) / 0.8), inset 0 0 20px rgb(var(--c-neon-blue) / 0.5);
   }
   100% {
     opacity: 1;
@@ -102,11 +104,11 @@
   text-decoration: underline;
 }
 .rich-text-content a {
-  color: #00f3ff;
+  color: rgb(var(--c-neon-blue));
   text-decoration: underline;
 }
 .rich-text-content a:hover {
-  text-shadow: 0 0 5px #00f3ff;
+  text-shadow: 0 0 5px rgb(var(--c-neon-blue));
 }
 
 body.email-detail-active #mobile-hamburger {
@@ -166,12 +168,12 @@ body.email-detail-active #mobile-user {
 }
 /* Logo ZažijVR: neonové probliknutí jednou za 10 s (stejně jako v aplikaci Moje Kára) */
 @keyframes vrNeonBlink {
-  0%, 12%, 100% { opacity: 0.9; filter: drop-shadow(0 0 6px rgba(0, 243, 255, 0.35)); }
+  0%, 12%, 100% { opacity: 0.9; filter: drop-shadow(0 0 6px rgb(var(--c-neon-blue) / 0.35)); }
   1%   { opacity: 0.25; }
   2%   { opacity: 0.9; }
   3%   { opacity: 0.3; }
-  4.5% { opacity: 1; filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.9)); }
-  8%   { opacity: 1; filter: drop-shadow(0 0 7px rgba(0, 243, 255, 0.6)); }
+  4.5% { opacity: 1; filter: drop-shadow(0 0 10px rgb(var(--c-neon-blue) / 0.9)); }
+  8%   { opacity: 1; filter: drop-shadow(0 0 7px rgb(var(--c-neon-blue) / 0.6)); }
 }
 .vr-neon-logo { animation: vrNeonBlink 10s linear 3s infinite; }
 @media (prefers-reduced-motion: reduce) {
@@ -197,9 +199,11 @@ html.composer-open #root {
 .app-bg {
   background-color: #0b1222;
   background-image:
-    radial-gradient(1200px 600px at 100% 0%, rgba(0, 243, 255, 0.07), transparent 60%),
-    radial-gradient(900px 700px at 0% 100%, rgba(247,37,133, 0.045), transparent 60%);
+    radial-gradient(1200px 600px at 100% 0%, rgb(var(--c-neon-blue) / 0.07), transparent 60%),
+    radial-gradient(900px 700px at 0% 100%, rgb(var(--c-neon-purple) / 0.045), transparent 60%);
 }
+/* Jiné motivy: pozadí v barvě motivu */
+:root[data-theme] .app-bg { background-color: rgb(var(--c-navy)); }
 
 /* Telefon: filtry (drop-shadow) v položkách seznamu se při posouvání pořád překreslují a berou
    paměť grafiky – v seznamu e-mailů se vypnou (stíny box-shadow zůstávají) */
@@ -235,3 +239,71 @@ html.composer-open #root {
   color: rgb(100 116 139); /* slate-500 */
   pointer-events: none;
 }
+
+
+/* ═════════ Motivy (Nastavení → Vzhled) – barvy v themes.css, tady jen doplňky ═════════ */
+:root[data-scheme="light"] select { color-scheme: light; }
+/* Neonové logo ZažijVR na světlém pozadí: tmavý stín za logem, ať nezapadne */
+:root[data-scheme="light"] .vr-logo-wrap {
+  filter: drop-shadow(0 0 0.5px rgba(6, 16, 38, 1)) drop-shadow(0 0 1px rgba(6, 16, 38, 0.9)) drop-shadow(0 1px 3px rgba(6, 16, 38, 0.5));
+}
+/* Ztmavení pod dialogy je ve světlém motivu jemnější */
+:root[data-scheme="light"] .bg-black\/80,
+:root[data-scheme="light"] .bg-black\/70,
+:root[data-scheme="light"] .bg-black\/60 { background-color: rgb(15 23 42 / 0.4); }
+
+/* Vánoční: sníh a Rudolf na logu */
+.vr-xmas-only { display: none; }
+:root[data-theme="xmas"] .vr-xmas-only { display: block; }
+@keyframes vr-nose-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px #ef233c) drop-shadow(0 0 5px #ef233c); }
+  50%      { filter: drop-shadow(0 0 1px #ef233c); }
+}
+.vr-rudolph-nose { animation: vr-nose-glow 1.8s ease-in-out infinite; }
+
+.vr-snow, .vr-petals { display: none; }
+:root[data-theme="xmas"] .vr-snow,
+:root[data-theme="sakura"] .vr-petals {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+  overflow: hidden;
+}
+.vr-snow > span {
+  position: absolute;
+  top: -12px;
+  border-radius: 9999px;
+  background: #ffffff;
+  animation: vr-snowfall linear infinite;
+}
+@keyframes vr-snowfall {
+  0%   { transform: translate3d(0, -12px, 0); }
+  50%  { transform: translate3d(var(--sway, 14px), 50vh, 0); }
+  100% { transform: translate3d(0, 105vh, 0); }
+}
+/* Sakura: padající okvětní lístky */
+.vr-petals > span {
+  position: absolute;
+  top: -14px;
+  border-radius: 100% 0 100% 0;
+  background: linear-gradient(135deg, #ffd1e1, #f79ac0);
+  animation: vr-petal-fall linear infinite;
+}
+@keyframes vr-petal-fall {
+  0%   { transform: translate3d(0, -14px, 0) rotate(0deg); }
+  50%  { transform: translate3d(var(--sway, 24px), 50vh, 0) rotate(200deg); }
+  100% { transform: translate3d(0, 105vh, 0) rotate(400deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="xmas"] .vr-snow,
+  :root[data-theme="sakura"] .vr-petals { display: none; }
+  .vr-rudolph-nose { animation: none; }
+}
+
+/* Neonové obvody v rozích (PNG) – přebarvené podle motivu */
+:root[data-theme="xmas"] .vr-neon-art   { filter: hue-rotate(180deg) saturate(1.3); }        /* azurová → červená, růžová → zelená */
+:root[data-theme="dark"] .vr-neon-art   { filter: grayscale(1) sepia(1) hue-rotate(180deg) saturate(2.2); opacity: 0.45; }
+:root[data-theme="light"] .vr-neon-art  { filter: grayscale(1) sepia(1) hue-rotate(150deg) saturate(2.5) brightness(0.8); opacity: 0.35; }
+:root[data-theme="sakura"] .vr-neon-art { filter: grayscale(1) sepia(1) hue-rotate(295deg) saturate(2.5); opacity: 0.45; }
