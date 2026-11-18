@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, type CSSProperties, type Mous
 import { createPortal } from 'react-dom';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
-import { open } from '@tauri-apps/plugin-shell';
+import { openExternal } from '../utils/openExternal';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { Maximize2, Trash2, Paperclip, Eye, Download, Reply, ReplyAll, Forward, AlertOctagon, Inbox, X, CalendarPlus, Copy, Check, MoreVertical, ArrowLeft, Mail, MailOpen, FileText } from 'lucide-react';
 // ical.js je velká knihovna – načte se až u e-mailu s pozvánkou (.ics), ne při startu aplikace
@@ -220,7 +220,7 @@ export default function EmailDetail({ googleToken, selectedEmailId, onExpand, on
 
         try {
           if (window.__TAURI_INTERNALS__) {
-            await open(e.data.url);
+            await openExternal(e.data.url);
           } else {
             window.open(e.data.url, '_blank', 'noopener,noreferrer');
           }

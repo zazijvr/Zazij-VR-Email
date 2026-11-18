@@ -70,7 +70,8 @@ pub fn run() {
         imap_mail::smtp_send,
         account_counts::accounts_unread,
         mail_watch::mail_watch_set_google_client,
-        open_file::open_attachment_externally
+        open_file::open_attachment_externally,
+        open_file::open_external_url
     ]);
     #[cfg(mobile)]
     let builder = builder.invoke_handler(tauri::generate_handler![

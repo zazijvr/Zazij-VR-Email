@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import type { CalendarEvent } from '../../../types/calendar';
 import { createPortal } from 'react-dom';
 import DOMPurify from 'dompurify';
-import { open as openUrl } from '@tauri-apps/plugin-shell';
+import { openExternal as openUrl } from '../../../utils/openExternal';
 import { ArrowLeft, Edit2, Trash2, Loader2, X, Clock, Bell, Repeat } from 'lucide-react';
 
 interface EventDetailViewProps {

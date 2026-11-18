@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, type ChangeEvent, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo } from 'lucide-react';
-import { open as openUrl } from '@tauri-apps/plugin-shell';
+import { openExternal as openUrl } from '../utils/openExternal';
 
 interface DropdownOption {
   label: string;

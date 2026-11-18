@@ -1,4 +1,5 @@
 use tauri::{command, AppHandle};
+#[cfg(mobile)]
 use tauri_plugin_shell::ShellExt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
@@ -47,7 +48,7 @@ pub async fn start_google_login(
 #[cfg(desktop)]
 #[command]
 pub async fn start_google_login(
-    app: AppHandle,
+    _app: AppHandle,
     client_id: String,
     code_challenge: String,
     state: String,
@@ -63,12 +64,8 @@ pub async fn start_google_login(
         client_id, code_challenge, state
     );
 
-    #[cfg(target_os = "linux")]
-    open::that(&url).map_err(|e| e.to_string())?;
-    #[cfg(target_os = "windows")]
-    open::that(&url).map_err(|e| e.to_string())?;
-    #[cfg(target_os = "macos")]
-    open::that(&url).map_err(|e| e.to_string())?;
+    // Prohlížeč systému (na Linuxu v AppImage s očištěným prostředím – viz open_file::open_external)
+    crate::open_file::open_external(std::ffi::OsStr::new(&url)).map_err(|e| e.to_string())?;
 
     let (mut stream, _) = listener.accept().await.map_err(|e| e.to_string())?;
 
