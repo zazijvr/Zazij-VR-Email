@@ -243,10 +243,26 @@ html.composer-open #root {
 
 /* ═════════ Motivy (Nastavení → Vzhled) – barvy v themes.css, tady jen doplňky ═════════ */
 :root[data-scheme="light"] select { color-scheme: light; }
-/* Neonové logo ZažijVR na světlém pozadí: tmavý stín za logem, ať nezapadne */
-:root[data-scheme="light"] .vr-logo-wrap {
-  filter: drop-shadow(0 0 0.5px rgba(6, 16, 38, 1)) drop-shadow(0 0 1px rgba(6, 16, 38, 0.9)) drop-shadow(0 1px 3px rgba(6, 16, 38, 0.5));
+/* Logo ZažijVR v ostatních motivech: obrys loga (PNG jako maska) vybarvený akcentem motivu,
+   původní neonový obrázek jen drží místo */
+.vr-logo-tint { display: none; }
+:root[data-theme] .vr-logo-tint {
+  display: block;
+  position: absolute;
+  inset: 0;
+  background-color: rgb(var(--c-neon-blue));
+  -webkit-mask: url(/cropped-logo-neon-pruhledna-150x50.png) center / contain no-repeat;
+  mask: url(/cropped-logo-neon-pruhledna-150x50.png) center / contain no-repeat;
 }
+:root[data-theme] .vr-logo-wrap > img { visibility: hidden; }
+
+/* Panáčci VR (Mascot.tsx): jen čáry, barvy podle motivu */
+.vr-mascot { aspect-ratio: 1 / 1; }
+.vr-mascot > svg { display: block; width: 100%; height: 100%; }
+:root[data-theme="light"]  { --vr-m-line: #0e7490; --vr-m-core: #7dd3e3; --vr-m-accent: #be185d; --vr-m-core2: #0e7490; }
+:root[data-theme="dark"]   { --vr-m-line: #8ab4f8; --vr-m-core: #e3edff; --vr-m-accent: #f48fb1; --vr-m-core2: #c9dcff; }
+:root[data-theme="sakura"] { --vr-m-line: #d6336c; --vr-m-core: #ffc2d6; --vr-m-accent: #8e5cd9; --vr-m-core2: #e64980; }
+:root[data-theme="xmas"]   { --vr-m-line: #f2c14e; --vr-m-core: #fff3c4; --vr-m-accent: #e63946; --vr-m-core2: #ffe08a; }
 /* Ztmavení pod dialogy je ve světlém motivu jemnější */
 :root[data-scheme="light"] .bg-black\/80,
 :root[data-scheme="light"] .bg-black\/70,

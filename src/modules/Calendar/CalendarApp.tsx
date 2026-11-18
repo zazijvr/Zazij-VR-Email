@@ -12,6 +12,7 @@ import {
   deleteEvent, describeRecurrence, getEvent, listEvents, parseRRule, saveEvent, toCalendarEvent,
   type GoogleCalendarEvent, type GoogleEventInput,
 } from '../../services/calendar';
+import { Mascot } from '../../components/Mascot';
 import type { CalendarEvent, EventForm, RecurrenceFreq, RecurrenceRule } from '../../types/calendar';
 
 const HOLIDAY_CALENDAR = 'cs.czech#holiday@group.v.calendar.google.com';
@@ -524,7 +525,7 @@ export default function CalendarApp({
          <p className="text-neon-rose/60 uppercase tracking-[0.2em] font-bold z-10 text-xl border border-neon-rose/20 bg-neon-rose/5 px-8 py-4 rounded-2xl shadow-[0_0_30px_rgb(var(--c-neon-rose)/0.1)] backdrop-blur-md">
            [ {activeCalendarView.toUpperCase()} VE VÝVOJI ]
          </p>
-         <img src="/vr_calendar.svg" alt="VR Mascot" className="absolute bottom-10 right-10 w-64 h-auto opacity-70 object-contain pointer-events-none" />
+         <Mascot src="/vr_calendar.svg" alt="VR Mascot" className="absolute bottom-10 right-10 w-64 h-auto opacity-70 object-contain pointer-events-none" />
        </div>
     );
   } else if (activeCalendarView === 'Co mě čeká?') {

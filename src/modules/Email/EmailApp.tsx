@@ -12,6 +12,7 @@ import type { EmailRef, MoveRequest } from '../../types/email';
 import type { GmailLabel } from '../../types/gmail';
 import type { UnreadCounts } from '../../types/account';
 import type { ComposerConfig, ComposerSuccess } from '../../types/composer';
+import { Mascot } from '../../components/Mascot';
 import { useHistoryBack } from '../../hooks/useHistoryBack';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
@@ -32,13 +33,13 @@ interface EmailAppProps {
 const getFolderIcon = (folder: string) => {
   const commonClasses = "w-14 h-14 md:w-16 md:h-16 object-contain";
   switch (folder) {
-    case 'Doručené': return <img src="/vr_inbox.svg" className={commonClasses} alt="Doručené" draggable="false" />;
-    case 'Odeslané': return <img src="/vr_sent.svg" className={commonClasses} alt="Odeslané" draggable="false" />;
-    case 'Rozepsané': return <img src="/vr_drafts.svg" className={commonClasses} alt="Rozepsané" draggable="false" />;
-    case 'Spam': return <img src="/vr_spam.svg" className={commonClasses} alt="Spam" draggable="false" />;
-    case 'Koš': return <img src="/vr_trash.svg" className={commonClasses} alt="Koš" draggable="false" />;
-    case 'Důležité': return <img src="/vr_important.svg" className={commonClasses} alt="Důležité" draggable="false" />;
-    default: return <img src="/vr_inbox.svg" className={commonClasses} alt={folder} draggable="false" />;
+    case 'Doručené': return <Mascot src="/vr_inbox.svg" className={commonClasses} alt="Doručené" />;
+    case 'Odeslané': return <Mascot src="/vr_sent.svg" className={commonClasses} alt="Odeslané" />;
+    case 'Rozepsané': return <Mascot src="/vr_drafts.svg" className={commonClasses} alt="Rozepsané" />;
+    case 'Spam': return <Mascot src="/vr_spam.svg" className={commonClasses} alt="Spam" />;
+    case 'Koš': return <Mascot src="/vr_trash.svg" className={commonClasses} alt="Koš" />;
+    case 'Důležité': return <Mascot src="/vr_important.svg" className={commonClasses} alt="Důležité" />;
+    default: return <Mascot src="/vr_inbox.svg" className={commonClasses} alt={folder} />;
   }
 };
 

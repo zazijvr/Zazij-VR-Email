@@ -8,6 +8,7 @@ import { saveNewContacts } from '../utils/contactManager';
 import { deleteDraft, modifyThread } from '../services/gmail';
 import { useMailProvider } from '../services/mailProvider';
 import { useHistoryBack } from '../hooks/useHistoryBack';
+import { Mascot } from './Mascot';
 import type { ComposerAttachment, ComposerConfig, ComposerSuccess, EmailSignature, EmailTemplate } from '../types/composer';
 
 export interface EmailComposerProps {
@@ -455,7 +456,7 @@ const EmailComposer = ({ googleToken, config, onClose, onSuccessAction, userEmai
 
         <div className="flex justify-between items-center p-6 border-b border-neon-blue/10 bg-navy-card">
           <h2 className="text-2xl font-black tracking-[0.2em] text-white flex items-center gap-3">
-            <img src="/vr_drafts.svg" className="w-8 h-8 object-contain" alt="VR Mascot" draggable="false" />
+            <Mascot src="/vr_drafts.svg" className="w-8 h-8 object-contain" alt="VR Mascot" />
             {config?.type === 'template' ? 'EDITOR ŠABLONY' : config?.type === 'reply' || config?.type === 'replyAll' ? 'ODPOVĚĎ' : config?.type === 'forward' ? 'PŘEPOSLÁNÍ' : 'NOVÁ ZPRÁVA'}
           </h2>
           <button

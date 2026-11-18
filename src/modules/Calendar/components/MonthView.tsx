@@ -1,5 +1,6 @@
 import type { CalendarEvent } from '../../../types/calendar';
 import { Search, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
+import { Mascot } from '../../../components/Mascot';
 import { getEventBgColor, getEventSolidColor, getEventColor } from '../utils/eventColors';
 
 interface MonthViewProps {
@@ -226,7 +227,7 @@ export default function MonthView({
          <div className="flex items-center gap-6 relative w-full justify-between">
            <div className="flex items-center gap-4 md:gap-6">
              <div className="p-2 md:p-3 rounded-2xl bg-neon-blue/10 border-2 border-neon-blue/40 shadow-[0_0_25px_rgb(var(--c-neon-blue)/0.4)] transition-all flex items-center justify-center min-w-[56px] md:min-w-[72px] min-h-[56px] md:min-h-[72px]">
-               <img src="/vr_calendar.svg" className="w-10 h-10 md:w-16 md:h-16 object-contain" alt="Kalendář" draggable="false" />
+               <Mascot src="/vr_calendar.svg" className="w-10 h-10 md:w-16 md:h-16 object-contain" alt="Kalendář" />
              </div>
              
              <div className="flex flex-col justify-center relative mt-1 select-none">

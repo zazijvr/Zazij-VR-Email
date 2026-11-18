@@ -10,6 +10,7 @@ import { saveNewContacts } from '../utils/contactManager';
 import { useAlert } from './AlertProvider';
 import type { EmailRef, ListEmail, OptimisticMove, SpammedEmail, TrashedEmail } from '../types/email';
 import type { GmailLabel } from '../types/gmail';
+import { Mascot } from './Mascot';
 import type { UnreadCounts } from '../types/account';
 
 type ShownEmail = ListEmail;
@@ -809,7 +810,7 @@ export default function EmailList({ googleToken, activeFolder = 'Doručené', se
           'Spam': '/vr_spam.svg',
           'Koš': '/vr_trash.svg'
         };
-        const mascotImg = iconMap[activeFolder] ? <img src={iconMap[activeFolder]} alt="Mascot" className="h-14 w-auto object-contain" /> : null;
+        const mascotImg = iconMap[activeFolder] ? <Mascot src={iconMap[activeFolder]} alt="Mascot" className="h-14 w-auto object-contain" /> : null;
 
         return (
           <div className="md:hidden px-6 pt-5 pb-3 bg-gradient-to-b from-navy-deep/60 to-transparent shrink-0 flex items-center justify-start gap-4 relative z-10">

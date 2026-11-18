@@ -129,6 +129,7 @@ export default function MobileHeader({
         >
           <span className="vr-logo-wrap relative block">
             <img src="/cropped-logo-neon-pruhledna-150x50.png" alt="ZažijVR" draggable="false" className="vr-neon-logo h-7 w-auto object-contain" />
+            <span className="vr-logo-tint vr-neon-logo" aria-hidden="true" />
             <RudolphOverlay />
           </span>
         </button>

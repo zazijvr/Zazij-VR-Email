@@ -1,6 +1,7 @@
 import { Fragment, type Dispatch, type SetStateAction } from 'react';
 import type { CalendarEvent } from '../../../types/calendar';
 import { Search, Clock, ChevronRight } from 'lucide-react';
+import { Mascot } from '../../../components/Mascot';
 import { getEventSolidColor } from '../utils/eventColors';
 
 interface AgendaViewProps {
@@ -50,7 +51,7 @@ export default function AgendaView({
             {/* Spodní laserová linka do ztracena */}
             <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-neon-blue via-neon-blue/50 to-neon-blue/10 drop-shadow-[0_0_10px_rgb(var(--c-neon-blue))] pointer-events-none z-20"></div>
 
-            <img src="/vr_calendar.svg" alt="Kalendář" draggable="false" className="h-14 w-auto object-contain" />
+            <Mascot src="/vr_calendar.svg" alt="Kalendář" className="h-14 w-auto object-contain" />
             <div className="flex-1 flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-black text-neon-blue tracking-widest uppercase drop-shadow-[0_0_15px_rgb(var(--c-neon-blue)/0.8)]">
@@ -82,7 +83,7 @@ export default function AgendaView({
             <div className="flex items-center gap-6 relative z-10 w-full justify-between">
               <div className="flex items-center gap-6">
                 <div className="p-2 md:p-3 rounded-2xl bg-neon-blue/10 border-2 border-neon-blue/40 shadow-[0_0_25px_rgb(var(--c-neon-blue)/0.4)] transition-all">
-                  <img src="/vr_calendar.svg" className="w-14 h-14 md:w-16 md:h-16 object-contain" alt="Kalendář" draggable="false" />
+                  <Mascot src="/vr_calendar.svg" className="w-14 h-14 md:w-16 md:h-16 object-contain" alt="Kalendář" />
                 </div>
                 
                 <div className="flex flex-col justify-center relative mt-1 select-none">

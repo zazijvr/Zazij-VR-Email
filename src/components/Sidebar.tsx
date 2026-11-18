@@ -184,6 +184,7 @@ export default function Sidebar({
               className="vr-neon-logo h-11 w-auto object-contain"
               draggable="false"
             />
+            <span className="vr-logo-tint vr-neon-logo" aria-hidden="true" />
             <RudolphOverlay />
           </span>
         </button>
