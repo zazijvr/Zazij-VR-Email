@@ -1,84 +1,126 @@
 #!/usr/bin/env bash
-# Vydání nové verze s automatickou aktualizací (Linux AppImage).
+# Vydání nové verze s automatickou aktualizací (Linux AppImage + Windows instalátor).
 #
-#   scripts/release.sh 1.3.0 "Co je nového…"            sestaví, podepíše a zveřejní
-#   scripts/release.sh 1.3.0 "Co je nového…" --no-publish   jen sestaví a připraví soubory
+#   scripts/release.sh 1.3.0 "Co je nového…"
+#     nastaví verzi, commitne a pushne ji na main, na GitHub Actions sestaví Linux (Ubuntu 22.04)
+#     i Windows, stáhne je, lokálně podepíše (klíč na GitHub nejde) a zveřejní vydání s latest.json
 #
-# Windows instalátor k už zveřejněnému vydání (verze musí být commitnutá a pushnutá na main):
+# Jednu platformu znovu sestavit a vyměnit v už zveřejněném vydání (verze musí být pushnutá na main):
+#   scripts/release.sh linux 1.3.0
 #   scripts/release.sh windows 1.3.0
-#   – sestaví ho GitHub Actions na Windows (.github/workflows/windows.yml), skript ho stáhne,
-#     lokálně podepíše (klíč na GitHub nejde), nahraje k vydání a doplní Windows do latest.json
+#
+# Proč ne lokálně: AppImage přibalí systémové knihovny a CachyOS (znver4) je má sestavené pro Zen 4
+# s AVX-512 – lokálně sestavený AppImage na jiných procesorech padal na SIGILL (Illegal instruction).
 #
 # Potřebuje: podpisový klíč ~/.tauri/zazijvr.key (nebo proměnnou TAURI_SIGNING_PRIVATE_KEY),
-# GitHub CLI (gh) přihlášené k účtu zazijvr a vyplněný .env.
+# GitHub CLI (gh) přihlášené k účtu zazijvr.
 set -euo pipefail
 
 RELEASES_REPO="zazijvr/Zazij-VR-Email-releases"
 CODE_REPO="zazijvr/Zazij-VR-Email"
 KEY_FILE="${TAURI_SIGNING_KEY_FILE:-$HOME/.tauri/zazijvr.key}"
+cd "$(dirname "$0")/.."
+
+die() { echo "❌ $*" >&2; exit 1; }
 
 load_signing_key() {
   if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
-    [ -f "$KEY_FILE" ] || { echo "❌ Podpisový klíč $KEY_FILE nenalezen." >&2; exit 1; }
+    [ -f "$KEY_FILE" ] || die "Podpisový klíč $KEY_FILE nenalezen."
     export TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY_FILE")"
   fi
   export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}"
 }
 
-# ───────────── Windows instalátor ─────────────
-if [ "${1:-}" = "windows" ]; then
-  VERSION="${2:-}"
-  [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Použití: scripts/release.sh windows X.Y.Z" >&2; exit 1; }
-  cd "$(dirname "$0")/.."
-  command -v gh >/dev/null || { echo "❌ Chybí GitHub CLI." >&2; exit 1; }
-  load_signing_key
+conf_version() { python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])"; }
 
-  CONF_VERSION=$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")
-  [ "$CONF_VERSION" = "$VERSION" ] || { echo "❌ V tauri.conf.json je verze $CONF_VERSION, ne $VERSION." >&2; exit 1; }
+ensure_pushed() {
   git fetch -q origin main
-  [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || { echo "❌ Lokální main není shodný s GitHubem – nejdřív commit a push." >&2; exit 1; }
-  gh release view "v$VERSION" --repo "$RELEASES_REPO" >/dev/null 2>&1 || { echo "❌ Vydání v$VERSION neexistuje – nejdřív scripts/release.sh $VERSION \"…\"." >&2; exit 1; }
+  [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || die "Lokální main není shodný s GitHubem – nejdřív commit a push."
+}
 
-  echo "☁️  Spouštím sestavení pro Windows na GitHubu…"
-  BEFORE=$(gh run list --repo "$CODE_REPO" --workflow windows.yml --limit 1 --json databaseId --jq '.[0].databaseId // 0')
-  gh workflow run windows.yml --repo "$CODE_REPO" --ref main
-  RUN_ID=""
+# Platforma: linux | windows → workflow, artefakt, název souboru ve vydání, klíč v latest.json
+platform_info() {
+  local platform="$1" version="$2"
+  case "$platform" in
+    linux)   WORKFLOW=linux.yml;   ARTIFACT=linux-appimage;    ASSET="ZazijVR-Email_${version}_amd64.AppImage";   PKEY=linux-x86_64;   PATTERN="*.AppImage" ;;
+    windows) WORKFLOW=windows.yml; ARTIFACT=windows-installer; ASSET="ZazijVR-Email_${version}_x64-setup.exe";  PKEY=windows-x86_64; PATTERN="*.exe" ;;
+    *) die "Neznámá platforma $platform" ;;
+  esac
+}
+
+# Spustí sestavení na GitHubu a vypíše id běhu (stdout)
+start_build() {
+  local workflow="$1" before run_id=""
+  before=$(gh run list --repo "$CODE_REPO" --workflow "$workflow" --limit 1 --json databaseId --jq '.[0].databaseId // 0')
+  gh workflow run "$workflow" --repo "$CODE_REPO" --ref main >/dev/null
   for _ in $(seq 1 30); do
     sleep 4
-    RUN_ID=$(gh run list --repo "$CODE_REPO" --workflow windows.yml --limit 1 --json databaseId --jq '.[0].databaseId // 0')
-    [ "$RUN_ID" != "$BEFORE" ] && [ "$RUN_ID" != "0" ] && break
+    run_id=$(gh run list --repo "$CODE_REPO" --workflow "$workflow" --limit 1 --json databaseId --jq '.[0].databaseId // 0')
+    [ "$run_id" != "$before" ] && [ "$run_id" != "0" ] && break
   done
-  [ -n "$RUN_ID" ] && [ "$RUN_ID" != "$BEFORE" ] || { echo "❌ Sestavení se nespustilo." >&2; exit 1; }
-  echo "   https://github.com/$CODE_REPO/actions/runs/$RUN_ID"
-  gh run watch "$RUN_ID" --repo "$CODE_REPO" --exit-status --interval 30 >/dev/null || {
-    echo "❌ Sestavení na GitHubu selhalo – log: gh run view $RUN_ID --repo $CODE_REPO --log-failed" >&2; exit 1; }
+  [ -n "$run_id" ] && [ "$run_id" != "$before" ] || die "Sestavení $workflow se nespustilo."
+  echo "$run_id"
+}
 
-  OUT="release/v$VERSION/windows"
-  rm -rf "$OUT" && mkdir -p "$OUT"
-  gh run download "$RUN_ID" --repo "$CODE_REPO" -n windows-installer -D "$OUT"
-  SRC_EXE=$(ls "$OUT"/*_"$VERSION"_*.exe | head -n 1)
-  ASSET="ZazijVR-Email_${VERSION}_x64-setup.exe"
-  mv "$SRC_EXE" "$OUT/$ASSET"
+# Počká na sestavení, stáhne ho, přejmenuje a podepíše → $OUT/$ASSET(.sig)
+fetch_and_sign() {
+  local platform="$1" version="$2" run_id="$3" out="$4"
+  platform_info "$platform" "$version"
+  echo "⏳ Čekám na sestavení ($platform): https://github.com/$CODE_REPO/actions/runs/$run_id"
+  gh run watch "$run_id" --repo "$CODE_REPO" --exit-status --interval 30 >/dev/null ||
+    die "Sestavení ($platform) selhalo – log: gh run view $run_id --repo $CODE_REPO --log-failed"
+  local tmp="$out/.$platform"
+  rm -rf "$tmp" && mkdir -p "$tmp"
+  gh run download "$run_id" --repo "$CODE_REPO" -n "$ARTIFACT" -D "$tmp"
+  local src
+  src=$(ls "$tmp"/$PATTERN | grep -F "_${version}_" | head -n 1) || true
+  [ -n "$src" ] || die "Ve staženém sestavení ($platform) chybí verze $version."
+  mv "$src" "$out/$ASSET" && rm -rf "$tmp"
+  [ "$platform" = linux ] && chmod +x "$out/$ASSET"
+  echo "✍️  Podepisuji $ASSET…"
+  npx tauri signer sign "$out/$ASSET" >/dev/null
+  [ -f "$out/$ASSET.sig" ] || die "Podpis $ASSET se nevytvořil."
+}
 
-  echo "✍️  Podepisuji instalátor pro automatické aktualizace…"
-  npx tauri signer sign "$OUT/$ASSET" >/dev/null
-  [ -f "$OUT/$ASSET.sig" ] || { echo "❌ Podpis se nevytvořil." >&2; exit 1; }
-
-  echo "🧩 Doplňuji Windows do latest.json…"
-  gh release download "v$VERSION" --repo "$RELEASES_REPO" -p latest.json -D "$OUT" --clobber
-  python3 - "$OUT" "$ASSET" "$VERSION" "$RELEASES_REPO" <<'PY'
-import json, sys
-out, asset, v, repo = sys.argv[1:5]
+# Zapíše / doplní platformu do $OUT/latest.json
+set_platform() {
+  python3 - "$1" "$2" "$3" "$4" "$RELEASES_REPO" <<'PY'
+import json, sys, os
+out, pkey, asset, v, repo = sys.argv[1:6]
 path = f"{out}/latest.json"
 data = json.load(open(path, encoding="utf-8"))
 if data.get("version") != v:
     sys.exit(f"latest.json patří k verzi {data.get('version')}, ne {v}")
-data["platforms"]["windows-x86_64"] = {
+data.setdefault("platforms", {})[pkey] = {
     "signature": open(f"{out}/{asset}.sig", encoding="utf-8").read().strip(),
     "url": f"https://github.com/{repo}/releases/download/v{v}/{asset}",
 }
 json.dump(data, open(path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 PY
+}
+
+command -v gh >/dev/null || die "Chybí GitHub CLI: sudo pacman -S github-cli && gh auth login"
+
+# ───────────── Jedna platforma do už zveřejněného vydání ─────────────
+if [ "${1:-}" = "linux" ] || [ "${1:-}" = "windows" ]; then
+  PLATFORM="$1"
+  VERSION="${2:-}"
+  [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "Použití: scripts/release.sh $PLATFORM X.Y.Z"
+  load_signing_key
+  [ "$(conf_version)" = "$VERSION" ] || die "V tauri.conf.json je verze $(conf_version), ne $VERSION."
+  ensure_pushed
+  gh release view "v$VERSION" --repo "$RELEASES_REPO" >/dev/null 2>&1 || die "Vydání v$VERSION neexistuje."
+
+  OUT="release/v$VERSION/$PLATFORM"
+  rm -rf "$OUT" && mkdir -p "$OUT"
+  platform_info "$PLATFORM" "$VERSION"
+  echo "☁️  Spouštím sestavení ($PLATFORM) na GitHubu…"
+  RUN_ID=$(start_build "$WORKFLOW")
+  fetch_and_sign "$PLATFORM" "$VERSION" "$RUN_ID" "$OUT"
+
+  echo "🧩 Doplňuji $PLATFORM do latest.json…"
+  gh release download "v$VERSION" --repo "$RELEASES_REPO" -p latest.json -D "$OUT" --clobber
+  set_platform "$OUT" "$PKEY" "$ASSET" "$VERSION"
 
   echo "🚀 Nahrávám k vydání v$VERSION…"
   gh release upload "v$VERSION" --repo "$RELEASES_REPO" --clobber "$OUT/$ASSET" "$OUT/latest.json"
@@ -86,29 +128,16 @@ PY
   exit 0
 fi
 
+# ───────────── Nové vydání ─────────────
 VERSION="${1:-}"
 NOTES="${2:-}"
-PUBLISH=1
-[ "${3:-}" = "--no-publish" ] && PUBLISH=0
-
-if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "Použití: scripts/release.sh X.Y.Z \"poznámky k vydání\" [--no-publish]" >&2
-  exit 1
-fi
-[ -n "$NOTES" ] || { echo "❌ Chybí poznámky k vydání (co je nového)." >&2; exit 1; }
-
-cd "$(dirname "$0")/.."
-
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die 'Použití: scripts/release.sh X.Y.Z "poznámky k vydání"'
+[ -n "$NOTES" ] || die "Chybí poznámky k vydání (co je nového)."
 load_signing_key
-# strip z linuxdeploy nezná novější knihovny (.relr.dyn) v Archu/CachyOS – ořezávání vypnout
-export NO_STRIP=true
-
-if [ "$PUBLISH" = 1 ]; then
-  command -v gh >/dev/null || { echo "❌ Chybí GitHub CLI: sudo pacman -S github-cli && gh auth login" >&2; exit 1; }
-  if gh release view "v$VERSION" --repo "$RELEASES_REPO" >/dev/null 2>&1; then
-    echo "❌ Vydání v$VERSION už existuje – zvolte vyšší číslo verze." >&2; exit 1
-  fi
+if gh release view "v$VERSION" --repo "$RELEASES_REPO" >/dev/null 2>&1; then
+  die "Vydání v$VERSION už existuje – zvolte vyšší číslo verze."
 fi
+[ "$(git rev-parse --abbrev-ref HEAD)" = main ] || die "Vydává se z větve main."
 
 echo "🔢 Nastavuji verzi $VERSION"
 python3 - "$VERSION" <<'PY'
@@ -125,47 +154,42 @@ s = open(path, encoding="utf-8").read()
 s = re.sub(r'(\[package\][^\[]*?\nversion\s*=\s*")[^"]*(")', lambda m: m.group(1) + v + m.group(2), s, count=1)
 open(path, "w", encoding="utf-8").write(s)
 PY
+# Cargo.lock dorovnat na novou verzi (bez sestavování)
+(cd src-tauri && cargo update -p zazijvr-email --offline >/dev/null 2>&1 || cargo metadata --format-version 1 >/dev/null)
 
-echo "🛠️  Sestavuji podepsaný AppImage…"
-npx tauri build --bundles appimage
-
-BUNDLE_DIR="src-tauri/target/release/bundle/appimage"
-SRC_APPIMAGE=$(ls -t "$BUNDLE_DIR"/*_"$VERSION"_*.AppImage | head -n 1)
-[ -f "$SRC_APPIMAGE.sig" ] || { echo "❌ Chybí podpis $SRC_APPIMAGE.sig" >&2; exit 1; }
+echo "📤 Commit a push verze $VERSION…"
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git diff --cached --quiet || git commit -q -m "Vydání $VERSION"
+git push -q origin main
+ensure_pushed
 
 OUT="release/v$VERSION"
 rm -rf "$OUT" && mkdir -p "$OUT"
-ASSET="ZazijVR-Email_${VERSION}_amd64.AppImage"
-cp "$SRC_APPIMAGE" "$OUT/$ASSET"
-cp "$SRC_APPIMAGE.sig" "$OUT/$ASSET.sig"
-chmod +x "$OUT/$ASSET"
+echo "☁️  Spouštím sestavení Linux a Windows na GitHubu…"
+LINUX_RUN=$(start_build linux.yml)
+WINDOWS_RUN=$(start_build windows.yml)
+fetch_and_sign linux "$VERSION" "$LINUX_RUN" "$OUT"
+LINUX_ASSET="$ASSET"
+fetch_and_sign windows "$VERSION" "$WINDOWS_RUN" "$OUT"
+WINDOWS_ASSET="$ASSET"
 
-python3 - "$VERSION" "$NOTES" "$OUT" "$ASSET" "$RELEASES_REPO" <<'PY'
+python3 - "$VERSION" "$NOTES" "$OUT" <<'PY'
 import json, sys, datetime
-v, notes, out, asset, repo = sys.argv[1:6]
-sig = open(f"{out}/{asset}.sig", encoding="utf-8").read().strip()
+v, notes, out = sys.argv[1:4]
 latest = {
     "version": v,
     "notes": notes,
     "pub_date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    "platforms": {
-        "linux-x86_64": {
-            "signature": sig,
-            "url": f"https://github.com/{repo}/releases/download/v{v}/{asset}",
-        }
-    },
+    "platforms": {},
 }
 with open(f"{out}/latest.json", "w", encoding="utf-8") as f:
     json.dump(latest, f, indent=2, ensure_ascii=False)
 PY
+set_platform "$OUT" linux-x86_64 "$LINUX_ASSET" "$VERSION"
+set_platform "$OUT" windows-x86_64 "$WINDOWS_ASSET" "$VERSION"
 
 echo "📦 Připraveno v $OUT:"
 ls -la "$OUT"
-
-if [ "$PUBLISH" = 0 ]; then
-  echo "ℹ️  Nezveřejněno (--no-publish)."
-  exit 0
-fi
 
 echo "🚀 Zveřejňuji v$VERSION v $RELEASES_REPO…"
 gh release create "v$VERSION" \
@@ -173,6 +197,6 @@ gh release create "v$VERSION" \
   --title "ZažijVR Email $VERSION" \
   --notes "$NOTES" \
   --latest \
-  "$OUT/$ASSET" "$OUT/latest.json"
+  "$OUT/$LINUX_ASSET" "$OUT/$WINDOWS_ASSET" "$OUT/latest.json"
 
-echo "✅ Hotovo. Nainstalované aplikace si verzi $VERSION najdou samy."
+echo "✅ Hotovo. Nainstalované aplikace (Linux i Windows) si verzi $VERSION najdou samy."
