@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense, type CSSProperties, type Dispatch, type MouseEvent, type SetStateAction } from 'react';
+import { mailtoBodyHtml, type MailtoRequest } from '../../utils/mailto';
 import { createPortal } from 'react-dom';
 import EmailList from '../../components/EmailList';
 import EmailDetail from '../../components/EmailDetail';
@@ -24,6 +25,8 @@ interface EmailAppProps {
   unreadCounts: UnreadCounts;
   setUnreadCounts: Dispatch<SetStateAction<UnreadCounts>>;
   triggerCompose: number;
+  /** Odkaz mailto: z jiné aplikace – otevře nový e-mail s předvyplněnými údaji (n = pořadí požadavku) */
+  mailtoRequest?: (MailtoRequest & { n: number }) | null;
   triggerMove: { moves: MoveRequest[]; ts: number } | null;
   loginWithGoogle: () => void;
   isVerticalLayout: boolean;
@@ -44,7 +47,7 @@ const getFolderIcon = (folder: string) => {
   }
 };
 
-export default function EmailApp({ googleToken, activeFolder, unreadCounts, setUnreadCounts, triggerCompose, triggerMove, loginWithGoogle, isVerticalLayout, customLabels, userEmail }: EmailAppProps) {
+export default function EmailApp({ googleToken, activeFolder, unreadCounts, setUnreadCounts, triggerCompose, mailtoRequest, triggerMove, loginWithGoogle, isVerticalLayout, customLabels, userEmail }: EmailAppProps) {
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const provider = useMailProvider();
   const queryClient = useQueryClient();
@@ -145,6 +148,20 @@ export default function EmailApp({ googleToken, activeFolder, unreadCounts, setU
       lastTriggerRef.current = triggerCompose;
     }
   }, [triggerCompose]);
+
+  // mailto: z jiné aplikace → nový e-mail s adresátem, kopií, předmětem a textem
+  const lastMailtoRef = useRef(0);
+  useEffect(() => {
+    if (!mailtoRequest || mailtoRequest.n === lastMailtoRef.current) return;
+    lastMailtoRef.current = mailtoRequest.n;
+    setComposerConfig({
+      type: 'new',
+      initialTo: mailtoRequest.to,
+      initialCc: mailtoRequest.cc || undefined,
+      initialSubject: mailtoRequest.subject || undefined,
+      initialBody: mailtoRequest.body ? mailtoBodyHtml(mailtoRequest.body) : undefined,
+    });
+  }, [mailtoRequest]);
 
   useEffect(() => {
     triggerMove?.moves.forEach((move) => {

@@ -41,14 +41,18 @@ cat > "$DESKTOP" <<EOF
 Type=Application
 Name=ZažijVR Email
 Comment=E-mail a kalendář ZažijVR
-Exec="$APP"
+Exec="$APP" %u
 Icon=zazijvr-email
 StartupWMClass=zazijvr-email
 Categories=Network;Email;Calendar;
+MimeType=x-scheme-handler/mailto;
 Terminal=false
 StartupNotify=true
 EOF
 command -v update-desktop-database >/dev/null && update-desktop-database "$(dirname "$DESKTOP")" >/dev/null 2>&1 || true
+# Odkazy mailto: (prohlížeč, soubory…) – ZažijVR Email jako výchozí poštovní klient
+# (%u v Exec předá odkaz aplikaci; jde změnit v Nastavení systému → Výchozí aplikace → E-mailový klient)
+command -v xdg-mime >/dev/null && xdg-mime default zazijvr-email.desktop x-scheme-handler/mailto >/dev/null 2>&1 || true
 
 echo "✅ Nainstalováno do $APP – aplikaci najdete v nabídce jako „ZažijVR Email“."
 if command -v pacman >/dev/null && pacman -Qq 2>/dev/null | grep -qx 'zažij-vr-email'; then

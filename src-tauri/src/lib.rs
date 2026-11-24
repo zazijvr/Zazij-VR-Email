@@ -7,6 +7,8 @@ mod android_mail_check;
 mod mail_watch;
 #[cfg(desktop)]
 mod open_file;
+#[cfg(desktop)]
+mod mailto;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -28,8 +30,15 @@ pub fn run() {
         builder = builder
             .plugin(tauri_plugin_updater::Builder::new().build())
             .plugin(tauri_plugin_process::init())
-            .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            use tauri::Manager;
+            .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            use tauri::{Emitter, Manager};
+            // Odkaz mailto: z jiné aplikace, když už ZažijVR Email běží → okno otevře nový e-mail
+            if let Some(url) = mailto::find(&args) {
+                if let Some(state) = app.try_state::<mailto::PendingMailto>() {
+                    if let Ok(mut p) = state.0.lock() { *p = Some(url); }
+                }
+                let _ = app.emit("open-mailto", ());
+            }
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.unminimize();
                 let _ = window.show();
@@ -71,8 +80,12 @@ pub fn run() {
         account_counts::accounts_unread,
         mail_watch::mail_watch_set_google_client,
         open_file::open_attachment_externally,
-        open_file::open_external_url
+        open_file::open_external_url,
+        mailto::take_pending_mailto
     ]);
+    // Odkaz mailto: při spuštění aplikace (výchozí poštovní klient) – okno si ho vyzvedne po načtení
+    #[cfg(desktop)]
+    let builder = builder.manage(mailto::PendingMailto(std::sync::Mutex::new(mailto::find(&std::env::args().collect::<Vec<_>>()))));
     #[cfg(mobile)]
     let builder = builder.invoke_handler(tauri::generate_handler![
         oauth::start_google_login,

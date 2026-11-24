@@ -17,6 +17,7 @@ import EmailApp from './modules/Email/EmailApp';
 import { useCustomLabels, useProfile, useUnreadCounts } from './hooks/useMailboxQueries';
 import { useHistoryBack } from './hooks/useHistoryBack';
 import { createPkceSession } from './utils/pkce';
+import { parseMailto, type MailtoRequest } from './utils/mailto';
 import type { AppMode } from './components/Sidebar';
 import type { UnreadCounts, UserInfo } from './types/account';
 import type { GmailLabel } from './types/gmail';
@@ -266,6 +267,23 @@ function App() {
   }, [googleToken, appMode]);
   const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
   const [triggerCompose, setTriggerCompose] = useState(0);
+  // Odkaz mailto: z jiné aplikace (ZažijVR Email jako výchozí poštovní klient) → nový e-mail s předvyplněním
+  const [mailtoRequest, setMailtoRequest] = useState<(MailtoRequest & { n: number }) | null>(null);
+  useEffect(() => {
+    const take = () => {
+      invoke<string | null>('take_pending_mailto')
+        .then((url) => {
+          const m = url ? parseMailto(url) : null;
+          if (!m) return;
+          setAppMode('email');
+          setMailtoRequest({ ...m, n: Date.now() });
+        })
+        .catch(() => { /* telefon / prohlížeč: příkaz neexistuje */ });
+    };
+    take();
+    const unlisten = listen('open-mailto', take);
+    return () => { unlisten.then((f) => f()).catch(() => {}); };
+  }, []);
   const [triggerCreateEvent, setTriggerCreateEvent] = useState(0);
   const [triggerMove, setTriggerMove] = useState<{ moves: MoveRequest[]; ts: number } | null>(null);
 
@@ -933,6 +951,7 @@ function App() {
                 unreadCounts={unreadCounts}
                 setUnreadCounts={setUnreadCounts}
                 triggerCompose={triggerCompose}
+                mailtoRequest={mailtoRequest}
                 triggerMove={triggerMove}
                 loginWithGoogle={loginWithGoogle}
                 isVerticalLayout={isVerticalLayout}
